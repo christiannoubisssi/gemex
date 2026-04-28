@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ParametresService {
   static const _prefixEntreprise = 'entreprise_';
   static const _prefixDocument = 'document_';
   static const _prefixFiscal = 'fiscal_';
+  static const _prefixSecurite = 'securite_';
   static const _keyTypesMission = 'types_mission';
 
   static const defaultsTva = 18.0;
@@ -20,6 +22,16 @@ class ParametresService {
   ];
 
   static Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
+
+  static Future<bool> getBool(String key, {bool defaultValue = false}) async {
+    final prefs = await _prefs;
+    return prefs.getBool(key) ?? defaultValue;
+  }
+
+  static Future<void> setBool(String key, bool value) async {
+    final prefs = await _prefs;
+    await prefs.setBool(key, value);
+  }
 
   static Future<String> getString(String key, {String defaultValue = ''}) async {
     final prefs = await _prefs;
@@ -55,7 +67,7 @@ class ParametresService {
 
   static Future<void> saveEntreprise(Map<String, String> data) async {
     for (final entry in data.entries) {
-      await setString('${_prefixEntreprise}${entry.key}', entry.value);
+      await setString('$_prefixEntreprise${entry.key}', entry.value);
     }
   }
 
@@ -85,7 +97,7 @@ class ParametresService {
 
   static Future<void> saveDocumentLayout(Map<String, String> data) async {
     for (final entry in data.entries) {
-      await setString('${_prefixDocument}${entry.key}', entry.value);
+      await setString('$_prefixDocument${entry.key}', entry.value);
     }
   }
 
@@ -100,5 +112,43 @@ class ParametresService {
   static Future<void> saveTypesMission(List<String> types) async {
     final prefs = await _prefs;
     await prefs.setString(_keyTypesMission, jsonEncode(types));
+  }
+
+  // Sécurité documents
+  static Future<Map<String, dynamic>> getSecurite() async {
+    return {
+      'qr_actif': await getBool('${_prefixSecurite}qr_actif'),
+      'signature_actif': await getBool('${_prefixSecurite}signature_actif'),
+      'filigrane_actif': await getBool('${_prefixSecurite}filigrane_actif'),
+      'filigrane_texte': await getString('${_prefixSecurite}filigrane_texte', defaultValue: 'ORIGINAL'),
+      'signature_texte': await getString('${_prefixSecurite}signature_texte'),
+      'hmac_secret': await _getOrCreateHmacSecret(),
+    };
+  }
+
+  static Future<void> saveSecurite(Map<String, dynamic> data) async {
+    if (data.containsKey('qr_actif')) await setBool('${_prefixSecurite}qr_actif', data['qr_actif'] as bool);
+    if (data.containsKey('signature_actif')) await setBool('${_prefixSecurite}signature_actif', data['signature_actif'] as bool);
+    if (data.containsKey('filigrane_actif')) await setBool('${_prefixSecurite}filigrane_actif', data['filigrane_actif'] as bool);
+    if (data.containsKey('filigrane_texte')) await setString('${_prefixSecurite}filigrane_texte', data['filigrane_texte'] as String);
+    if (data.containsKey('signature_texte')) await setString('${_prefixSecurite}signature_texte', data['signature_texte'] as String);
+  }
+
+  static Future<String> _getOrCreateHmacSecret() async {
+    final existing = await getString('${_prefixSecurite}hmac_secret');
+    if (existing.isNotEmpty) return existing;
+    final secret = _generateSecret();
+    await setString('${_prefixSecurite}hmac_secret', secret);
+    return secret;
+  }
+
+  static Future<void> regenererHmacSecret() async {
+    await setString('${_prefixSecurite}hmac_secret', _generateSecret());
+  }
+
+  static String _generateSecret() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 }

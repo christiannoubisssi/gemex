@@ -7842,6 +7842,547 @@ class SalairesCompanion extends UpdateCompanion<Salaire> {
   }
 }
 
+class $CongesTable extends Conges with TableInfo<$CongesTable, Conge> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CongesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _personnelIdMeta =
+      const VerificationMeta('personnelId');
+  @override
+  late final GeneratedColumn<String> personnelId = GeneratedColumn<String>(
+      'personnel_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dateDebutMeta =
+      const VerificationMeta('dateDebut');
+  @override
+  late final GeneratedColumn<DateTime> dateDebut = GeneratedColumn<DateTime>(
+      'date_debut', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _dateFinMeta =
+      const VerificationMeta('dateFin');
+  @override
+  late final GeneratedColumn<DateTime> dateFin = GeneratedColumn<DateTime>(
+      'date_fin', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+      'type', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('conge_annuel'));
+  static const VerificationMeta _motifMeta = const VerificationMeta('motif');
+  @override
+  late final GeneratedColumn<String> motif = GeneratedColumn<String>(
+      'motif', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _statutMeta = const VerificationMeta('statut');
+  @override
+  late final GeneratedColumn<String> statut = GeneratedColumn<String>(
+      'statut', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('demande'));
+  static const VerificationMeta _valideParMeta =
+      const VerificationMeta('validePar');
+  @override
+  late final GeneratedColumn<String> validePar = GeneratedColumn<String>(
+      'valide_par', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+      'sync_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        personnelId,
+        dateDebut,
+        dateFin,
+        type,
+        motif,
+        statut,
+        validePar,
+        syncStatus,
+        createdAt,
+        updatedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'conges';
+  @override
+  VerificationContext validateIntegrity(Insertable<Conge> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('personnel_id')) {
+      context.handle(
+          _personnelIdMeta,
+          personnelId.isAcceptableOrUnknown(
+              data['personnel_id']!, _personnelIdMeta));
+    } else if (isInserting) {
+      context.missing(_personnelIdMeta);
+    }
+    if (data.containsKey('date_debut')) {
+      context.handle(_dateDebutMeta,
+          dateDebut.isAcceptableOrUnknown(data['date_debut']!, _dateDebutMeta));
+    } else if (isInserting) {
+      context.missing(_dateDebutMeta);
+    }
+    if (data.containsKey('date_fin')) {
+      context.handle(_dateFinMeta,
+          dateFin.isAcceptableOrUnknown(data['date_fin']!, _dateFinMeta));
+    } else if (isInserting) {
+      context.missing(_dateFinMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+          _typeMeta, type.isAcceptableOrUnknown(data['type']!, _typeMeta));
+    }
+    if (data.containsKey('motif')) {
+      context.handle(
+          _motifMeta, motif.isAcceptableOrUnknown(data['motif']!, _motifMeta));
+    }
+    if (data.containsKey('statut')) {
+      context.handle(_statutMeta,
+          statut.isAcceptableOrUnknown(data['statut']!, _statutMeta));
+    }
+    if (data.containsKey('valide_par')) {
+      context.handle(_valideParMeta,
+          validePar.isAcceptableOrUnknown(data['valide_par']!, _valideParMeta));
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+          _syncStatusMeta,
+          syncStatus.isAcceptableOrUnknown(
+              data['sync_status']!, _syncStatusMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Conge map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Conge(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      personnelId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}personnel_id'])!,
+      dateDebut: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}date_debut'])!,
+      dateFin: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}date_fin'])!,
+      type: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
+      motif: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}motif']),
+      statut: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}statut'])!,
+      validePar: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}valide_par']),
+      syncStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $CongesTable createAlias(String alias) {
+    return $CongesTable(attachedDatabase, alias);
+  }
+}
+
+class Conge extends DataClass implements Insertable<Conge> {
+  final String id;
+  final String personnelId;
+  final DateTime dateDebut;
+  final DateTime dateFin;
+  final String type;
+  final String? motif;
+  final String statut;
+  final String? validePar;
+  final String syncStatus;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const Conge(
+      {required this.id,
+      required this.personnelId,
+      required this.dateDebut,
+      required this.dateFin,
+      required this.type,
+      this.motif,
+      required this.statut,
+      this.validePar,
+      required this.syncStatus,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['personnel_id'] = Variable<String>(personnelId);
+    map['date_debut'] = Variable<DateTime>(dateDebut);
+    map['date_fin'] = Variable<DateTime>(dateFin);
+    map['type'] = Variable<String>(type);
+    if (!nullToAbsent || motif != null) {
+      map['motif'] = Variable<String>(motif);
+    }
+    map['statut'] = Variable<String>(statut);
+    if (!nullToAbsent || validePar != null) {
+      map['valide_par'] = Variable<String>(validePar);
+    }
+    map['sync_status'] = Variable<String>(syncStatus);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  CongesCompanion toCompanion(bool nullToAbsent) {
+    return CongesCompanion(
+      id: Value(id),
+      personnelId: Value(personnelId),
+      dateDebut: Value(dateDebut),
+      dateFin: Value(dateFin),
+      type: Value(type),
+      motif:
+          motif == null && nullToAbsent ? const Value.absent() : Value(motif),
+      statut: Value(statut),
+      validePar: validePar == null && nullToAbsent
+          ? const Value.absent()
+          : Value(validePar),
+      syncStatus: Value(syncStatus),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Conge.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Conge(
+      id: serializer.fromJson<String>(json['id']),
+      personnelId: serializer.fromJson<String>(json['personnelId']),
+      dateDebut: serializer.fromJson<DateTime>(json['dateDebut']),
+      dateFin: serializer.fromJson<DateTime>(json['dateFin']),
+      type: serializer.fromJson<String>(json['type']),
+      motif: serializer.fromJson<String?>(json['motif']),
+      statut: serializer.fromJson<String>(json['statut']),
+      validePar: serializer.fromJson<String?>(json['validePar']),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'personnelId': serializer.toJson<String>(personnelId),
+      'dateDebut': serializer.toJson<DateTime>(dateDebut),
+      'dateFin': serializer.toJson<DateTime>(dateFin),
+      'type': serializer.toJson<String>(type),
+      'motif': serializer.toJson<String?>(motif),
+      'statut': serializer.toJson<String>(statut),
+      'validePar': serializer.toJson<String?>(validePar),
+      'syncStatus': serializer.toJson<String>(syncStatus),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  Conge copyWith(
+          {String? id,
+          String? personnelId,
+          DateTime? dateDebut,
+          DateTime? dateFin,
+          String? type,
+          Value<String?> motif = const Value.absent(),
+          String? statut,
+          Value<String?> validePar = const Value.absent(),
+          String? syncStatus,
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      Conge(
+        id: id ?? this.id,
+        personnelId: personnelId ?? this.personnelId,
+        dateDebut: dateDebut ?? this.dateDebut,
+        dateFin: dateFin ?? this.dateFin,
+        type: type ?? this.type,
+        motif: motif.present ? motif.value : this.motif,
+        statut: statut ?? this.statut,
+        validePar: validePar.present ? validePar.value : this.validePar,
+        syncStatus: syncStatus ?? this.syncStatus,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  Conge copyWithCompanion(CongesCompanion data) {
+    return Conge(
+      id: data.id.present ? data.id.value : this.id,
+      personnelId:
+          data.personnelId.present ? data.personnelId.value : this.personnelId,
+      dateDebut: data.dateDebut.present ? data.dateDebut.value : this.dateDebut,
+      dateFin: data.dateFin.present ? data.dateFin.value : this.dateFin,
+      type: data.type.present ? data.type.value : this.type,
+      motif: data.motif.present ? data.motif.value : this.motif,
+      statut: data.statut.present ? data.statut.value : this.statut,
+      validePar: data.validePar.present ? data.validePar.value : this.validePar,
+      syncStatus:
+          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Conge(')
+          ..write('id: $id, ')
+          ..write('personnelId: $personnelId, ')
+          ..write('dateDebut: $dateDebut, ')
+          ..write('dateFin: $dateFin, ')
+          ..write('type: $type, ')
+          ..write('motif: $motif, ')
+          ..write('statut: $statut, ')
+          ..write('validePar: $validePar, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, personnelId, dateDebut, dateFin, type,
+      motif, statut, validePar, syncStatus, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Conge &&
+          other.id == this.id &&
+          other.personnelId == this.personnelId &&
+          other.dateDebut == this.dateDebut &&
+          other.dateFin == this.dateFin &&
+          other.type == this.type &&
+          other.motif == this.motif &&
+          other.statut == this.statut &&
+          other.validePar == this.validePar &&
+          other.syncStatus == this.syncStatus &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class CongesCompanion extends UpdateCompanion<Conge> {
+  final Value<String> id;
+  final Value<String> personnelId;
+  final Value<DateTime> dateDebut;
+  final Value<DateTime> dateFin;
+  final Value<String> type;
+  final Value<String?> motif;
+  final Value<String> statut;
+  final Value<String?> validePar;
+  final Value<String> syncStatus;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const CongesCompanion({
+    this.id = const Value.absent(),
+    this.personnelId = const Value.absent(),
+    this.dateDebut = const Value.absent(),
+    this.dateFin = const Value.absent(),
+    this.type = const Value.absent(),
+    this.motif = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.validePar = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CongesCompanion.insert({
+    required String id,
+    required String personnelId,
+    required DateTime dateDebut,
+    required DateTime dateFin,
+    this.type = const Value.absent(),
+    this.motif = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.validePar = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        personnelId = Value(personnelId),
+        dateDebut = Value(dateDebut),
+        dateFin = Value(dateFin);
+  static Insertable<Conge> custom({
+    Expression<String>? id,
+    Expression<String>? personnelId,
+    Expression<DateTime>? dateDebut,
+    Expression<DateTime>? dateFin,
+    Expression<String>? type,
+    Expression<String>? motif,
+    Expression<String>? statut,
+    Expression<String>? validePar,
+    Expression<String>? syncStatus,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (personnelId != null) 'personnel_id': personnelId,
+      if (dateDebut != null) 'date_debut': dateDebut,
+      if (dateFin != null) 'date_fin': dateFin,
+      if (type != null) 'type': type,
+      if (motif != null) 'motif': motif,
+      if (statut != null) 'statut': statut,
+      if (validePar != null) 'valide_par': validePar,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CongesCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? personnelId,
+      Value<DateTime>? dateDebut,
+      Value<DateTime>? dateFin,
+      Value<String>? type,
+      Value<String?>? motif,
+      Value<String>? statut,
+      Value<String?>? validePar,
+      Value<String>? syncStatus,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return CongesCompanion(
+      id: id ?? this.id,
+      personnelId: personnelId ?? this.personnelId,
+      dateDebut: dateDebut ?? this.dateDebut,
+      dateFin: dateFin ?? this.dateFin,
+      type: type ?? this.type,
+      motif: motif ?? this.motif,
+      statut: statut ?? this.statut,
+      validePar: validePar ?? this.validePar,
+      syncStatus: syncStatus ?? this.syncStatus,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (personnelId.present) {
+      map['personnel_id'] = Variable<String>(personnelId.value);
+    }
+    if (dateDebut.present) {
+      map['date_debut'] = Variable<DateTime>(dateDebut.value);
+    }
+    if (dateFin.present) {
+      map['date_fin'] = Variable<DateTime>(dateFin.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (motif.present) {
+      map['motif'] = Variable<String>(motif.value);
+    }
+    if (statut.present) {
+      map['statut'] = Variable<String>(statut.value);
+    }
+    if (validePar.present) {
+      map['valide_par'] = Variable<String>(validePar.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CongesCompanion(')
+          ..write('id: $id, ')
+          ..write('personnelId: $personnelId, ')
+          ..write('dateDebut: $dateDebut, ')
+          ..write('dateFin: $dateFin, ')
+          ..write('type: $type, ')
+          ..write('motif: $motif, ')
+          ..write('statut: $statut, ')
+          ..write('validePar: $validePar, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $PiecesJointesTable extends PiecesJointes
     with TableInfo<$PiecesJointesTable, PiecesJointe> {
   @override
@@ -8918,6 +9459,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ChargesTable charges = $ChargesTable(this);
   late final $PersonnelTable personnel = $PersonnelTable(this);
   late final $SalairesTable salaires = $SalairesTable(this);
+  late final $CongesTable conges = $CongesTable(this);
   late final $PiecesJointesTable piecesJointes = $PiecesJointesTable(this);
   late final $SyncQueueTable syncQueue = $SyncQueueTable(this);
   late final ClientsDao clientsDao = ClientsDao(this as AppDatabase);
@@ -8925,6 +9467,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final DevisDao devisDao = DevisDao(this as AppDatabase);
   late final FacturesDao facturesDao = FacturesDao(this as AppDatabase);
   late final ChargesDao chargesDao = ChargesDao(this as AppDatabase);
+  late final PersonnelDao personnelDao = PersonnelDao(this as AppDatabase);
+  late final SalairesDao salairesDao = SalairesDao(this as AppDatabase);
+  late final CongesDao congesDao = CongesDao(this as AppDatabase);
   late final PiecesJointesDao piecesJointesDao =
       PiecesJointesDao(this as AppDatabase);
   late final SyncQueueDao syncQueueDao = SyncQueueDao(this as AppDatabase);
@@ -8942,6 +9487,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         charges,
         personnel,
         salaires,
+        conges,
         piecesJointes,
         syncQueue
       ];
@@ -12327,6 +12873,261 @@ typedef $$SalairesTableProcessedTableManager = ProcessedTableManager<
     (Salaire, BaseReferences<_$AppDatabase, $SalairesTable, Salaire>),
     Salaire,
     PrefetchHooks Function()>;
+typedef $$CongesTableCreateCompanionBuilder = CongesCompanion Function({
+  required String id,
+  required String personnelId,
+  required DateTime dateDebut,
+  required DateTime dateFin,
+  Value<String> type,
+  Value<String?> motif,
+  Value<String> statut,
+  Value<String?> validePar,
+  Value<String> syncStatus,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+typedef $$CongesTableUpdateCompanionBuilder = CongesCompanion Function({
+  Value<String> id,
+  Value<String> personnelId,
+  Value<DateTime> dateDebut,
+  Value<DateTime> dateFin,
+  Value<String> type,
+  Value<String?> motif,
+  Value<String> statut,
+  Value<String?> validePar,
+  Value<String> syncStatus,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$CongesTableFilterComposer
+    extends Composer<_$AppDatabase, $CongesTable> {
+  $$CongesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get personnelId => $composableBuilder(
+      column: $table.personnelId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get dateDebut => $composableBuilder(
+      column: $table.dateDebut, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get dateFin => $composableBuilder(
+      column: $table.dateFin, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get motif => $composableBuilder(
+      column: $table.motif, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get validePar => $composableBuilder(
+      column: $table.validePar, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$CongesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CongesTable> {
+  $$CongesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get personnelId => $composableBuilder(
+      column: $table.personnelId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get dateDebut => $composableBuilder(
+      column: $table.dateDebut, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get dateFin => $composableBuilder(
+      column: $table.dateFin, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get motif => $composableBuilder(
+      column: $table.motif, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get validePar => $composableBuilder(
+      column: $table.validePar, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CongesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CongesTable> {
+  $$CongesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get personnelId => $composableBuilder(
+      column: $table.personnelId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateDebut =>
+      $composableBuilder(column: $table.dateDebut, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get dateFin =>
+      $composableBuilder(column: $table.dateFin, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get motif =>
+      $composableBuilder(column: $table.motif, builder: (column) => column);
+
+  GeneratedColumn<String> get statut =>
+      $composableBuilder(column: $table.statut, builder: (column) => column);
+
+  GeneratedColumn<String> get validePar =>
+      $composableBuilder(column: $table.validePar, builder: (column) => column);
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$CongesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CongesTable,
+    Conge,
+    $$CongesTableFilterComposer,
+    $$CongesTableOrderingComposer,
+    $$CongesTableAnnotationComposer,
+    $$CongesTableCreateCompanionBuilder,
+    $$CongesTableUpdateCompanionBuilder,
+    (Conge, BaseReferences<_$AppDatabase, $CongesTable, Conge>),
+    Conge,
+    PrefetchHooks Function()> {
+  $$CongesTableTableManager(_$AppDatabase db, $CongesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CongesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CongesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CongesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> personnelId = const Value.absent(),
+            Value<DateTime> dateDebut = const Value.absent(),
+            Value<DateTime> dateFin = const Value.absent(),
+            Value<String> type = const Value.absent(),
+            Value<String?> motif = const Value.absent(),
+            Value<String> statut = const Value.absent(),
+            Value<String?> validePar = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CongesCompanion(
+            id: id,
+            personnelId: personnelId,
+            dateDebut: dateDebut,
+            dateFin: dateFin,
+            type: type,
+            motif: motif,
+            statut: statut,
+            validePar: validePar,
+            syncStatus: syncStatus,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String personnelId,
+            required DateTime dateDebut,
+            required DateTime dateFin,
+            Value<String> type = const Value.absent(),
+            Value<String?> motif = const Value.absent(),
+            Value<String> statut = const Value.absent(),
+            Value<String?> validePar = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CongesCompanion.insert(
+            id: id,
+            personnelId: personnelId,
+            dateDebut: dateDebut,
+            dateFin: dateFin,
+            type: type,
+            motif: motif,
+            statut: statut,
+            validePar: validePar,
+            syncStatus: syncStatus,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CongesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CongesTable,
+    Conge,
+    $$CongesTableFilterComposer,
+    $$CongesTableOrderingComposer,
+    $$CongesTableAnnotationComposer,
+    $$CongesTableCreateCompanionBuilder,
+    $$CongesTableUpdateCompanionBuilder,
+    (Conge, BaseReferences<_$AppDatabase, $CongesTable, Conge>),
+    Conge,
+    PrefetchHooks Function()>;
 typedef $$PiecesJointesTableCreateCompanionBuilder = PiecesJointesCompanion
     Function({
   required String id,
@@ -12852,6 +13653,8 @@ class $AppDatabaseManager {
       $$PersonnelTableTableManager(_db, _db.personnel);
   $$SalairesTableTableManager get salaires =>
       $$SalairesTableTableManager(_db, _db.salaires);
+  $$CongesTableTableManager get conges =>
+      $$CongesTableTableManager(_db, _db.conges);
   $$PiecesJointesTableTableManager get piecesJointes =>
       $$PiecesJointesTableTableManager(_db, _db.piecesJointes);
   $$SyncQueueTableTableManager get syncQueue =>

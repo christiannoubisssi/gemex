@@ -4,6 +4,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../../database/app_database.dart';
+import 'document_securite_service.dart';
 
 class PdfService {
   static final _fcfa = NumberFormat('#,###', 'fr_FR');
@@ -20,10 +21,27 @@ class PdfService {
     final roboto = await PdfGoogleFonts.robotoRegular();
     final robotoBold = await PdfGoogleFonts.robotoBold();
 
+    final securiteConfig = await DocumentSecuriteConfig.load();
+    final securite = await DocumentSecuriteService.buildFor(
+      config: securiteConfig,
+      type: 'DEV',
+      numero: devis.numero ?? devis.id.substring(0, 8).toUpperCase(),
+      id: devis.id,
+      date: devis.dateEmission,
+      roboto: roboto,
+      robotoBold: robotoBold,
+    );
+
+    final bottomMargin = 40.0 + securite.extraBottomMargin;
+
     doc.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(40),
+        pageTheme: pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.fromLTRB(40, 40, 40, bottomMargin),
+          buildBackground: securite.background,
+        ),
+        footer: securite.footer,
         build: (ctx) => [
           _buildHeader(
             type: 'DEVIS',
@@ -99,10 +117,27 @@ class PdfService {
     final roboto = await PdfGoogleFonts.robotoRegular();
     final robotoBold = await PdfGoogleFonts.robotoBold();
 
+    final securiteConfig = await DocumentSecuriteConfig.load();
+    final securite = await DocumentSecuriteService.buildFor(
+      config: securiteConfig,
+      type: 'FAC',
+      numero: facture.numero ?? facture.id.substring(0, 8).toUpperCase(),
+      id: facture.id,
+      date: facture.dateEmission,
+      roboto: roboto,
+      robotoBold: robotoBold,
+    );
+
+    final bottomMargin = 40.0 + securite.extraBottomMargin;
+
     doc.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(40),
+        pageTheme: pw.PageTheme(
+          pageFormat: PdfPageFormat.a4,
+          margin: pw.EdgeInsets.fromLTRB(40, 40, 40, bottomMargin),
+          buildBackground: securite.background,
+        ),
+        footer: securite.footer,
         build: (ctx) => [
           _buildHeader(
             type: 'FACTURE',

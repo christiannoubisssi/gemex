@@ -97,6 +97,17 @@ class FacturesDao extends DatabaseAccessor<AppDatabase> with _$FacturesDaoMixin 
         .get();
   }
 
+  Future<double> getTauxRecouvrement() async {
+    final all = await (select(factures)
+          ..where((f) => f.statut.isNotIn(['annulee'])))
+        .get();
+    if (all.isEmpty) return 0.0;
+    final totalEmis = all.fold<double>(0.0, (s, f) => s + f.montantTtc);
+    final totalRecouvre = all.fold<double>(0.0, (s, f) => s + f.montantPaye);
+    if (totalEmis == 0) return 0.0;
+    return (totalRecouvre / totalEmis) * 100;
+  }
+
   Future<void> markSynced(String id) {
     return (update(factures)..where((f) => f.id.equals(id)))
         .write(const FacturesCompanion(syncStatus: Value('synced')));

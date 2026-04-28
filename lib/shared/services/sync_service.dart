@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -63,13 +64,20 @@ class SyncService {
 
   Future<void> _processItem(SyncQueueData item) async {
     try {
-      switch (item.operation) {
-        case 'create':
-          await _supabase.from('${item.entityType}s').insert(_parsePayload(item.payload));
-        case 'update':
-          await _supabase.from('${item.entityType}s').update(_parsePayload(item.payload)).eq('id', item.entityId);
-        case 'delete':
-          await _supabase.from('${item.entityType}s').update({'deleted_at': DateTime.now().toIso8601String()}).eq('id', item.entityId);
+      if (item.operation == 'upload' && item.entityType == 'piece_jointe') {
+        await _uploadPieceJointe(item);
+      } else {
+        final table = item.entityType == 'piece_jointe'
+            ? 'pieces_jointes'
+            : '${item.entityType}s';
+        switch (item.operation) {
+          case 'create':
+            await _supabase.from(table).insert(_parsePayload(item.payload));
+          case 'update':
+            await _supabase.from(table).update(_parsePayload(item.payload)).eq('id', item.entityId);
+          case 'delete':
+            await _supabase.from(table).update({'deleted_at': DateTime.now().toIso8601String()}).eq('id', item.entityId);
+        }
       }
       await _db.syncQueueDao.deleteItem(item.id);
       await _markEntitySynced(item.entityType, item.entityId);
@@ -79,6 +87,22 @@ class SyncService {
         await _markEntityConflict(item.entityType, item.entityId);
       }
     }
+  }
+
+  Future<void> _uploadPieceJointe(SyncQueueData item) async {
+    final data = _parsePayload(item.payload);
+    final cheminLocal = data['chemin_local'] as String?;
+    final dossierId = data['dossier_id'] as String?;
+    final nom = data['nom'] as String?;
+    if (cheminLocal == null || dossierId == null || nom == null) return;
+
+    final file = File(cheminLocal);
+    if (!await file.exists()) return;
+
+    final path = 'dossiers/$dossierId/$nom';
+    await _supabase.storage.from('pieces-jointes').upload(path, file);
+    final url = _supabase.storage.from('pieces-jointes').getPublicUrl(path);
+    await _db.piecesJointesDao.updateUrlStorage(item.entityId, url);
   }
 
   Map<String, dynamic> _parsePayload(String payload) {
@@ -96,6 +120,7 @@ class SyncService {
       case 'devis': await _db.devisDao.markSynced(entityId);
       case 'facture': await _db.facturesDao.markSynced(entityId);
       case 'charge': await _db.chargesDao.markSynced(entityId);
+      case 'piece_jointe': await _db.piecesJointesDao.markSynced(entityId);
     }
   }
 

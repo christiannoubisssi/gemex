@@ -46,6 +46,14 @@ dependencies:
   # Sécurité
   flutter_secure_storage: ^9.2.2
 
+  # Graphiques
+  fl_chart: ^0.68.0
+
+  # Sécurité documents
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^5.0.0
+  crypto: ^3.0.3
+
   # Utilitaires
   uuid: ^4.4.2
   intl: any

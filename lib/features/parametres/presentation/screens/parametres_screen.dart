@@ -11,7 +11,7 @@ class ParametresScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Paramètres')),
       body: ListView(
         children: [
-          _SectionHeader('Mon compte'),
+          const _SectionHeader('Mon compte'),
           _SettingsTile(
             icon: Icons.person_outline,
             title: 'Profil',
@@ -19,7 +19,7 @@ class ParametresScreen extends StatelessWidget {
             onTap: () => context.push('/parametres/profil'),
           ),
           const Divider(height: 1),
-          _SectionHeader('Entreprise'),
+          const _SectionHeader('Entreprise'),
           _SettingsTile(
             icon: Icons.business_outlined,
             title: 'Informations entreprise',
@@ -45,12 +45,26 @@ class ParametresScreen extends StatelessWidget {
             onTap: () => context.push('/parametres/types-mission'),
           ),
           const Divider(height: 1),
-          _SectionHeader('Administration'),
+          const _SectionHeader('Administration'),
           _SettingsTile(
             icon: Icons.people_outlined,
             title: 'Utilisateurs',
             subtitle: 'Gérer les accès et les rôles',
             onTap: () => context.push('/parametres/utilisateurs'),
+          ),
+          _SettingsTile(
+            icon: Icons.shield_outlined,
+            title: 'Sécurité des documents',
+            subtitle: 'QR d\'authenticité, signature, filigrane',
+            onTap: () => context.push('/parametres/securite'),
+          ),
+          const Divider(height: 1),
+          const _SectionHeader('Vérification'),
+          _SettingsTile(
+            icon: Icons.qr_code_scanner_outlined,
+            title: 'Scanner QR',
+            subtitle: 'Vérifier l\'authenticité d\'un document',
+            onTap: () => context.push('/securite/scanner'),
           ),
           const SizedBox(height: 32),
         ],

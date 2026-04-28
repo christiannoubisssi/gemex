@@ -16,8 +16,23 @@ import '../../features/devis/presentation/screens/devis_form_screen.dart';
 import '../../features/factures/presentation/screens/factures_list_screen.dart';
 import '../../features/factures/presentation/screens/facture_detail_screen.dart';
 import '../../features/comptabilite/presentation/screens/comptabilite_screen.dart';
+import '../../features/comptabilite/presentation/screens/charge_form_screen.dart';
 import '../../features/rh/presentation/screens/rh_dashboard_screen.dart';
+import '../../features/rh/presentation/screens/personnel_list_screen.dart';
+import '../../features/rh/presentation/screens/personnel_form_screen.dart';
+import '../../features/rh/presentation/screens/personnel_detail_screen.dart';
+import '../../features/rh/presentation/screens/conges_screen.dart';
+import '../../features/paie/presentation/screens/paie_screen.dart';
 import '../../features/parametres/presentation/screens/parametres_screen.dart';
+import '../../features/parametres/presentation/screens/entreprise_screen.dart';
+import '../../features/parametres/presentation/screens/document_layout_screen.dart';
+import '../../features/parametres/presentation/screens/fiscalite_screen.dart';
+import '../../features/parametres/presentation/screens/types_mission_screen.dart';
+import '../../features/parametres/presentation/screens/utilisateurs_screen.dart';
+import '../../features/parametres/presentation/screens/profil_screen.dart';
+import '../../features/parametres/presentation/screens/securite_screen.dart';
+import '../../features/pieces_jointes/presentation/screens/pieces_jointes_screen.dart';
+import '../../features/securite/presentation/screens/scanner_screen.dart';
 import '../shell/main_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -115,9 +130,59 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          GoRoute(path: '/comptabilite', builder: (_, __) => const ComptabiliteScreen()),
-          GoRoute(path: '/rh', builder: (_, __) => const RhDashboardScreen()),
-          GoRoute(path: '/parametres', builder: (_, __) => const ParametresScreen()),
+          GoRoute(
+            path: '/comptabilite',
+            builder: (_, __) => const ComptabiliteScreen(),
+            routes: [
+              GoRoute(path: 'charges/new', builder: (_, __) => const ChargeFormScreen()),
+            ],
+          ),
+          GoRoute(
+            path: '/rh',
+            builder: (_, __) => const RhDashboardScreen(),
+            routes: [
+              GoRoute(
+                path: 'personnel',
+                builder: (_, __) => const PersonnelListScreen(),
+                routes: [
+                  GoRoute(path: 'new', builder: (_, __) => const PersonnelFormScreen()),
+                  GoRoute(
+                    path: ':id',
+                    builder: (_, state) =>
+                        PersonnelDetailScreen(id: state.pathParameters['id']!),
+                    routes: [
+                      GoRoute(
+                        path: 'edit',
+                        builder: (_, state) =>
+                            PersonnelFormScreen(id: state.pathParameters['id']),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              GoRoute(path: 'conges', builder: (_, __) => const CongesScreen()),
+            ],
+          ),
+          GoRoute(path: '/paie', builder: (_, __) => const PaieScreen()),
+          GoRoute(
+            path: '/parametres',
+            builder: (_, __) => const ParametresScreen(),
+            routes: [
+              GoRoute(path: 'profil', builder: (_, __) => const ProfilScreen()),
+              GoRoute(path: 'entreprise', builder: (_, __) => const EntrepriseScreen()),
+              GoRoute(path: 'documents', builder: (_, __) => const DocumentLayoutScreen()),
+              GoRoute(path: 'fiscalite', builder: (_, __) => const FiscaliteScreen()),
+              GoRoute(path: 'types-mission', builder: (_, __) => const TypesMissionScreen()),
+              GoRoute(path: 'utilisateurs', builder: (_, __) => const UtilisateursScreen()),
+              GoRoute(path: 'securite', builder: (_, __) => const SecuriteScreen()),
+            ],
+          ),
+          GoRoute(path: '/securite/scanner', builder: (_, __) => const ScannerScreen()),
+          GoRoute(
+            path: '/dossiers/:dossierId/pieces-jointes',
+            builder: (_, state) =>
+                PiecesJointesScreen(dossierId: state.pathParameters['dossierId']!),
+          ),
         ],
       ),
     ],

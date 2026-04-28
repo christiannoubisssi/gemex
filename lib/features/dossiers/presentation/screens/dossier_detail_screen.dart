@@ -177,6 +177,15 @@ class DossierDetailScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.attach_file_outlined),
+                    label: const Text('Pièces jointes'),
+                    onPressed: () => context.push('/dossiers/${dossier.id}/pieces-jointes'),
+                  ),
+                ),
                 const SizedBox(height: 32),
               ],
             ),

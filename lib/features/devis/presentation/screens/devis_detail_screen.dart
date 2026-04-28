@@ -5,6 +5,8 @@ import 'package:printing/printing.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../database/app_database.dart';
+import '../../../../shared/services/email_service.dart';
 import '../../../../shared/services/pdf_service.dart';
 import '../providers/devis_provider.dart';
 
@@ -116,6 +118,14 @@ class DevisDetailScreen extends ConsumerWidget {
                       },
               ),
               const SizedBox(height: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.email_outlined),
+                label: const Text('Envoyer par email'),
+                onPressed: lignesAsync.value == null
+                    ? null
+                    : () => _showEmailDialog(context, ref, devis, lignesAsync.value!),
+              ),
+              const SizedBox(height: 8),
               // Actions
               if (devis.statut == 'brouillon') ...[
                 ElevatedButton.icon(
@@ -152,6 +162,70 @@ class DevisDetailScreen extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _showEmailDialog(
+      BuildContext context, WidgetRef ref, Devi devis, List<DevisLigne> lignes) async {
+    final emailCtrl = TextEditingController();
+    bool sending = false;
+
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: const Text('Envoyer le devis par email'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Email du destinataire',
+                  prefixIcon: Icon(Icons.email_outlined),
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            ElevatedButton.icon(
+              icon: sending
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.send),
+              label: const Text('Envoyer'),
+              onPressed: sending
+                  ? null
+                  : () async {
+                      final email = emailCtrl.text.trim();
+                      if (email.isEmpty) return;
+                      setS(() => sending = true);
+                      try {
+                        await ref.read(emailServiceProvider).envoyerDevis(
+                              devis: devis,
+                              lignes: lignes,
+                              destinataire: email,
+                            );
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Devis envoyé !')),
+                          );
+                        }
+                      } catch (e) {
+                        setS(() => sending = false);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

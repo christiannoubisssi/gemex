@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../database/app_database.dart';
+import '../../../../shared/services/email_service.dart';
 import '../../../../shared/services/pdf_service.dart';
 import '../providers/facture_provider.dart';
 
@@ -103,6 +105,23 @@ class FactureDetailScreen extends ConsumerWidget {
                       },
               ),
               const SizedBox(height: 8),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.email_outlined),
+                label: const Text('Envoyer par email'),
+                onPressed: lignesAsync.value == null
+                    ? null
+                    : () => _showEmailDialog(context, ref, facture, lignesAsync.value!),
+              ),
+              if (enRetard) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.notification_important_outlined, color: AppColors.warning),
+                  label: const Text('Envoyer une relance', style: TextStyle(color: AppColors.warning)),
+                  style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.warning)),
+                  onPressed: () => _showRelanceDialog(context, ref, facture),
+                ),
+              ],
+              const SizedBox(height: 8),
               if (facture.statut != 'payee' && facture.statut != 'annulee')
                 ElevatedButton.icon(
                   icon: const Icon(Icons.payment),
@@ -114,6 +133,121 @@ class FactureDetailScreen extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  Future<void> _showEmailDialog(
+      BuildContext context, WidgetRef ref, Facture facture, List<FacturesLigne> lignes) async {
+    final emailCtrl = TextEditingController();
+    bool sending = false;
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: const Text('Envoyer la facture par email'),
+          content: TextField(
+            controller: emailCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Email du destinataire',
+              prefixIcon: Icon(Icons.email_outlined),
+            ),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            ElevatedButton.icon(
+              icon: sending
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.send),
+              label: const Text('Envoyer'),
+              onPressed: sending
+                  ? null
+                  : () async {
+                      final email = emailCtrl.text.trim();
+                      if (email.isEmpty) return;
+                      setS(() => sending = true);
+                      try {
+                        await ref.read(emailServiceProvider).envoyerFacture(
+                              facture: facture,
+                              lignes: lignes,
+                              destinataire: email,
+                            );
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Facture envoyée !')),
+                          );
+                        }
+                      } catch (e) {
+                        setS(() => sending = false);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showRelanceDialog(BuildContext context, WidgetRef ref, Facture facture) async {
+    final emailCtrl = TextEditingController();
+    bool sending = false;
+    await showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: const Text('Envoyer une relance'),
+          content: TextField(
+            controller: emailCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Email du destinataire',
+              prefixIcon: Icon(Icons.email_outlined),
+            ),
+            keyboardType: TextInputType.emailAddress,
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Annuler')),
+            ElevatedButton.icon(
+              icon: sending
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.notification_important_outlined),
+              label: const Text('Relancer'),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.warning),
+              onPressed: sending
+                  ? null
+                  : () async {
+                      final email = emailCtrl.text.trim();
+                      if (email.isEmpty) return;
+                      setS(() => sending = true);
+                      try {
+                        await ref.read(emailServiceProvider).envoyerRelance(
+                              facture: facture,
+                              destinataire: email,
+                            );
+                        if (ctx.mounted) {
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Relance envoyée !')),
+                          );
+                        }
+                      } catch (e) {
+                        setS(() => sending = false);
+                        if (ctx.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Erreur : $e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      }
+                    },
+            ),
+          ],
+        ),
+      ),
     );
   }
 
