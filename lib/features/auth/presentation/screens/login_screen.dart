@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../data/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -32,35 +31,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _emailController.text.trim(),
           _passwordController.text,
         );
-
-    if (mounted) {
-      final state = ref.read(authNotifierProvider);
-      if (state.hasError) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_formatError(state.error.toString())),
-            backgroundColor: AppTheme.danger,
-          ),
-        );
-      } else {
-        context.go('/');
-      }
-    }
   }
 
-  String _formatError(String error) {
-    if (error.contains('Invalid login credentials')) {
-      return 'Email ou mot de passe incorrect';
+  String _formatError(Object error) {
+    final msg = error.toString();
+    if (msg.contains('Invalid login credentials') ||
+        msg.contains('invalid_credentials') ||
+        msg.contains('Email not confirmed')) {
+      return 'Email ou mot de passe incorrect, ou compte non confirmé.';
     }
-    if (error.contains('network') || error.contains('socket')) {
-      return 'Connexion internet requise pour se connecter';
+    if (msg.contains('network') || msg.contains('socket') || msg.contains('Failed host lookup')) {
+      return 'Connexion internet requise.';
     }
-    return 'Erreur de connexion. Réessayez.';
+    // Affiche le message brut pour faciliter le diagnostic
+    return 'Erreur : $msg';
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
+
+    // Affiche les erreurs de connexion via ref.listen (pattern Riverpod correct)
+    ref.listen<AsyncValue<void>>(authNotifierProvider, (_, next) {
+      if (next.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_formatError(next.error!)),
+            backgroundColor: AppColors.danger,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.navy,

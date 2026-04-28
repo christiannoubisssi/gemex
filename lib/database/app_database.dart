@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:drift_flutter/drift_flutter.dart';
+
+import 'connection/connection.dart';
 
 import 'tables/clients_table.dart';
 import 'tables/dossiers_table.dart';
@@ -74,11 +74,6 @@ class AppDatabase extends _$AppDatabase {
     return _instance!;
   }
 
-  static QueryExecutor _openConnection() {
-    return driftDatabase(name: 'avarie_app_db');
-  }
+  static QueryExecutor _openConnection() => openAppDatabase();
 }
 
-AppDatabase createInMemoryDatabase() {
-  return AppDatabase(NativeDatabase.memory());
-}
