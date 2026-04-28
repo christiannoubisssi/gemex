@@ -1,0 +1,125 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../features/auth/data/auth_provider.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../features/dossiers/presentation/screens/dossiers_list_screen.dart';
+import '../../features/dossiers/presentation/screens/dossier_detail_screen.dart';
+import '../../features/dossiers/presentation/screens/dossier_form_screen.dart';
+import '../../features/clients/presentation/screens/clients_list_screen.dart';
+import '../../features/clients/presentation/screens/client_detail_screen.dart';
+import '../../features/clients/presentation/screens/client_form_screen.dart';
+import '../../features/devis/presentation/screens/devis_list_screen.dart';
+import '../../features/devis/presentation/screens/devis_detail_screen.dart';
+import '../../features/devis/presentation/screens/devis_form_screen.dart';
+import '../../features/factures/presentation/screens/factures_list_screen.dart';
+import '../../features/factures/presentation/screens/facture_detail_screen.dart';
+import '../../features/comptabilite/presentation/screens/comptabilite_screen.dart';
+import '../../features/rh/presentation/screens/rh_dashboard_screen.dart';
+import '../../features/parametres/presentation/screens/parametres_screen.dart';
+import '../shell/main_shell.dart';
+
+final appRouterProvider = Provider<GoRouter>((ref) {
+  ref.watch(authStateProvider);
+
+  return GoRouter(
+    initialLocation: '/',
+    redirect: (context, state) {
+      final isAuthenticated = ref.read(isAuthenticatedProvider);
+      final isLoginRoute = state.matchedLocation.startsWith('/login');
+
+      if (!isAuthenticated && !isLoginRoute) return '/login';
+      if (isAuthenticated && isLoginRoute) return '/';
+      return null;
+    },
+    routes: [
+      // Routes sans shell (auth)
+      GoRoute(
+        path: '/login',
+        builder: (_, __) => const LoginScreen(),
+        routes: [
+          GoRoute(
+            path: 'reset-password',
+            builder: (_, __) => const ResetPasswordScreen(),
+          ),
+        ],
+      ),
+
+      // Routes avec shell (navigation principale)
+      ShellRoute(
+        builder: (context, state, child) => MainShell(child: child),
+        routes: [
+          GoRoute(path: '/', builder: (_, __) => const DashboardScreen()),
+          GoRoute(
+            path: '/dossiers',
+            builder: (_, __) => const DossiersListScreen(),
+            routes: [
+              GoRoute(path: 'new', builder: (_, __) => const DossierFormScreen()),
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => DossierDetailScreen(id: state.pathParameters['id']!),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => DossierFormScreen(id: state.pathParameters['id']),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/clients',
+            builder: (_, __) => const ClientsListScreen(),
+            routes: [
+              GoRoute(path: 'new', builder: (_, __) => const ClientFormScreen()),
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => ClientDetailScreen(id: state.pathParameters['id']!),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => ClientFormScreen(id: state.pathParameters['id']),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/devis',
+            builder: (_, __) => const DevisListScreen(),
+            routes: [
+              GoRoute(path: 'new', builder: (_, state) {
+                final dossierId = state.uri.queryParameters['dossierId'];
+                return DevisFormScreen(dossierId: dossierId);
+              }),
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => DevisDetailScreen(id: state.pathParameters['id']!),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => DevisFormScreen(id: state.pathParameters['id']),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          GoRoute(
+            path: '/factures',
+            builder: (_, __) => const FacturesListScreen(),
+            routes: [
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => FactureDetailScreen(id: state.pathParameters['id']!),
+              ),
+            ],
+          ),
+          GoRoute(path: '/comptabilite', builder: (_, __) => const ComptabiliteScreen()),
+          GoRoute(path: '/rh', builder: (_, __) => const RhDashboardScreen()),
+          GoRoute(path: '/parametres', builder: (_, __) => const ParametresScreen()),
+        ],
+      ),
+    ],
+  );
+});
