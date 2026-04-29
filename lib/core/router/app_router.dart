@@ -17,6 +17,10 @@ import '../../features/factures/presentation/screens/factures_list_screen.dart';
 import '../../features/factures/presentation/screens/facture_detail_screen.dart';
 import '../../features/comptabilite/presentation/screens/comptabilite_screen.dart';
 import '../../features/comptabilite/presentation/screens/charge_form_screen.dart';
+import '../../features/charges_modeles/presentation/screens/charges_modeles_list_screen.dart';
+import '../../features/charges_modeles/presentation/screens/charges_modeles_form_screen.dart';
+import '../../features/charges_modeles/presentation/screens/charges_modeles_detail_screen.dart';
+import '../../features/taxes/presentation/screens/taxes_screen.dart';
 import '../../features/rh/presentation/screens/rh_dashboard_screen.dart';
 import '../../features/rh/presentation/screens/personnel_list_screen.dart';
 import '../../features/rh/presentation/screens/personnel_form_screen.dart';
@@ -135,6 +139,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (_, __) => const ComptabiliteScreen(),
             routes: [
               GoRoute(path: 'charges/new', builder: (_, __) => const ChargeFormScreen()),
+              GoRoute(path: 'taxes', builder: (_, __) => const TaxesScreen()),
+              GoRoute(
+                path: 'charges-modeles',
+                builder: (_, __) => const ChargesModelesListScreen(),
+                routes: [
+                  GoRoute(path: 'new', builder: (_, __) => const ChargesModelesFormScreen()),
+                  GoRoute(
+                    path: ':id',
+                    builder: (_, state) =>
+                        ChargesModeleDetailScreen(id: state.pathParameters['id']!),
+                  ),
+                ],
+              ),
             ],
           ),
           GoRoute(

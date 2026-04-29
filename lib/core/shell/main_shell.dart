@@ -4,7 +4,87 @@ import 'package:go_router/go_router.dart';
 
 import '../theme/app_colors.dart';
 import '../../features/auth/data/auth_provider.dart';
+import '../../features/parametres/data/user_management_service.dart';
 import '../network/connectivity_service.dart';
+
+class _NavItemDef {
+  final IconData icon;
+  final String label;
+  final String route;
+  final Set<String> roles;
+  const _NavItemDef({
+    required this.icon,
+    required this.label,
+    required this.route,
+    required this.roles,
+  });
+}
+
+const _allNavDefs = [
+  _NavItemDef(
+    icon: Icons.dashboard_outlined,
+    label: 'Tableau de bord',
+    route: '/',
+    roles: {'admin', 'expert', 'agent', 'comptable', 'rh'},
+  ),
+  _NavItemDef(
+    icon: Icons.folder_outlined,
+    label: 'Dossiers',
+    route: '/dossiers',
+    roles: {'admin', 'expert', 'agent', 'comptable'},
+  ),
+  _NavItemDef(
+    icon: Icons.people_outlined,
+    label: 'Clients',
+    route: '/clients',
+    roles: {'admin', 'expert', 'agent', 'comptable'},
+  ),
+  _NavItemDef(
+    icon: Icons.description_outlined,
+    label: 'Devis',
+    route: '/devis',
+    roles: {'admin', 'expert', 'comptable'},
+  ),
+  _NavItemDef(
+    icon: Icons.receipt_long_outlined,
+    label: 'Factures',
+    route: '/factures',
+    roles: {'admin', 'expert', 'comptable'},
+  ),
+  _NavItemDef(
+    icon: Icons.account_balance_outlined,
+    label: 'Comptabilité',
+    route: '/comptabilite',
+    roles: {'admin', 'comptable'},
+  ),
+  _NavItemDef(
+    icon: Icons.people_alt_outlined,
+    label: 'RH',
+    route: '/rh',
+    roles: {'admin', 'rh', 'comptable'},
+  ),
+  _NavItemDef(
+    icon: Icons.settings_outlined,
+    label: 'Paramètres',
+    route: '/parametres',
+    roles: {'admin'},
+  ),
+];
+
+List<_NavItemDef> _itemsForRole(String role) =>
+    _allNavDefs.where((item) => item.roles.contains(role)).toList();
+
+int _selectedIndex(List<_NavItemDef> items, String path) {
+  for (int i = 0; i < items.length; i++) {
+    final route = items[i].route;
+    if (route == '/') {
+      if (path == '/' || path.isEmpty) return i;
+    } else if (path.startsWith(route)) {
+      return i;
+    }
+  }
+  return 0;
+}
 
 class MainShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -15,23 +95,15 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  static const _navItems = [
-    _NavItem(icon: Icons.dashboard_outlined, label: 'Tableau de bord', route: '/'),
-    _NavItem(icon: Icons.folder_outlined, label: 'Dossiers', route: '/dossiers'),
-    _NavItem(icon: Icons.people_outlined, label: 'Clients', route: '/clients'),
-    _NavItem(icon: Icons.description_outlined, label: 'Devis', route: '/devis'),
-    _NavItem(icon: Icons.receipt_long_outlined, label: 'Factures', route: '/factures'),
-    _NavItem(icon: Icons.account_balance_outlined, label: 'Comptabilité', route: '/comptabilite'),
-    _NavItem(icon: Icons.people_alt_outlined, label: 'RH', route: '/rh'),
-    _NavItem(icon: Icons.settings_outlined, label: 'Paramètres', route: '/parametres'),
-  ];
-
-  int _selectedIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     final isOnline = ref.watch(isOnlineProvider);
     final isWide = MediaQuery.of(context).size.width >= 1024;
+    final profileAsync = ref.watch(currentProfileProvider);
+    final role = profileAsync.valueOrNull?.role ?? 'agent';
+    final items = _itemsForRole(role);
+    final path = GoRouterState.of(context).uri.path;
+    final selIdx = _selectedIndex(items, path).clamp(0, items.isEmpty ? 0 : items.length - 1);
 
     return Scaffold(
       appBar: isWide
@@ -50,7 +122,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                 ),
               ],
             ),
-      drawer: isWide ? null : _buildDrawer(context),
+      drawer: isWide ? null : _buildDrawer(context, items, profileAsync),
       body: Column(
         children: [
           if (!isOnline) const _OfflineBanner(),
@@ -58,7 +130,7 @@ class _MainShellState extends ConsumerState<MainShell> {
             child: isWide
                 ? Row(
                     children: [
-                      _buildNavigationRail(context),
+                      _buildNavigationRail(context, items, selIdx, profileAsync),
                       const VerticalDivider(width: 1),
                       Expanded(child: widget.child),
                     ],
@@ -70,20 +142,23 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  Widget _buildNavigationRail(BuildContext context) {
+  Widget _buildNavigationRail(
+    BuildContext context,
+    List<_NavItemDef> items,
+    int selIdx,
+    AsyncValue<UserProfile?> profileAsync,
+  ) {
     return SizedBox(
       width: 200,
       child: NavigationRail(
         backgroundColor: AppColors.navy,
         extended: true,
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (i) {
-          setState(() => _selectedIndex = i);
-          context.go(_navItems[i].route);
-        },
+        selectedIndex: selIdx,
+        onDestinationSelected: (i) => context.go(items[i].route),
         leading: Padding(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
@@ -107,6 +182,18 @@ class _MainShellState extends ConsumerState<MainShell> {
                   ),
                 ],
               ),
+              const SizedBox(height: 10),
+              profileAsync.when(
+                data: (p) => p != null
+                    ? _RoleBadge(role: p.role, nom: p.nom ?? p.email)
+                    : const SizedBox.shrink(),
+                loading: () => const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white38),
+                ),
+                error: (_, __) => const SizedBox.shrink(),
+              ),
             ],
           ),
         ),
@@ -117,13 +204,16 @@ class _MainShellState extends ConsumerState<MainShell> {
               padding: const EdgeInsets.only(bottom: 16),
               child: ListTile(
                 leading: const Icon(Icons.logout, color: Colors.white54),
-                title: const Text('Déconnexion', style: TextStyle(color: Colors.white54, fontSize: 13)),
-                onTap: () => _signOut(),
+                title: const Text(
+                  'Déconnexion',
+                  style: TextStyle(color: Colors.white54, fontSize: 13),
+                ),
+                onTap: _signOut,
               ),
             ),
           ),
         ),
-        destinations: _navItems
+        destinations: items
             .map((item) => NavigationRailDestination(
                   icon: Icon(item.icon),
                   label: Text(item.label),
@@ -133,48 +223,76 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
-  Widget _buildDrawer(BuildContext context) {
+  Widget _buildDrawer(
+    BuildContext context,
+    List<_NavItemDef> items,
+    AsyncValue<UserProfile?> profileAsync,
+  ) {
     return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(color: AppColors.navy),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: AppColors.gold,
-                    borderRadius: BorderRadius.circular(8),
+      child: Container(
+        color: AppColors.navy,
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(color: AppColors.navy),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppColors.gold,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.anchor, color: Colors.white),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'AvarieApp',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Icon(Icons.anchor, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'AvarieApp',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  profileAsync.when(
+                    data: (p) => p != null
+                        ? _RoleBadge(role: p.role, nom: p.nom ?? p.email)
+                        : const SizedBox.shrink(),
+                    loading: () => const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white38),
+                    ),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+                ],
+              ),
             ),
-          ),
-          for (final item in _navItems)
+            for (final item in items)
+              ListTile(
+                leading: Icon(item.icon, color: Colors.white70),
+                title: Text(item.label, style: const TextStyle(color: Colors.white70)),
+                onTap: () {
+                  Navigator.pop(context);
+                  context.go(item.route);
+                },
+              ),
+            const Divider(color: Colors.white24),
             ListTile(
-              leading: Icon(item.icon, color: Colors.white70),
-              title: Text(item.label, style: const TextStyle(color: Colors.white70)),
-              onTap: () {
-                Navigator.pop(context);
-                context.go(item.route);
-              },
+              leading: const Icon(Icons.logout, color: Colors.white54),
+              title: const Text('Déconnexion', style: TextStyle(color: Colors.white54)),
+              onTap: _signOut,
             ),
-          const Divider(color: Colors.white24),
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.white54),
-            title: const Text('Déconnexion', style: TextStyle(color: Colors.white54)),
-            onTap: () => _signOut(),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -186,11 +304,60 @@ class _MainShellState extends ConsumerState<MainShell> {
   }
 }
 
-class _NavItem {
-  final IconData icon;
-  final String label;
-  final String route;
-  const _NavItem({required this.icon, required this.label, required this.route});
+class _RoleBadge extends StatelessWidget {
+  final String role;
+  final String nom;
+  const _RoleBadge({required this.role, required this.nom});
+
+  static const _roleColors = {
+    'admin': Color(0xFFF0A500),
+    'expert': Color(0xFF1A8A9A),
+    'comptable': Color(0xFF4CAF50),
+    'rh': Color(0xFF9C27B0),
+    'agent': Color(0xFF607D8B),
+  };
+
+  static const _roleLabels = {
+    'admin': 'Administrateur',
+    'expert': 'Expert',
+    'comptable': 'Comptable',
+    'rh': 'RH',
+    'agent': 'Agent',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _roleColors[role] ?? const Color(0xFF607D8B);
+    final label = _roleLabels[role] ?? role;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          nom,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 3),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: color.withAlpha(50),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: color.withAlpha(140), width: 1),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _OfflineBanner extends StatelessWidget {

@@ -6,6 +6,16 @@ final facturesProvider = FutureProvider.autoDispose.family<List<Facture>, String
   (ref, statut) async => ref.read(factureRepositoryProvider).getAll(statut: statut),
 );
 
+final facturesByDossierProvider = FutureProvider.autoDispose.family<List<Facture>, String>(
+  (ref, dossierId) async =>
+      ref.read(factureRepositoryProvider).getAll(dossierId: dossierId),
+);
+
+final facturesByClientProvider = FutureProvider.autoDispose.family<List<Facture>, String>(
+  (ref, clientId) async =>
+      ref.read(factureRepositoryProvider).getAll(clientId: clientId),
+);
+
 final factureDetailProvider = FutureProvider.autoDispose.family<Facture?, String>(
   (ref, id) async => ref.read(factureRepositoryProvider).getById(id),
 );

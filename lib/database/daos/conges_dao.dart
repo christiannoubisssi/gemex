@@ -8,10 +8,25 @@ part 'conges_dao.g.dart';
 class CongesDao extends DatabaseAccessor<AppDatabase> with _$CongesDaoMixin {
   CongesDao(super.db);
 
+  Future<List<Conge>> getAll({String? statut}) {
+    final q = select(conges)
+      ..orderBy([(c) => OrderingTerm.desc(c.dateDebut)]);
+    if (statut != null) q.where((c) => c.statut.equals(statut));
+    return q.get();
+  }
+
   Future<List<Conge>> getByPersonnel(String personnelId) {
     return (select(conges)
           ..where((c) => c.personnelId.equals(personnelId))
           ..orderBy([(c) => OrderingTerm.desc(c.dateDebut)]))
+        .get();
+  }
+
+  /// Returns congés that overlap the [from, to] range.
+  Future<List<Conge>> getForRange(DateTime from, DateTime to) {
+    return (select(conges)
+          ..where((c) => c.dateDebut.isSmallerOrEqualValue(to) & c.dateFin.isBiggerOrEqualValue(from))
+          ..orderBy([(c) => OrderingTerm.asc(c.dateDebut)]))
         .get();
   }
 

@@ -23,6 +23,10 @@ final congesPersonnelProvider =
   return ref.read(personnelRepositoryProvider).getCongesByPersonnel(personnelId);
 });
 
+final congesAllProvider = FutureProvider.autoDispose<List<Conge>>(
+  (ref) => ref.read(personnelRepositoryProvider).getAllConges(),
+);
+
 class PersonnelNotifier extends AsyncNotifier<void> {
   @override
   Future<void> build() async {}
@@ -79,24 +83,40 @@ class PersonnelNotifier extends AsyncNotifier<void> {
               type: type,
               motif: motif,
             ));
+    ref.invalidate(congesAllProvider);
+    ref.invalidate(congesPersonnelProvider);
+  }
+
+  Future<void> validerConge(String id, {String? validePar}) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() => ref
+        .read(personnelRepositoryProvider)
+        .updateStatutConge(id, 'valide', validePar: validePar));
+    ref.invalidate(congesAllProvider);
+    ref.invalidate(congesPersonnelProvider);
   }
 
   Future<void> approuverConge(String id) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() =>
-        ref.read(personnelRepositoryProvider).updateStatutConge(id, 'approuve'));
+        ref.read(personnelRepositoryProvider).updateStatutConge(id, 'valide'));
+    ref.invalidate(congesAllProvider);
   }
 
-  Future<void> refuserConge(String id) async {
+  Future<void> refuserConge(String id, {String? motif}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() =>
         ref.read(personnelRepositoryProvider).updateStatutConge(id, 'refuse'));
+    ref.invalidate(congesAllProvider);
+    ref.invalidate(congesPersonnelProvider);
   }
 
   Future<void> deleteConge(String id) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
         () => ref.read(personnelRepositoryProvider).deleteConge(id));
+    ref.invalidate(congesAllProvider);
+    ref.invalidate(congesPersonnelProvider);
   }
 }
 

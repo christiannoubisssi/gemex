@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../clients/presentation/providers/client_provider.dart';
 import '../providers/dossier_provider.dart';
 import '../widgets/status_badge.dart';
 
@@ -31,6 +32,8 @@ class _DossiersListScreenState extends ConsumerState<DossiersListScreen> {
     final dossiersAsync = _search.isNotEmpty
         ? ref.watch(dossierSearchProvider(_search))
         : ref.watch(dossiersProvider(_filtreStatut));
+    final clientsMap = ref.watch(clientsMapProvider).valueOrNull ?? {};
+    final isWide = MediaQuery.of(context).size.width >= 700;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Dossiers')),
@@ -42,8 +45,9 @@ class _DossiersListScreenState extends ConsumerState<DossiersListScreen> {
       body: Column(
         children: [
           // Barre de recherche
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -63,26 +67,36 @@ class _DossiersListScreenState extends ConsumerState<DossiersListScreen> {
             ),
           ),
           // Filtres par statut
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                _FilterChip(label: 'Tous', selected: _filtreStatut == null, onTap: () => setState(() => _filtreStatut = null)),
-                const SizedBox(width: 8),
-                ...AppConstants.statutsDossier
-                    .where((s) => s != AppConstants.statutAnnule)
-                    .map((s) => Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: _FilterChip(
-                            label: AppConstants.statutLabels[s] ?? s,
-                            selected: _filtreStatut == s,
-                            onTap: () => setState(() => _filtreStatut = s),
-                          ),
-                        )),
-              ],
+          Container(
+            color: Colors.white,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+              child: Row(
+                children: [
+                  _FilterChip(
+                    label: 'Tous',
+                    selected: _filtreStatut == null,
+                    onTap: () => setState(() => _filtreStatut = null),
+                  ),
+                  const SizedBox(width: 8),
+                  ...AppConstants.statutsDossier
+                      .where((s) => s != AppConstants.statutAnnule)
+                      .map((s) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: _FilterChip(
+                              label: AppConstants.statutLabels[s] ?? s,
+                              selected: _filtreStatut == s,
+                              onTap: () => setState(() => _filtreStatut = s),
+                            ),
+                          )),
+                ],
+              ),
             ),
           ),
+          const Divider(height: 1),
+          // Table header
+          if (isWide) const _TableHeader(),
           // Liste
           Expanded(
             child: dossiersAsync.when(
@@ -92,73 +106,15 @@ class _DossiersListScreenState extends ConsumerState<DossiersListScreen> {
                 if (dossiers.isEmpty) {
                   return _EmptyState(filtreActif: _filtreStatut != null || _search.isNotEmpty);
                 }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 80),
                   itemCount: dossiers.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (_, i) {
                     final d = dossiers[i];
-                    return Card(
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () => context.push('/dossiers/${d.id}'),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  // Numéro + badge local
-                                  Text(
-                                    d.numero ?? '—',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 13,
-                                      color: AppColors.navy,
-                                    ),
-                                  ),
-                                  if (d.numero != null && d.numero!.contains('LOCAL')) ...[
-                                    const SizedBox(width: 6),
-                                    const SyncBadge(),
-                                  ],
-                                  const Spacer(),
-                                  StatusBadge(statut: d.statut),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                d.titre,
-                                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              if (d.lieuSinistre != null) ...[
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.location_on_outlined, size: 14, color: Colors.grey),
-                                    const SizedBox(width: 4),
-                                    Text(d.lieuSinistre!, style: const TextStyle(fontSize: 13, color: Colors.grey)),
-                                  ],
-                                ),
-                              ],
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  PrioriteBadge(priorite: d.priorite),
-                                  const Spacer(),
-                                  Text(
-                                    FormatUtils.formatDate(d.dateOuverture),
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
+                    final clientNom = d.clientId != null ? (clientsMap[d.clientId!] ?? '—') : '—';
+                    return isWide
+                        ? _TableRow(d: d, clientNom: clientNom)
+                        : _Card(d: d, clientNom: clientNom);
                   },
                 );
               },
@@ -170,6 +126,161 @@ class _DossiersListScreenState extends ConsumerState<DossiersListScreen> {
   }
 }
 
+// ─── Table header ─────────────────────────────────────────────────────────
+
+class _TableHeader extends StatelessWidget {
+  const _TableHeader();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+        decoration: const BoxDecoration(
+          color: AppColors.tableHeaderBg,
+          border: Border(bottom: BorderSide(color: AppColors.borderLight)),
+        ),
+        child: const Row(children: [
+          Expanded(flex: 2, child: _ColLabel('NUMÉRO')),
+          Expanded(flex: 3, child: _ColLabel('TITRE')),
+          Expanded(flex: 2, child: _ColLabel('CLIENT')),
+          Expanded(flex: 2, child: _ColLabel('DATE OUVERTURE')),
+          Expanded(flex: 2, child: _ColLabel('DATE MISSION')),
+          Expanded(flex: 2, child: _ColLabel('STATUT')),
+        ]),
+      );
+}
+
+// ─── Table row (wide) ─────────────────────────────────────────────────────
+
+class _TableRow extends StatelessWidget {
+  final dynamic d;
+  final String clientNom;
+  const _TableRow({required this.d, required this.clientNom});
+
+  @override
+  Widget build(BuildContext context) => InkWell(
+        onTap: () => context.push('/dossiers/${d.id}'),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Color(0xFFF0F1F3))),
+          ),
+          child: Row(children: [
+            Expanded(
+              flex: 2,
+              child: Row(children: [
+                Text(d.numero ?? '—',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.navy)),
+                if (d.numero != null && (d.numero as String).contains('LOCAL')) ...[
+                  const SizedBox(width: 6),
+                  const SyncBadge(),
+                ],
+              ]),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(d.titre,
+                  style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                  overflow: TextOverflow.ellipsis),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(clientNom,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  overflow: TextOverflow.ellipsis),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(FormatUtils.formatDate(d.dateOuverture),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                d.dateExpertise != null ? FormatUtils.formatDate(d.dateExpertise!) : '—',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: d.dateExpertise != null ? AppColors.textMuted : AppColors.textMuted.withAlpha(120)),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: StatusBadge(statut: d.statut),
+              ),
+            ),
+          ]),
+        ),
+      );
+}
+
+// ─── Card (narrow) ────────────────────────────────────────────────────────
+
+class _Card extends StatelessWidget {
+  final dynamic d;
+  final String clientNom;
+  const _Card({required this.d, required this.clientNom});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        margin: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: InkWell(
+          onTap: () => context.push('/dossiers/${d.id}'),
+          borderRadius: BorderRadius.circular(10),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Text(d.numero ?? '—',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.navy)),
+                if (d.numero != null && (d.numero as String).contains('LOCAL')) ...[
+                  const SizedBox(width: 6),
+                  const SyncBadge(),
+                ],
+                const Spacer(),
+                StatusBadge(statut: d.statut),
+              ]),
+              const SizedBox(height: 6),
+              Text(d.titre,
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 4),
+              Text(clientNom,
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 8),
+              Row(children: [
+                PrioriteBadge(priorite: d.priorite),
+                const Spacer(),
+                const Icon(Icons.calendar_today_outlined, size: 12, color: AppColors.textMuted),
+                const SizedBox(width: 4),
+                Text(FormatUtils.formatDate(d.dateOuverture),
+                    style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                if (d.dateExpertise != null) ...[
+                  const SizedBox(width: 8),
+                  const Icon(Icons.engineering_outlined, size: 12, color: AppColors.textMuted),
+                  const SizedBox(width: 4),
+                  Text(FormatUtils.formatDate(d.dateExpertise!),
+                      style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                ],
+              ]),
+            ]),
+          ),
+        ),
+      );
+}
+
+// ─── Filter chip ──────────────────────────────────────────────────────────
+
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -177,28 +288,43 @@ class _FilterChip extends StatelessWidget {
   const _FilterChip({required this.label, required this.selected, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.navy : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: selected ? AppColors.navy : Colors.grey.shade300),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: selected ? Colors.white : Colors.grey.shade700,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-            fontSize: 13,
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.navy : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? AppColors.navy : AppColors.borderLight,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: selected ? Colors.white : AppColors.textSecondary,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+              fontSize: 13,
+            ),
           ),
         ),
-      ),
-    );
-  }
+      );
+}
+
+// ─── Shared widgets ───────────────────────────────────────────────────────
+
+class _ColLabel extends StatelessWidget {
+  final String text;
+  const _ColLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) => Text(text,
+      style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textMuted,
+          letterSpacing: 0.5));
 }
 
 class _EmptyState extends StatelessWidget {
@@ -206,26 +332,24 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState({required this.filtreActif});
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(filtreActif ? Icons.search_off : Icons.folder_open_outlined,
-              size: 64, color: Colors.grey.shade400),
-          const SizedBox(height: 16),
-          Text(
-            filtreActif ? 'Aucun dossier trouvé' : 'Aucun dossier pour l\'instant',
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
-          ),
-          const SizedBox(height: 8),
-          if (!filtreActif)
+  Widget build(BuildContext context) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(filtreActif ? Icons.search_off : Icons.folder_open_outlined,
+                size: 64, color: AppColors.textMuted),
+            const SizedBox(height: 16),
             Text(
-              'Créez votre premier dossier en appuyant sur +',
-              style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+              filtreActif ? 'Aucun dossier trouvé' : "Aucun dossier pour l'instant",
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
             ),
-        ],
-      ),
-    );
-  }
+            const SizedBox(height: 8),
+            if (!filtreActif)
+              const Text(
+                'Créez votre premier dossier en appuyant sur +',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 14),
+              ),
+          ],
+        ),
+      );
 }

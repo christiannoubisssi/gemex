@@ -57,6 +57,12 @@ class PersonnelRepository {
   Future<List<Conge>> getCongesByPersonnel(String personnelId) =>
       _db.congesDao.getByPersonnel(personnelId);
 
+  Future<List<Conge>> getAllConges({String? statut}) =>
+      _db.congesDao.getAll(statut: statut);
+
+  Future<List<Conge>> getCongesForRange(DateTime from, DateTime to) =>
+      _db.congesDao.getForRange(from, to);
+
   Future<void> addConge({
     required String personnelId,
     required DateTime dateDebut,
@@ -72,6 +78,8 @@ class PersonnelRepository {
       dateFin: dateFin,
       type: Value(type),
       motif: Value(motif),
+      // Nouveau statut par défaut
+      statut: const Value('programme'),
       createdAt: Value(now),
       updatedAt: Value(now),
     ));

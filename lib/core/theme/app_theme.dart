@@ -13,7 +13,7 @@ class AppTheme {
           error: AppColors.danger,
           brightness: Brightness.light,
         ),
-        scaffoldBackgroundColor: AppColors.surface,
+        scaffoldBackgroundColor: AppColors.pageBg,
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.navy,
           foregroundColor: Colors.white,
@@ -39,9 +39,12 @@ class AppTheme {
           scrimColor: Colors.black54,
         ),
         cardTheme: CardThemeData(
-          elevation: 2,
-          shadowColor: Colors.black12,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: 0,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppColors.borderLight, width: 1),
+          ),
           color: Colors.white,
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(

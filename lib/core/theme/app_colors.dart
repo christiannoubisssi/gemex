@@ -35,4 +35,12 @@ class AppColors {
   static const Color syncPending = Color(0xFFF0A500);
   static const Color syncConflict = Color(0xFFC62828);
   static const Color syncSynced = Color(0xFF2E7D32);
+
+  // Design system — layout / typography
+  static const Color pageBg = Color(0xFFF5F6F8);
+  static const Color borderLight = Color(0xFFE5E7EB);
+  static const Color textPrimary = Color(0xFF1A1D23);
+  static const Color textSecondary = Color(0xFF6B7280);
+  static const Color textMuted = Color(0xFF9CA3AF);
+  static const Color tableHeaderBg = Color(0xFFF9FAFB);
 }

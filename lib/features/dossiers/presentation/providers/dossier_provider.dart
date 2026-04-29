@@ -27,6 +27,11 @@ final dossiersUrgentsProvider = FutureProvider.autoDispose<List<Dossier>>(
   },
 );
 
+final dossiersByClientProvider = FutureProvider.autoDispose.family<List<Dossier>, String>(
+  (ref, clientId) async =>
+      ref.read(dossierRepositoryProvider).getAll(clientId: clientId),
+);
+
 final dossierStatsProvider = FutureProvider.autoDispose<Map<String, int>>(
   (ref) async {
     return ref.read(dossierRepositoryProvider).getStatsCounts();

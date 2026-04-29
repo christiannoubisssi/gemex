@@ -30,8 +30,8 @@ class DossierRepository {
         _supabase = supabase,
         _ref = ref;
 
-  Future<List<Dossier>> getAll({String? statut, String? search}) {
-    return _db.dossiersDao.getAll(statut: statut, search: search);
+  Future<List<Dossier>> getAll({String? statut, String? search, String? clientId}) {
+    return _db.dossiersDao.getAll(statut: statut, search: search, clientId: clientId);
   }
 
   Stream<List<Dossier>> watchAll({String? statut}) {
@@ -46,15 +46,30 @@ class DossierRepository {
     return _db.dossiersDao.getUrgents();
   }
 
+  static double? _parseDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is num) return v.toDouble();
+    return double.tryParse(v.toString().replaceAll(' ', ''));
+  }
+
+  static DateTime? _parseDateTime(dynamic v) {
+    if (v == null) return null;
+    if (v is DateTime) return v;
+    if (v is String && v.isNotEmpty) return DateTime.tryParse(v);
+    return null;
+  }
+
   Future<String> create(Map<String, dynamic> data) async {
     final id = const Uuid().v4();
     final now = DateTime.now();
     final numero = FormatUtils.generateLocalNumero('AV');
+    final nature = data['nature_sinistre'] as String?;
+    final titre = (nature != null && nature.isNotEmpty) ? nature : numero;
 
     final companion = DossiersCompanion.insert(
       id: id,
       entrepriseId: data['entreprise_id'] as String? ?? '',
-      titre: data['titre'] as String,
+      titre: titre,
       annee: now.year,
       numero: drift.Value(numero),
       clientId: drift.Value(data['client_id'] as String?),
@@ -62,11 +77,10 @@ class DossierRepository {
       statut: const drift.Value('nouveau'),
       priorite: drift.Value(data['priorite'] as String? ?? 'normale'),
       description: drift.Value(data['description'] as String?),
-      dateSinistre: drift.Value(data['date_sinistre'] as DateTime?),
+      dateSinistre: drift.Value(_parseDateTime(data['date_sinistre'])),
       lieuSinistre: drift.Value(data['lieu_sinistre'] as String?),
-      natureSinistre: drift.Value(data['nature_sinistre'] as String?),
-      montantSinistre:
-          drift.Value((data['montant_sinistre'] as num?)?.toDouble()),
+      natureSinistre: drift.Value(nature),
+      montantSinistre: drift.Value(_parseDouble(data['montant_sinistre'])),
       compagnieAssurance: drift.Value(data['compagnie_assurance'] as String?),
       numeroPolice: drift.Value(data['numero_police'] as String?),
       courtier: drift.Value(data['courtier'] as String?),
@@ -95,8 +109,10 @@ class DossierRepository {
 
     await _db.dossiersDao.upsert(DossiersCompanion(
       id: drift.Value(id),
-      titre: data.containsKey('titre')
-          ? drift.Value(data['titre'] as String)
+      titre: data.containsKey('nature_sinistre')
+          ? drift.Value((data['nature_sinistre'] as String?)?.isNotEmpty == true
+              ? data['nature_sinistre'] as String
+              : (data['titre'] as String? ?? ''))
           : const drift.Value.absent(),
       description: data.containsKey('description')
           ? drift.Value(data['description'] as String?)
@@ -114,7 +130,7 @@ class DossierRepository {
           ? drift.Value(data['nature_sinistre'] as String?)
           : const drift.Value.absent(),
       montantSinistre: data.containsKey('montant_sinistre')
-          ? drift.Value((data['montant_sinistre'] as num?)?.toDouble())
+          ? drift.Value(_parseDouble(data['montant_sinistre']))
           : const drift.Value.absent(),
       compagnieAssurance: data.containsKey('compagnie_assurance')
           ? drift.Value(data['compagnie_assurance'] as String?)

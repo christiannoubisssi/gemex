@@ -42,3 +42,9 @@ class ClientNotifier extends AsyncNotifier<void> {
 }
 
 final clientNotifierProvider = AsyncNotifierProvider<ClientNotifier, void>(() => ClientNotifier());
+
+// Map clientId → nom pour affichage dans les listes (devis, factures, dossiers)
+final clientsMapProvider = FutureProvider.autoDispose<Map<String, String>>((ref) async {
+  final clients = await ref.read(clientRepositoryProvider).getAll();
+  return {for (final c in clients) c.id: c.nom};
+});

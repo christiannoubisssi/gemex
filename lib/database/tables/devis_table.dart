@@ -44,6 +44,7 @@ class DevisLignes extends Table {
   TextColumn get unite => text().withDefault(const Constant('forfait'))();
   RealColumn get prixUnit => real().withDefault(const Constant(0.0))();
   RealColumn get montantHt => real().withDefault(const Constant(0.0))();
+  TextColumn get taxesJson => text().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   @override

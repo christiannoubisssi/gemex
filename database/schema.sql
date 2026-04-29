@@ -40,14 +40,20 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- Helper function : évite la récursion infinie dans les politiques RLS de profiles
+create or replace function public.is_admin()
+returns boolean language sql security definer stable as $$
+  select exists (
+    select 1 from public.profiles where id = auth.uid() and role = 'admin'
+  )
+$$;
+
 -- RLS profiles
 alter table public.profiles enable row level security;
 create policy "Lecture propre profil" on public.profiles
   for select using (auth.uid() = id);
 create policy "Admin voit tout" on public.profiles
-  for all using (
-    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+  for all using (public.is_admin());
 
 -- ─── Numérotation automatique ──────────────────────────────────────────────
 -- Séquences annuelles par type de document

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -118,6 +119,27 @@ class _ComptabiliteScreenState extends ConsumerState<ComptabiliteScreen> {
       ),
       body: Column(
         children: [
+          // Accès rapides
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                _QuickCard(
+                  icon: Icons.list_alt,
+                  label: 'Modèles de charges',
+                  onTap: () => context.push('/comptabilite/charges-modeles'),
+                ),
+                const SizedBox(width: 8),
+                _QuickCard(
+                  icon: Icons.percent,
+                  label: 'Taxes & taux',
+                  onTap: () => context.push('/comptabilite/taxes'),
+                ),
+              ],
+            ),
+          ),
+
           // Sélecteur de période
           _PeriodSelector(
             mois: _mois,
@@ -392,6 +414,41 @@ class _EmptyCharges extends StatelessWidget {
       padding: EdgeInsets.all(32),
       child: Center(
         child: Text('Aucune charge ce mois-ci', style: TextStyle(color: Colors.grey)),
+      ),
+    );
+  }
+}
+
+class _QuickCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _QuickCard({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.navy.withAlpha(12),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.navy.withAlpha(40)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: AppColors.navy),
+            const SizedBox(width: 8),
+            Text(label,
+                style: const TextStyle(
+                    fontSize: 13, color: AppColors.navy, fontWeight: FontWeight.w500)),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right, size: 16, color: AppColors.navy),
+          ],
+        ),
       ),
     );
   }
