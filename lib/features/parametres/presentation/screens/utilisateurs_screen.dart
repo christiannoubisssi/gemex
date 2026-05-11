@@ -111,14 +111,17 @@ class UtilisateursScreen extends ConsumerWidget {
   Future<void> _showInviteDialog(BuildContext context, WidgetRef ref) async {
     final emailCtrl = TextEditingController();
     final nomCtrl = TextEditingController();
+    final pwCtrl = TextEditingController();
     String role = 'agent';
+    bool obscure = true;
     bool sending = false;
+    String? errorMsg;
 
     await showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
-          title: const Text('Inviter un collaborateur'),
+          title: const Text('Créer un collaborateur'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -135,7 +138,7 @@ class UtilisateursScreen extends ConsumerWidget {
                 TextField(
                   controller: nomCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'Nom',
+                    labelText: 'Nom complet',
                     prefixIcon: Icon(Icons.person_outline),
                   ),
                 ),
@@ -151,6 +154,28 @@ class UtilisateursScreen extends ConsumerWidget {
                       .toList(),
                   onChanged: (v) => setS(() => role = v ?? role),
                 ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: pwCtrl,
+                  obscureText: obscure,
+                  decoration: InputDecoration(
+                    labelText: 'Mot de passe *',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscure
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined),
+                      onPressed: () => setS(() => obscure = !obscure),
+                    ),
+                    helperText: 'Minimum 8 caractères',
+                  ),
+                ),
+                if (errorMsg != null) ...[
+                  const SizedBox(height: 8),
+                  Text(errorMsg!,
+                      style: const TextStyle(
+                          color: AppColors.danger, fontSize: 12)),
+                ],
               ],
             ),
           ),
@@ -167,14 +192,26 @@ class UtilisateursScreen extends ConsumerWidget {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: Colors.white),
                     )
-                  : const Icon(Icons.send),
-              label: const Text('Inviter'),
+                  : const Icon(Icons.person_add_outlined),
+              label: const Text('Créer'),
               onPressed: sending
                   ? null
                   : () async {
                       final email = emailCtrl.text.trim();
-                      if (email.isEmpty) return;
-                      setS(() => sending = true);
+                      final pw = pwCtrl.text;
+                      if (email.isEmpty) {
+                        setS(() => errorMsg = 'Email requis');
+                        return;
+                      }
+                      if (pw.length < 8) {
+                        setS(() => errorMsg =
+                            'Mot de passe : 8 caractères minimum');
+                        return;
+                      }
+                      setS(() {
+                        errorMsg = null;
+                        sending = true;
+                      });
                       try {
                         await ref.read(userManagementServiceProvider).inviter(
                               email: email,
@@ -182,26 +219,22 @@ class UtilisateursScreen extends ConsumerWidget {
                               nom: nomCtrl.text.trim().isEmpty
                                   ? null
                                   : nomCtrl.text.trim(),
+                              password: pw,
                             );
                         ref.invalidate(usersProvider);
                         if (ctx.mounted) {
                           Navigator.pop(ctx);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                                content:
-                                    Text('Invitation envoyée à $email')),
+                                content: Text(
+                                    'Compte créé pour $email')),
                           );
                         }
                       } catch (e) {
-                        setS(() => sending = false);
-                        if (ctx.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Erreur : $e'),
-                              backgroundColor: AppColors.danger,
-                            ),
-                          );
-                        }
+                        setS(() {
+                          errorMsg = e.toString();
+                          sending = false;
+                        });
                       }
                     },
             ),

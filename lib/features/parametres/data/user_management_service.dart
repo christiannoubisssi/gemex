@@ -58,10 +58,16 @@ class UserManagementService {
     required String email,
     required String role,
     String? nom,
+    String? password,
   }) async {
     await _client.functions.invoke(
       'invite-user',
-      body: {'email': email, 'role': role, if (nom != null) 'nom': nom},
+      body: {
+        'email': email,
+        'role': role,
+        if (nom != null) 'nom': nom,
+        if (password != null) 'password': password,
+      },
     );
   }
 

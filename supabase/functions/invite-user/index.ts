@@ -12,7 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    // Seul un admin authentifié peut inviter
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       return new Response(JSON.stringify({ error: 'Non autorisé' }), {
@@ -21,7 +20,10 @@ serve(async (req) => {
       });
     }
 
-    const { email, role, nom } = await req.json();
+    const { email, role, nom, password } = await req.json() as {
+      email: string; role: string; nom?: string; password?: string;
+    };
+
     if (!email || !role) {
       return new Response(JSON.stringify({ error: 'email et role requis' }), {
         status: 400,
@@ -29,20 +31,21 @@ serve(async (req) => {
       });
     }
 
-    // Client admin avec service_role
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
-      data: { role, nom: nom ?? '' },
-      redirectTo: `${Deno.env.get('APP_URL') ?? ''}/login`,
+    // createUser avec email_confirm: true — compte actif immédiatement, sans email
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: password ?? `Gemex@${Math.random().toString(36).slice(2, 10)}`,
+      email_confirm: true,
+      user_metadata: { role, nom: nom ?? '' },
     });
 
     if (error) throw error;
 
-    // Créer l'entrée dans la table profiles
     await supabaseAdmin.from('profiles').upsert({
       id: data.user.id,
       email,
