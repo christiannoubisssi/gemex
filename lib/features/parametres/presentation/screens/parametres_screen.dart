@@ -90,58 +90,64 @@ class ParametresScreen extends ConsumerWidget {
               ],
             ),
 
-            // ─── Section Données — visible uniquement pour les admins ─────
-            if (isAdmin) ...[
-              const SizedBox(height: 24),
-              const _SectionHeader('Données de démonstration'),
-              const SizedBox(height: 8),
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 0),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.navy.withAlpha(8),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.navy.withAlpha(30)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.admin_panel_settings_outlined,
-                            size: 16, color: AppColors.navy.withAlpha(150)),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Accès administrateur uniquement',
-                          style: TextStyle(
-                              fontSize: 11,
-                              color: AppColors.navy.withAlpha(150),
-                              fontWeight: FontWeight.w600),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _SettingsGrid(
-                      children: [
-                        _SettingsTile(
-                          icon: Icons.dataset_outlined,
-                          title: 'Générer les données démo',
-                          subtitle: 'Clients, dossiers, devis, factures, RH et paie inter-connectés',
-                          onTap: () => _handleSeedData(context),
-                        ),
-                        _SettingsTile(
-                          icon: Icons.delete_sweep_outlined,
-                          title: 'Supprimer toutes les données',
-                          subtitle: 'Vider entièrement la base locale',
-                          color: AppColors.danger,
-                          onTap: () => _handleDeleteAll(context),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+            // ─── Section Données de démonstration — visible par tous ─────
+            const SizedBox(height: 24),
+            const _SectionHeader('Données de démonstration'),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.navy.withAlpha(8),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.navy.withAlpha(30)),
               ),
-            ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        isAdmin
+                            ? Icons.admin_panel_settings_outlined
+                            : Icons.info_outline,
+                        size: 16,
+                        color: AppColors.navy.withAlpha(150),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        isAdmin
+                            ? 'Chargement et suppression réservés à l\'administrateur'
+                            : 'Données de test disponibles pour explorer l\'application',
+                        style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.navy.withAlpha(150),
+                            fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _SettingsGrid(
+                    children: [
+                      _SettingsTile(
+                        icon: Icons.dataset_outlined,
+                        title: 'Générer les données démo',
+                        subtitle: 'Clients, dossiers, devis, factures, RH et paie inter-connectés',
+                        onTap: isAdmin ? () => _handleSeedData(context) : null,
+                        locked: !isAdmin,
+                      ),
+                      _SettingsTile(
+                        icon: Icons.delete_sweep_outlined,
+                        title: 'Supprimer toutes les données',
+                        subtitle: 'Vider entièrement la base locale',
+                        color: isAdmin ? AppColors.danger : null,
+                        onTap: isAdmin ? () => _handleDeleteAll(context) : null,
+                        locked: !isAdmin,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -293,12 +299,25 @@ class _SettingsTile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final Color? color;
-  const _SettingsTile({required this.icon, required this.title, required this.subtitle, required this.onTap, this.color});
+  final bool locked;
+
+  const _SettingsTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.color,
+    this.locked = false,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveColor = locked
+        ? AppColors.textMuted
+        : (color ?? AppColors.primary);
+
     return Card(
       margin: EdgeInsets.zero,
       child: InkWell(
@@ -311,10 +330,10 @@ class _SettingsTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: (color ?? AppColors.primary).withAlpha(20),
+                  color: effectiveColor.withAlpha(20),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, color: color ?? AppColors.primary),
+                child: Icon(icon, color: effectiveColor),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -322,12 +341,24 @@ class _SettingsTile extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: locked ? AppColors.textMuted : null,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                    Text(subtitle,
+                        style: const TextStyle(
+                            fontSize: 12, color: AppColors.textSecondary)),
                   ],
                 ),
               ),
+              if (locked)
+                const Icon(Icons.lock_outline,
+                    size: 16, color: AppColors.textMuted),
             ],
           ),
         ),
