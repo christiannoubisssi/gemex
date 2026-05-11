@@ -2,6 +2,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../database/app_database.dart';
 import '../../data/repositories/devis_repository.dart';
 
+// Provider simple pour la liste complète (sans filtre) — évite le problème d'identité Map dans family
+final devisAllProvider = FutureProvider.autoDispose<List<Devi>>(
+  (ref) async => ref.read(devisRepositoryProvider).getAll(),
+);
+
 final devisListProvider = FutureProvider.autoDispose.family<List<Devi>, Map<String, String?>>(
   (ref, filters) async => ref.read(devisRepositoryProvider).getAll(
     statut: filters['statut'],
@@ -27,6 +32,7 @@ class DevisNotifier extends AsyncNotifier<void> {
     try {
       final id = await ref.read(devisRepositoryProvider).create(data, lignes);
       state = const AsyncData(null);
+      ref.invalidate(devisAllProvider);
       ref.invalidate(devisListProvider);
       return id;
     } catch (e, s) {
@@ -40,6 +46,7 @@ class DevisNotifier extends AsyncNotifier<void> {
     state = await AsyncValue.guard(() async {
       await ref.read(devisRepositoryProvider).updateStatut(id, statut);
       ref.invalidate(devisDetailProvider(id));
+      ref.invalidate(devisAllProvider);
       ref.invalidate(devisListProvider);
     });
   }

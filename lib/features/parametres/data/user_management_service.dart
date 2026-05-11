@@ -65,6 +65,31 @@ class UserManagementService {
     );
   }
 
+  Future<void> updateUserProfile({
+    required String userId,
+    String? nom,
+    String? role,
+  }) async {
+    await _client.functions.invoke(
+      'update-user',
+      body: {
+        'userId': userId,
+        if (nom != null) 'nom': nom,
+        if (role != null) 'role': role,
+      },
+    );
+  }
+
+  Future<void> setPassword({
+    required String userId,
+    required String password,
+  }) async {
+    await _client.functions.invoke(
+      'update-user',
+      body: {'userId': userId, 'password': password},
+    );
+  }
+
   Future<void> updateRole(String userId, String newRole) async {
     await _client.from('profiles').update({'role': newRole}).eq('id', userId);
   }

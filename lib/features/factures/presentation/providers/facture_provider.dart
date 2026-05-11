@@ -49,6 +49,19 @@ class FactureNotifier extends AsyncNotifier<void> {
     }
   }
 
+  Future<String?> create(Map<String, dynamic> data, List<Map<String, dynamic>> lignes) async {
+    state = const AsyncLoading();
+    try {
+      final id = await ref.read(factureRepositoryProvider).create(data, lignes);
+      state = const AsyncData(null);
+      ref.invalidate(facturesProvider);
+      return id;
+    } catch (e, s) {
+      state = AsyncError(e, s);
+      return null;
+    }
+  }
+
   Future<void> enregistrerPaiement(String id, double montant, String? mode, String? reference) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {

@@ -91,6 +91,76 @@ class FactureRepository {
     return id;
   }
 
+  Future<String> create(Map<String, dynamic> data, List<Map<String, dynamic>> lignes) async {
+    final id = const Uuid().v4();
+    final now = DateTime.now();
+    final numero = FormatUtils.generateLocalNumero('FAC');
+
+    // Calculer totaux
+    double montantHt = 0;
+    for (final l in lignes) {
+      final qte = (l['quantite'] as num?)?.toDouble() ?? 1;
+      final pu = (l['prix_unit'] as num?)?.toDouble() ?? 0;
+      montantHt += qte * pu;
+    }
+    final tauxTva = (data['taux_tva'] as num?)?.toDouble() ?? AppConstants.tvaTauxDefaut;
+    final tauxTps = (data['taux_tps'] as num?)?.toDouble() ?? AppConstants.tpsTauxDefaut;
+    final montantTva = montantHt * tauxTva / 100;
+    final montantTps = montantHt * tauxTps / 100;
+    final montantTtc = montantHt + montantTva + montantTps;
+
+    await _db.transaction(() async {
+      await _db.facturesDao.upsertFacture(FacturesCompanion.insert(
+        id: id,
+        entrepriseId: data['entreprise_id'] as String? ?? 'default',
+        clientId: data['client_id'] as String,
+        devisId: drift.Value(data['devis_id'] as String?),
+        dossierId: drift.Value(data['dossier_id'] as String?),
+        annee: now.year,
+        numero: drift.Value(numero),
+        dateEmission: data['date_emission'] as DateTime? ?? now,
+        dateEcheance: data['date_echeance'] as DateTime? ?? now.add(const Duration(days: 30)),
+        montantHt: drift.Value(montantHt),
+        tauxTva: drift.Value(tauxTva),
+        montantTva: drift.Value(montantTva),
+        tauxTps: drift.Value(tauxTps),
+        montantTps: drift.Value(montantTps),
+        montantTtc: drift.Value(montantTtc),
+        montantRestant: drift.Value(montantTtc),
+        objet: drift.Value(data['objet'] as String?),
+        syncStatus: const drift.Value(AppConstants.syncPending),
+      ));
+
+      for (var i = 0; i < lignes.length; i++) {
+        final l = lignes[i];
+        final qte = (l['quantite'] as num?)?.toDouble() ?? 1;
+        final pu = (l['prix_unit'] as num?)?.toDouble() ?? 0;
+        await _db.facturesDao.upsertLigne(FacturesLignesCompanion.insert(
+          id: const Uuid().v4(),
+          factureId: id,
+          ordre: drift.Value(i),
+          designation: l['designation'] as String,
+          quantite: drift.Value(qte),
+          unite: drift.Value(l['unite'] as String? ?? 'forfait'),
+          prixUnit: drift.Value(pu),
+          montantHt: drift.Value(qte * pu),
+        ));
+      }
+    });
+
+    if (_ref.read(isOnlineProvider)) {
+      try {
+        await _supabase.from('factures').insert({...data, 'id': id});
+        await _db.facturesDao.markSynced(id);
+      } catch (_) {
+        await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode({...data, 'id': id}));
+      }
+    } else {
+      await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode({...data, 'id': id}));
+    }
+    return id;
+  }
+
   Future<void> enregistrerPaiement(String id, double montant, String? mode, String? reference) async {
     await _db.facturesDao.enregistrerPaiement(id, montant, mode, reference);
     if (_ref.read(isOnlineProvider)) {

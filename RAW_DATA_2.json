@@ -1,0 +1,97 @@
+[
+  {
+    "page_id": "SCREEN_41",
+    "title": "Tableau de Bord Paie - Gemex/Gamis",
+    "role": "Suivi de la masse salariale et calendrier de paie",
+    "layout": "KPIs + Graphique de prévision + Historique des runs",
+    "fields": [
+      {"label": "Recherche globale", "id": "input-search-global", "type": "text"},
+      {"label": "Période", "id": "btn-period-selector", "type": "dropdown"}
+    ],
+    "functions": [
+      {"label": "Générer Bulletins", "id": "btn-generate-slips", "action": "Calcul de paie"},
+      {"label": "Exporter SEPA", "id": "btn-export-sepa", "action": "Virement bancaire"},
+      {"label": "Déclaration DSN", "id": "btn-dsn-declaration", "action": "Envoi social"}
+    ],
+    "sections": ["KPIs (Coût total, En attente, Charges)", "Tableau des Runs", "Graphique de Prévision"]
+  },
+  {
+    "page_id": "SCREEN_19",
+    "title": "Gestion des Congés - Gemex/Gamis",
+    "role": "Planning et validation des absences",
+    "layout": "Calendrier d'équipe + Suivi des demandes",
+    "fields": [
+      {"label": "Recherche", "id": "input-search-leaves", "type": "text"}
+    ],
+    "functions": [
+      {"label": "Soumettre demande", "id": "btn-submit-request", "action": "Nouveau congé"},
+      {"label": "Approuver", "id": "btn-approve", "action": "Validation RH"},
+      {"label": "Refuser", "id": "btn-reject", "action": "Refus RH"}
+    ],
+    "sections": ["Résumé des soldes (CP, RTT)", "Calendrier d'équipe", "Liste des demandes"]
+  },
+  {
+    "page_id": "SCREEN_24",
+    "title": "Paramètres Généraux - Gemex/Gamis",
+    "role": "Configuration globale du système",
+    "layout": "Grille de cartes de configuration",
+    "fields": [
+      {"label": "Recherche configurations", "id": "input-search-config", "type": "text"}
+    ],
+    "functions": [
+      {"label": "Enregistrer", "id": "btn-save-settings", "action": "Sauvegarde globale"},
+      {"label": "Audit Logs", "id": "btn-view-audit", "action": "Historique modifs"}
+    ],
+    "sections": ["Profil Entreprise", "Utilisateurs & Rôles", "Fiscalité", "Hub d'Intégration"]
+  },
+  {
+    "page_id": "SCREEN_32",
+    "title": "Utilisateurs & Rôles - Gemex/Gamis",
+    "role": "Gestion des accès et permissions",
+    "layout": "Annuaire + Panneau de permissions latéral",
+    "fields": [
+      {"label": "Recherche experts", "id": "input-search-experts", "type": "text"}
+    ],
+    "functions": [
+      {"label": "Provision New User", "id": "btn-provision-user", "action": "Création compte"},
+      {"label": "Save Permission Profile", "id": "btn-save-permissions", "action": "Mise à jour accès"}
+    ],
+    "sections": ["Tableau des Utilisateurs", "Panneau de Permissions Granulaires", "Santé Sécurité (MFA)"]
+  },
+  {
+    "page_id": "SCREEN_8",
+    "title": "Gestion des Dossiers - Gemex",
+    "role": "Liste et suivi des missions clients",
+    "layout": "Filtres segmentés + Cartes de dossiers (Mobile)",
+    "fields": [
+      {"label": "Recherche ID/Client", "id": "input-search-dossier", "type": "text"}
+    ],
+    "functions": [
+      {"label": "+ Nouveau Dossier", "id": "btn-new-dossier", "action": "Création mission"},
+      {"label": "Scanner", "id": "btn-scan-doc", "action": "Indexation intelligente"}
+    ],
+    "sections": ["KPIs Opérationnels", "Filtres (En cours, Clôturés)", "Liste des Dossiers"]
+  },
+  {
+    "page_id": "SCREEN_11_GEMEX",
+    "title": "Tableau de Bord Comptabilité - Gemex",
+    "role": "Synthèse financière (Version Gemex)",
+    "layout": "Identique Gamis (KPIs + Evolution + Validation)",
+    "fields": [],
+    "functions": [
+      {"label": "+ Nouvelle écriture", "id": "btn-add-entry", "action": "Saisie"}
+    ],
+    "sections": ["KPIs (CA, Charges, Résultat)", "Graphique Evolution", "Panel À Valider"]
+  },
+  {
+    "page_id": "SCREEN_34",
+    "title": "Tableau de Bord RH - Gamis",
+    "role": "Synthèse RH (Version Gamis)",
+    "layout": "Identique Gemex (Effectif, Congés, Fins de contrats)",
+    "fields": [],
+    "functions": [
+      {"label": "Nouveau contrat", "id": "btn-new-contract", "action": "Recrutement"}
+    ],
+    "sections": ["KPI Cards RH", "Répartition Département", "Calendrier Absences", "Alertes RH"]
+  }
+]

@@ -7,21 +7,22 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../database/app_database.dart';
+import '../../../taxes/presentation/providers/taxe_provider.dart';
 import '../../../clients/presentation/providers/client_provider.dart';
 import '../../../dossiers/presentation/providers/dossier_provider.dart';
-import '../../../taxes/presentation/providers/taxe_provider.dart';
-import '../providers/devis_provider.dart';
+import '../providers/facture_provider.dart';
 
-class DevisFormScreen extends ConsumerStatefulWidget {
+class FactureFormScreen extends ConsumerStatefulWidget {
   final String? id;
   final String? dossierId;
-  const DevisFormScreen({super.key, this.id, this.dossierId});
+  final String? devisId;
+  const FactureFormScreen({super.key, this.id, this.dossierId, this.devisId});
 
   @override
-  ConsumerState<DevisFormScreen> createState() => _DevisFormScreenState();
+  ConsumerState<FactureFormScreen> createState() => _FactureFormScreenState();
 }
 
-class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
+class _FactureFormScreenState extends ConsumerState<FactureFormScreen> {
   final _objetController = TextEditingController();
   String? _selectedClientId;
   String? _selectedDossierId;
@@ -31,9 +32,9 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
   @override
   void initState() {
     super.initState();
-    _objetController.text = 'Prestation annuelle de services';
+    _objetController.text = 'Prestation de services';
     _selectedDossierId = widget.dossierId;
-    
+
     if (_selectedDossierId != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         final dossiers = await ref.read(dossiersProvider(null).future);
@@ -46,14 +47,14 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
     
     // Exemple de données pour visualiser l'architecture
     final ligne1 = _LigneController();
-    ligne1.desCtrl.text = 'Licence Cloud Entreprise';
-    ligne1.qteCtrl.text = '12';
-    ligne1.puCtrl.text = '150000';
+    ligne1.desCtrl.text = 'Service de Consultation';
+    ligne1.qteCtrl.text = '5';
+    ligne1.puCtrl.text = '75000';
     
     final ligne2 = _LigneController();
-    ligne2.desCtrl.text = 'Installation et Configuration';
+    ligne2.desCtrl.text = 'Support Technique';
     ligne2.qteCtrl.text = '1';
-    ligne2.puCtrl.text = '450000';
+    ligne2.puCtrl.text = '120000';
 
     _lignes.addAll([ligne1, ligne2]);
   }
@@ -69,7 +70,6 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
 
   double get _montantHt => _lignes.fold(0.0, (sum, l) => sum + l.montantHt);
 
-  // Aggregate taxes: {nom: {taux, montant}}
   Map<String, _TaxeTotal> get _taxeTotaux {
     final map = <String, _TaxeTotal>{};
     for (final l in _lignes) {
@@ -92,15 +92,21 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
   Future<void> _submit() async {
     if (_selectedClientId == null) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Veuillez sélectionner un client')));
+          .showSnackBar(const SnackBar(content: Text('Client requis')));
+      return;
+    }
+    if (_selectedDossierId == null) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Dossier requis')));
       return;
     }
     setState(() => _loading = true);
-    final id = await ref.read(devisNotifierProvider.notifier).create(
+    final id = await ref.read(factureNotifierProvider.notifier).create(
       {
         'entreprise_id': 'default',
         'client_id': _selectedClientId,
         'dossier_id': _selectedDossierId,
+        'devis_id': widget.devisId,
         'objet': _objetController.text.isNotEmpty ? _objetController.text : null,
         'taux_tva': 0.0,
         'taux_tps': 0.0,
@@ -117,7 +123,7 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
     );
     if (mounted) {
       setState(() => _loading = false);
-      if (id != null) context.go('/devis/$id');
+      if (id != null) context.go('/factures/$id');
     }
   }
 
@@ -132,7 +138,7 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
     return Scaffold(
       backgroundColor: AppColors.pageBg,
       appBar: AppBar(
-        title: const Text('Nouveau devis'),
+        title: const Text('Nouvelle facture'),
         elevation: 0,
         backgroundColor: Colors.white,
       ),
@@ -141,18 +147,17 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header: Breadcrumbs & Titre
             Row(
               children: [
                 Icon(Icons.home_outlined, size: 16, color: AppColors.textMuted),
                 const SizedBox(width: 8),
                 const Text('/', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                 const SizedBox(width: 8),
-                const Text('Devis', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                const Text('Factures', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                 const SizedBox(width: 8),
                 const Text('/', style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
                 const SizedBox(width: 8),
-                const Text('Nouveau Devis', style: TextStyle(color: AppColors.navy, fontSize: 12, fontWeight: FontWeight.w600)),
+                const Text('Nouvelle Facture', style: TextStyle(color: AppColors.navy, fontSize: 12, fontWeight: FontWeight.w600)),
               ],
             ),
             const SizedBox(height: 24),
@@ -164,14 +169,14 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Création de Devis',
+                      const Text('Création de Facture',
                           style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: AppColors.navy,
                               letterSpacing: -0.5)),
                       const SizedBox(height: 4),
-                      Text('Configurez les détails du devis pour votre client.',
+                      Text('Configurez les détails de la facture pour votre client.',
                           style: TextStyle(color: AppColors.textSecondary)),
                     ],
                   ),
@@ -198,7 +203,6 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Contenu principal
             if (isWide)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,7 +220,6 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
                   const SizedBox(height: 24),
                   _buildRightColumn(),
                   const SizedBox(height: 24),
-                  // Actions mobiles en bas
                   OutlinedButton(
                     onPressed: () => context.pop(),
                     child: const Text('Annuler'),
@@ -241,7 +244,6 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Carte Client & Date (Objet)
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -267,42 +269,22 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
                         clientsAsync.when(
                           loading: () => const LinearProgressIndicator(),
                           error: (e, _) => Text('Erreur: $e'),
-                          data: (clients) {
-                            if (clients.isEmpty) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                decoration: BoxDecoration(
-                                  color: AppColors.pageBg,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: AppColors.warning.withAlpha(80)),
-                                ),
-                                child: const Row(children: [
-                                  Icon(Icons.warning_amber_outlined, size: 16, color: AppColors.warning),
-                                  SizedBox(width: 8),
-                                  Text('Aucun client — créez-en un d\'abord',
-                                      style: TextStyle(fontSize: 12, color: AppColors.warning)),
-                                ]),
-                              );
-                            }
-                            return DropdownButtonFormField<String>(
-                              value: _selectedClientId,
-                              isExpanded: true,
-                              hint: const Text('Sélectionner un client…', style: TextStyle(fontSize: 13)),
-                              items: clients
-                                  .map((c) => DropdownMenuItem<String>(value: c.id, child: Text(c.nom, overflow: TextOverflow.ellipsis)))
-                                  .toList(),
-                              onChanged: (v) => setState(() {
+                          data: (clients) => DropdownButtonFormField<String>(
+                            value: _selectedClientId,
+                            items: clients.map((c) => DropdownMenuItem<String>(value: c.id, child: Text(c.nom))).toList(),
+                            onChanged: (v) {
+                              setState(() {
                                 _selectedClientId = v;
                                 _selectedDossierId = null;
-                              }),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.pageBg,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
-                              ),
-                            );
-                          },
+                              });
+                            },
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: AppColors.pageBg,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide.none),
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -318,26 +300,12 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
                           loading: () => const LinearProgressIndicator(),
                           error: (e, _) => Text('Erreur: $e'),
                           data: (dossiers) {
-                            final filtered = _selectedClientId == null
-                                ? dossiers
-                                : dossiers.where((d) => d.clientId == _selectedClientId).toList();
+                            final filtered = _selectedClientId == null 
+                              ? dossiers 
+                              : dossiers.where((d) => d.clientId == _selectedClientId).toList();
                             return DropdownButtonFormField<String>(
-                              key: ValueKey('dossier_$_selectedClientId'),
                               value: _selectedDossierId,
-                              isExpanded: true,
-                              hint: Text(
-                                filtered.isEmpty
-                                    ? (_selectedClientId == null ? 'Choisir un client d\'abord' : 'Aucun dossier pour ce client')
-                                    : 'Sélectionner un dossier (optionnel)',
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              items: [
-                                const DropdownMenuItem<String>(value: null, child: Text('— Aucun dossier —', style: TextStyle(color: AppColors.textMuted))),
-                                ...filtered.map((d) => DropdownMenuItem<String>(
-                                      value: d.id,
-                                      child: Text('${d.numero ?? '—'} · ${d.titre}', overflow: TextOverflow.ellipsis),
-                                    )),
-                              ],
+                              items: filtered.map((d) => DropdownMenuItem<String>(value: d.id, child: Text(d.numero ?? 'N/A'))).toList(),
                               onChanged: (v) => setState(() => _selectedDossierId = v),
                               decoration: InputDecoration(
                                 filled: true,
@@ -359,7 +327,7 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
               TextField(
                 controller: _objetController,
                 decoration: InputDecoration(
-                  hintText: 'Ex: Prestation annuelle...',
+                  hintText: 'Ex: Facturation mensuelle...',
                   filled: true,
                   fillColor: AppColors.pageBg,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -370,8 +338,6 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
           ),
         ),
         const SizedBox(height: 24),
-
-        // Lignes du devis (Tableau)
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -389,7 +355,7 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Lignes du devis', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.navy)),
+                    const Text('Lignes de la facture', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.navy)),
                     TextButton.icon(
                       onPressed: () => setState(() => _lignes.add(_LigneController())),
                       icon: const Icon(Icons.add_circle),
@@ -399,7 +365,6 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
                 ),
               ),
               const Divider(height: 1),
-              // En-têtes (si écran large)
               if (MediaQuery.of(context).size.width >= 600)
                 Container(
                   color: AppColors.pageBg,
@@ -417,7 +382,6 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
                     ],
                   ),
                 ),
-              // Liste des lignes
               ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -432,7 +396,6 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
                 ),
               ),
               const Divider(height: 1),
-              // Footer "Add item"
               InkWell(
                 onTap: () => setState(() => _lignes.add(_LigneController())),
                 child: Container(
@@ -456,19 +419,15 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
   }
 
   Widget _buildRightColumn() {
-    final clientsAsync = ref.watch(clientsProvider(null));
-    final clients = clientsAsync.valueOrNull ?? [];
-    final selectedClient = clients.where((c) => c.id == _selectedClientId).firstOrNull;
-    final clientStr = selectedClient?.nom ?? 'Client non défini';
+    final clientStr = _selectedClientId ?? 'Client non défini';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Résumé financier (Dark Card)
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F172A), // Dark Navy
+            color: const Color(0xFF0F172A),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(color: Colors.blue.withAlpha(30), blurRadius: 20, offset: const Offset(0, 8))
@@ -527,8 +486,6 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
           ),
         ),
         const SizedBox(height: 24),
-
-        // Aperçu Client
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -586,7 +543,7 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('DERNIER DEVIS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
+                          const Text('DERNIÈRE FAC.', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textMuted)),
                           const SizedBox(height: 4),
                           const Text('---', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.navy)),
                         ],

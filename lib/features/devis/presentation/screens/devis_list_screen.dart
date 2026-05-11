@@ -13,7 +13,7 @@ class DevisListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final devisAsync = ref.watch(devisListProvider({}));
+    final devisAsync = ref.watch(devisAllProvider);
     final clientsMap = ref.watch(clientsMapProvider).valueOrNull ?? {};
     final isWide = MediaQuery.of(context).size.width >= 700;
 
@@ -29,20 +29,15 @@ class DevisListScreen extends ConsumerWidget {
         error: (e, _) => Center(child: Text('Erreur : $e')),
         data: (devisList) {
           if (devisList.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.description_outlined, size: 64, color: AppColors.textMuted),
-                  SizedBox(height: 16),
-                  Text('Aucun devis',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                ],
-              ),
-            );
+            return const _EmptyState();
           }
+          final total = devisList.length;
+          final enCours = devisList.where((d) => d.statut == AppConstants.devisBrouillon || d.statut == AppConstants.devisEnvoye).length;
+          final acceptes = devisList.where((d) => d.statut == AppConstants.devisAccepte).length;
+
           return Column(
             children: [
+              _KPISection(total: total, enCours: enCours, acceptes: acceptes),
               if (isWide) const _TableHeader(),
               Expanded(
                 child: ListView.builder(
@@ -143,7 +138,101 @@ class _TableRow extends StatelessWidget {
 }
 
 // ─── Card (narrow) ────────────────────────────────────────────────────────
+// ─── Shared widgets ───────────────────────────────────────────────────────
 
+class _ColLabel extends StatelessWidget {
+  final String text;
+  const _ColLabel(this.text);
+
+  @override
+  Widget build(BuildContext context) => Text(text,
+      style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textMuted,
+          letterSpacing: 0.5));
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) => const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.description_outlined, size: 64, color: AppColors.textMuted),
+            SizedBox(height: 16),
+            Text('Aucun devis', style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+            SizedBox(height: 8),
+            Text('Créez votre premier devis en appuyant sur +',
+                style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
+          ],
+        ),
+      );
+}
+
+// ─── KPI Section ──────────────────────────────────────────────────────────
+
+class _KPISection extends StatelessWidget {
+  final int total;
+  final int enCours;
+  final int acceptes;
+
+  const _KPISection({required this.total, required this.enCours, required this.acceptes});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.pageBg,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Row(
+        children: [
+          Expanded(child: _KPICard(title: 'Total', count: total, color: AppColors.navy)),
+          const SizedBox(width: 8),
+          Expanded(child: _KPICard(title: 'En cours', count: enCours, color: AppColors.primary)),
+          const SizedBox(width: 8),
+          Expanded(child: _KPICard(title: 'Acceptés', count: acceptes, color: AppColors.success)),
+        ],
+      ),
+    );
+  }
+}
+
+class _KPICard extends StatelessWidget {
+  final String title;
+  final int count;
+  final Color color;
+
+  const _KPICard({required this.title, required this.count, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(count.toString(), style: TextStyle(fontSize: 22, color: color, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
+}
 class _Card extends StatelessWidget {
   final dynamic d;
   final String clientNom;
@@ -191,20 +280,7 @@ class _Card extends StatelessWidget {
       );
 }
 
-// ─── Shared widgets ───────────────────────────────────────────────────────
 
-class _ColLabel extends StatelessWidget {
-  final String text;
-  const _ColLabel(this.text);
-
-  @override
-  Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: AppColors.textMuted,
-          letterSpacing: 0.5));
-}
 
 class _StatutChip extends StatelessWidget {
   final String statut;

@@ -166,18 +166,19 @@ class _MainShellState extends ConsumerState<MainShell> {
                     width: 36,
                     height: 36,
                     decoration: BoxDecoration(
-                      color: AppColors.gold,
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Icon(Icons.anchor, size: 22, color: Colors.white),
+                    child: const Icon(Icons.anchor, size: 20, color: Colors.white),
                   ),
                   const SizedBox(width: 10),
                   const Text(
-                    'AvarieApp',
+                    'Gemex ERP',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
-                      fontSize: 15,
+                      fontSize: 16,
+                      letterSpacing: -0.5,
                     ),
                   ),
                 ],
@@ -245,14 +246,14 @@ class _MainShellState extends ConsumerState<MainShell> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppColors.gold,
-                          borderRadius: BorderRadius.circular(8),
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Icon(Icons.anchor, color: Colors.white),
                       ),
                       const SizedBox(width: 12),
                       const Text(
-                        'AvarieApp',
+                        'Gemex ERP',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
@@ -310,15 +311,15 @@ class _RoleBadge extends StatelessWidget {
   const _RoleBadge({required this.role, required this.nom});
 
   static const _roleColors = {
-    'admin': Color(0xFFF0A500),
-    'expert': Color(0xFF1A8A9A),
-    'comptable': Color(0xFF4CAF50),
-    'rh': Color(0xFF9C27B0),
-    'agent': Color(0xFF607D8B),
+    'admin': AppColors.primary,
+    'expert': AppColors.emerald,
+    'comptable': Color(0xFF6366F1), // Indigo
+    'rh': Color(0xFFEC4899), // Pink
+    'agent': Color(0xFF64748B), // Slate
   };
 
   static const _roleLabels = {
-    'admin': 'Administrateur',
+    'admin': 'Admin',
     'expert': 'Expert',
     'comptable': 'Comptable',
     'rh': 'RH',

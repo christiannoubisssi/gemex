@@ -84,19 +84,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     margin: const EdgeInsets.only(bottom: 24),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: AppColors.gold,
-                      borderRadius: BorderRadius.circular(16),
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child:
                         const Icon(Icons.anchor, size: 48, color: Colors.white),
                   ),
                   const Text(
-                    'AvarieApp',
+                    'Gemex ERP',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 28,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      letterSpacing: -1,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -112,12 +112,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(8),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withAlpha(40),
+                          color: Colors.black.withAlpha(20),
                           blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          offset: const Offset(0, 10),
                         ),
                       ],
                     ),
@@ -300,7 +300,7 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
                   ElevatedButton(
                     onPressed: _send,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.gold,
+                      backgroundColor: AppColors.primary,
                       minimumSize: const Size(double.infinity, 48),
                     ),
                     child: const Text('Envoyer le lien'),

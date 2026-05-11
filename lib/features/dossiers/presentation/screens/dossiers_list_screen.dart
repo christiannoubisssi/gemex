@@ -44,6 +44,7 @@ class _DossiersListScreenState extends ConsumerState<DossiersListScreen> {
       ),
       body: Column(
         children: [
+          const _KPISection(),
           // Barre de recherche
           Container(
             color: Colors.white,
@@ -294,10 +295,10 @@ class _FilterChip extends StatelessWidget {
           duration: const Duration(milliseconds: 150),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
-            color: selected ? AppColors.navy : Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
+            color: selected ? AppColors.primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(9999),
             border: Border.all(
-              color: selected ? AppColors.navy : AppColors.borderLight,
+              color: selected ? AppColors.primary : AppColors.borderLight,
             ),
           ),
           child: Text(
@@ -352,4 +353,75 @@ class _EmptyState extends StatelessWidget {
           ],
         ),
       );
+}
+
+// ─── KPI Section ──────────────────────────────────────────────────────────
+
+class _KPISection extends ConsumerWidget {
+  const _KPISection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(dossierStatsProvider);
+
+    return Container(
+      color: AppColors.pageBg,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: statsAsync.when(
+        data: (stats) {
+          final total = stats.values.fold(0, (sum, count) => sum + count);
+          final enCours = (stats[AppConstants.statutEnInstruction] ?? 0) +
+                          (stats[AppConstants.statutExpertise] ?? 0) +
+                          (stats[AppConstants.statutRapport] ?? 0);
+          final clos = stats[AppConstants.statutClos] ?? 0;
+          return Row(
+            children: [
+              Expanded(child: _KPICard(title: 'Total', count: total, color: AppColors.navy)),
+              const SizedBox(width: 8),
+              Expanded(child: _KPICard(title: 'En cours', count: enCours, color: AppColors.primary)),
+              const SizedBox(width: 8),
+              Expanded(child: _KPICard(title: 'Clos', count: clos, color: AppColors.success)),
+            ],
+          );
+        },
+        loading: () => const SizedBox(height: 70, child: Center(child: CircularProgressIndicator())),
+        error: (_, __) => const SizedBox(),
+      ),
+    );
+  }
+}
+
+class _KPICard extends StatelessWidget {
+  final String title;
+  final int count;
+  final Color color;
+
+  const _KPICard({required this.title, required this.count, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(count.toString(), style: TextStyle(fontSize: 22, color: color, fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
 }

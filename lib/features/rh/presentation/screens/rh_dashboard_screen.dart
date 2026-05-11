@@ -14,37 +14,54 @@ class RhDashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ressources humaines')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          personnelAsync.when(
-            loading: () => const LinearProgressIndicator(),
-            error: (e, _) => const SizedBox.shrink(),
-            data: (list) => _StatsCard(count: list.length),
-          ),
-          const SizedBox(height: 16),
-          const _SectionHeader('Gestion'),
-          _NavTile(
-            icon: Icons.people_outlined,
-            title: 'Personnel',
-            subtitle: 'Liste des employés actifs',
-            onTap: () => context.push('/rh/personnel'),
-          ),
-          _NavTile(
-            icon: Icons.beach_access_outlined,
-            title: 'Congés',
-            subtitle: 'Demandes et planning',
-            onTap: () => context.push('/rh/conges'),
-          ),
-          const SizedBox(height: 8),
-          const _SectionHeader('Paie'),
-          _NavTile(
-            icon: Icons.payments_outlined,
-            title: 'Traitement de la paie',
-            subtitle: 'Saisie, validation et paiement',
-            onTap: () => context.push('/paie'),
-          ),
-        ],
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            personnelAsync.when(
+              loading: () => const LinearProgressIndicator(),
+              error: (e, _) => const SizedBox.shrink(),
+              data: (list) => _StatsCard(count: list.length),
+            ),
+            const SizedBox(height: 32),
+            const _SectionHeader('Gestion & Paie'),
+            const SizedBox(height: 16),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final crossCount = constraints.maxWidth > 900 ? 3 : (constraints.maxWidth > 600 ? 2 : 1);
+                return GridView.count(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisCount: crossCount,
+                  crossAxisSpacing: 16,
+                  mainAxisSpacing: 16,
+                  childAspectRatio: 2.2,
+                  children: [
+                    _NavTile(
+                      icon: Icons.people_outlined,
+                      title: 'Personnel',
+                      subtitle: 'Liste des employés actifs',
+                      onTap: () => context.push('/rh/personnel'),
+                    ),
+                    _NavTile(
+                      icon: Icons.beach_access_outlined,
+                      title: 'Congés',
+                      subtitle: 'Demandes et planning',
+                      onTap: () => context.push('/rh/conges'),
+                    ),
+                    _NavTile(
+                      icon: Icons.payments_outlined,
+                      title: 'Traitement de la paie',
+                      subtitle: 'Saisie, validation et paiement',
+                      onTap: () => context.push('/paie'),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -113,13 +130,37 @@ class _NavTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListTile(
-        leading: Icon(icon, color: AppColors.navy),
-        title: Text(title),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
-        trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+      margin: EdgeInsets.zero,
+      child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withAlpha(20),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: AppColors.primary),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

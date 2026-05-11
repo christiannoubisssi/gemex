@@ -1,119 +1,144 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 class AppTheme {
   static ThemeData get light => ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.navy,
-          primary: AppColors.navy,
-          secondary: AppColors.teal,
-          tertiary: AppColors.gold,
-          surface: AppColors.surface,
-          error: AppColors.danger,
+        // Typographie Inter (Spec DESIGN.md)
+        textTheme: GoogleFonts.interTextTheme(),
+        
+        colorScheme: const ColorScheme(
           brightness: Brightness.light,
+          primary: AppColors.primary,
+          onPrimary: Colors.white,
+          secondary: AppColors.slate,
+          onSecondary: Colors.white,
+          error: AppColors.danger,
+          onError: Colors.white,
+          surface: AppColors.surface,
+          onSurface: AppColors.textPrimary,
+          surfaceContainerHighest: AppColors.surfaceVariant,
+          outline: Color(0xFFCBD5E1),
+          outlineVariant: AppColors.borderLight,
         ),
+        
         scaffoldBackgroundColor: AppColors.pageBg,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.navy,
-          foregroundColor: Colors.white,
+        
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.navy,
           elevation: 0,
           centerTitle: false,
-          titleTextStyle: TextStyle(
-            color: Colors.white,
+          shape: Border(bottom: BorderSide(color: AppColors.borderLight, width: 1)),
+          titleTextStyle: GoogleFonts.inter(
+            color: AppColors.navy,
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            letterSpacing: 0.15,
           ),
         ),
+        
+        // Sidebar (Navigation latérale Spec DESIGN.md)
         navigationRailTheme: const NavigationRailThemeData(
           backgroundColor: AppColors.navy,
-          selectedIconTheme: IconThemeData(color: AppColors.gold),
-          unselectedIconTheme: IconThemeData(color: Colors.white54),
-          selectedLabelTextStyle: TextStyle(color: AppColors.gold, fontSize: 12),
-          unselectedLabelTextStyle: TextStyle(color: Colors.white54, fontSize: 12),
-          indicatorColor: Colors.white12,
+          selectedIconTheme: IconThemeData(color: Colors.white),
+          unselectedIconTheme: IconThemeData(color: Colors.white60),
+          selectedLabelTextStyle: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+          unselectedLabelTextStyle: TextStyle(color: Colors.white60, fontSize: 12),
+          indicatorColor: AppColors.primary,
+          indicatorShape: RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
         ),
+        
         drawerTheme: const DrawerThemeData(
           backgroundColor: AppColors.navy,
           scrimColor: Colors.black54,
         ),
+        
+        // Cartes (Niveau 1 Spec DESIGN.md)
         cardTheme: CardThemeData(
           elevation: 0,
-          shadowColor: Colors.transparent,
+          shadowColor: Colors.black.withAlpha(25),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8), // Rayon 8px (lg)
             side: const BorderSide(color: AppColors.borderLight, width: 1),
           ),
           color: Colors.white,
         ),
+        
+        // Boutons (Rayon 4px Spec DESIGN.md)
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.navy,
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 48),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            minimumSize: const Size(0, 48),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)), // Rayon 4px (sm/md)
             elevation: 0,
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600),
           ),
         ),
+        
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            foregroundColor: AppColors.navy,
+            foregroundColor: AppColors.slate,
             minimumSize: const Size(0, 44),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            side: const BorderSide(color: AppColors.navy),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+            side: const BorderSide(color: Color(0xFFCBD5E1)),
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w500),
           ),
         ),
+        
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
-            foregroundColor: AppColors.teal,
+            foregroundColor: AppColors.primary,
+            textStyle: GoogleFonts.inter(fontWeight: FontWeight.w500),
           ),
         ),
+        
+        // Champs de saisie (Spec DESIGN.md)
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFCFD8DC)),
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Color(0xFFCFD8DC)),
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppColors.teal, width: 2),
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1),
           ),
           errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(4),
             borderSide: const BorderSide(color: AppColors.danger),
           ),
-          labelStyle: const TextStyle(color: Color(0xFF546E7A)),
-          hintStyle: const TextStyle(color: Color(0xFF90A4AE)),
+          labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 14),
         ),
+        
         chipTheme: ChipThemeData(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9999)), // Pill-shaped
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          backgroundColor: AppColors.surfaceVariant,
+          labelStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
         ),
+        
         dividerTheme: const DividerThemeData(
-          color: Color(0xFFECEFF1),
+          color: AppColors.borderLight,
           thickness: 1,
         ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: AppColors.teal,
+        
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           elevation: 4,
-        ),
-        snackBarTheme: const SnackBarThemeData(
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(8)),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
         ),
       );
 
-  // Couleurs sémantiques
   static const Color danger = AppColors.danger;
   static const Color success = AppColors.success;
   static const Color warning = AppColors.warning;

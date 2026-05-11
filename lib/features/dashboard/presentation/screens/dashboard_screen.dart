@@ -111,7 +111,7 @@ class DashboardScreen extends ConsumerWidget {
                     label: 'Masse salariale',
                     value: FormatUtils.formatFcfaCompact(stats.masseSalarialeMois),
                     icon: Icons.people_outline,
-                    iconColor: AppColors.navy,
+                    iconColor: AppColors.slate,
                   ),
                 ],
               ),
@@ -584,12 +584,12 @@ class _Legend extends StatelessWidget {
 // ─── Donut dossiers par statut ─────────────────────────────────────────────
 
 const _statutColors = {
-  'nouveau': Color(0xFF1565C0),
-  'en_instruction': Color(0xFF6A1B9A),
-  'expertise_en_cours': Color(0xFFF9A825),
-  'rapport_redige': Color(0xFF00838F),
-  'clos': Color(0xFF2E7D32),
-  'annule': Color(0xFFC62828),
+  'nouveau': AppColors.statutNouveau,
+  'en_instruction': AppColors.statutEnInstruction,
+  'expertise_en_cours': AppColors.statutExpertise,
+  'rapport_redige': AppColors.statutRapport,
+  'clos': AppColors.statutClos,
+  'annule': AppColors.statutAnnule,
 };
 
 const _statutLabels = {

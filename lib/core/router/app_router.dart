@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -15,6 +17,7 @@ import '../../features/devis/presentation/screens/devis_detail_screen.dart';
 import '../../features/devis/presentation/screens/devis_form_screen.dart';
 import '../../features/factures/presentation/screens/factures_list_screen.dart';
 import '../../features/factures/presentation/screens/facture_detail_screen.dart';
+import '../../features/factures/presentation/screens/facture_form_screen.dart';
 import '../../features/comptabilite/presentation/screens/comptabilite_screen.dart';
 import '../../features/comptabilite/presentation/screens/charge_form_screen.dart';
 import '../../features/charges_modeles/presentation/screens/charges_modeles_list_screen.dart';
@@ -40,10 +43,11 @@ import '../../features/securite/presentation/screens/scanner_screen.dart';
 import '../shell/main_shell.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
-  ref.watch(authStateProvider);
+  final listenable = GoRouterRefreshStream(ref.watch(authStateProvider.stream));
 
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: listenable,
     redirect: (context, state) {
       final isAuthenticated = ref.read(isAuthenticatedProvider);
       final isLoginRoute = state.matchedLocation.startsWith('/login');
@@ -128,9 +132,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             path: '/factures',
             builder: (_, __) => const FacturesListScreen(),
             routes: [
+              GoRoute(path: 'new', builder: (_, state) {
+                final dossierId = state.uri.queryParameters['dossierId'];
+                final devisId = state.uri.queryParameters['devisId'];
+                return FactureFormScreen(dossierId: dossierId, devisId: devisId);
+              }),
               GoRoute(
                 path: ':id',
                 builder: (_, state) => FactureDetailScreen(id: state.pathParameters['id']!),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => FactureFormScreen(id: state.pathParameters['id']),
+                  ),
+                ],
               ),
             ],
           ),
@@ -205,3 +220,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+class GoRouterRefreshStream extends ChangeNotifier {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen(
+          (dynamic _) => notifyListeners(),
+        );
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}

@@ -48,51 +48,128 @@ class _FacturesListScreenState extends ConsumerState<FacturesListScreen>
           tabs: _tabLabels.map((l) => Tab(text: l)).toList(),
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: _tabs.map((statut) {
-          final async = ref.watch(facturesProvider(statut));
-          return async.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('$e')),
-            data: (factures) {
-              if (factures.isEmpty) {
-                return const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.textMuted),
-                      SizedBox(height: 16),
-                      Text('Aucune facture',
-                          style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
-                    ],
-                  ),
+      body: Column(
+        children: [
+          const _KPISection(),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: _tabs.map((statut) {
+                final async = ref.watch(facturesProvider(statut));
+                return async.when(
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('$e')),
+                  data: (factures) {
+                    if (factures.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.textMuted),
+                            SizedBox(height: 16),
+                            Text('Aucune facture',
+                                style: TextStyle(color: AppColors.textSecondary, fontSize: 16)),
+                          ],
+                        ),
+                      );
+                    }
+                    return Column(
+                      children: [
+                        if (isWide) const _TableHeader(),
+                        Expanded(
+                          child: ListView.builder(
+                            padding: const EdgeInsets.only(bottom: 40),
+                            itemCount: factures.length,
+                            itemBuilder: (_, i) {
+                              final f = factures[i];
+                              final clientNom = clientsMap[f.clientId] ?? '—';
+                              final enRetard = f.statut != 'payee' &&
+                                  f.statut != 'annulee' &&
+                                  f.dateEcheance.isBefore(DateTime.now());
+                              return isWide
+                                  ? _TableRow(f: f, clientNom: clientNom, enRetard: enRetard)
+                                  : _Card(f: f, clientNom: clientNom, enRetard: enRetard);
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 );
-              }
-              return Column(
-                children: [
-                  if (isWide) const _TableHeader(),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 40),
-                      itemCount: factures.length,
-                      itemBuilder: (_, i) {
-                        final f = factures[i];
-                        final clientNom = clientsMap[f.clientId] ?? '—';
-                        final enRetard = f.statut != 'payee' &&
-                            f.statut != 'annulee' &&
-                            f.dateEcheance.isBefore(DateTime.now());
-                        return isWide
-                            ? _TableRow(f: f, clientNom: clientNom, enRetard: enRetard)
-                            : _Card(f: f, clientNom: clientNom, enRetard: enRetard);
-                      },
-                    ),
-                  ),
-                ],
-              );
-            },
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── KPI Section ──────────────────────────────────────────────────────────
+
+class _KPISection extends ConsumerWidget {
+  const _KPISection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncAll = ref.watch(facturesProvider(null));
+
+    return Container(
+      color: AppColors.pageBg,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: asyncAll.when(
+        data: (factures) {
+          final total = factures.length;
+          final enAttente = factures.where((f) => f.statut == 'emise' || f.statut == 'partiellement_payee').length;
+          final enRetard = factures.where((f) => f.statut != 'payee' && f.statut != 'annulee' && f.dateEcheance.isBefore(DateTime.now())).length;
+
+          return Row(
+            children: [
+              Expanded(child: _KPICard(title: 'Total', count: total, color: AppColors.navy)),
+              const SizedBox(width: 8),
+              Expanded(child: _KPICard(title: 'En attente', count: enAttente, color: AppColors.primary)),
+              const SizedBox(width: 8),
+              Expanded(child: _KPICard(title: 'En retard', count: enRetard, color: AppColors.danger)),
+            ],
           );
-        }).toList(),
+        },
+        loading: () => const SizedBox(height: 70, child: Center(child: CircularProgressIndicator())),
+        error: (_, __) => const SizedBox(),
+      ),
+    );
+  }
+}
+
+class _KPICard extends StatelessWidget {
+  final String title;
+  final int count;
+  final Color color;
+
+  const _KPICard({required this.title, required this.count, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(count.toString(), style: TextStyle(fontSize: 22, color: color, fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }

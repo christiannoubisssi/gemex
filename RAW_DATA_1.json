@@ -1,0 +1,215 @@
+[
+  {
+    "page_id": "SCREEN_23",
+    "title": "Charges & Déclarations - Gemex/Gamis",
+    "role": "Gestion des charges sociales et déclarations DSN",
+    "layout": "Sidebar fixe, Top Bar avec recherche, Content area avec KPIs et Tableau",
+    "fields": [
+      {"label": "Rechercher une déclaration...", "id": "search-input", "type": "text"},
+      {"label": "Période", "id": "period-selector", "type": "button/date"},
+      {"label": "Montant Total", "id": "stat-total-amount", "type": "kpi"}
+    ],
+    "functions": [
+      {"label": "Exporter (CSV)", "id": "export-csv", "action": "Exportation des données"},
+      {"label": "+ Nouvelle Déclaration", "id": "new-declaration", "action": "Création d'une nouvelle DSN"},
+      {"label": "Aperçu", "id": "btn-view", "action": "Visualisation du bulletin"},
+      {"label": "Télécharger", "id": "btn-download", "action": "Téléchargement PDF"}
+    ],
+    "sections": ["Sidebar", "Top Bar", "Résumé des Cotisations (KPIs)", "Historique des Déclarations (Tableau)", "Échéancier & Actualités (Sidebar droite)"]
+  },
+  {
+    "page_id": "SCREEN_2",
+    "title": "Fiche Employé - Gemex/Gamis",
+    "role": "Consultation et modification des informations d'un collaborateur",
+    "layout": "Profil Header, Navigation par onglets, Widgets latéraux",
+    "fields": [
+      {"label": "Nom Complet", "id": "field-employee-name", "type": "text"},
+      {"label": "Poste", "id": "field-job-title", "type": "text"},
+      {"label": "Département", "id": "field-dept", "type": "text"},
+      {"label": "Coordonnées", "id": "group-contact", "type": "section"},
+      {"label": "Historique Salarial", "id": "group-salary-history", "type": "section"}
+    ],
+    "functions": [
+      {"label": "Modifier", "id": "btn-edit-profile", "action": "Passage en mode édition"},
+      {"label": "Envoyer message", "id": "btn-send-msg", "action": "Contact direct"},
+      {"label": "Déposer", "id": "btn-upload-doc", "action": "Ajout de document RH"}
+    ],
+    "sections": ["Header Profil", "Onglets (Infos, Contrat, Paie)", "Widgets (Soldes congés, Responsable)"]
+  },
+  {
+    "page_id": "SCREEN_3",
+    "title": "Validation des Dépenses - Gemex/Gamis",
+    "role": "Approbation des notes de frais et dépenses",
+    "layout": "Dashboard KPIs + Tableau de validation",
+    "fields": [
+      {"label": "Rechercher une dépense", "id": "input-search-expense", "type": "text"},
+      {"label": "Filtres avancés", "id": "btn-filter-main", "type": "button"}
+    ],
+    "functions": [
+      {"label": "+ Nouvelle Demande", "id": "btn-new-expense", "action": "Création de note de frais"},
+      {"label": "Approuver", "id": "btn-approve", "action": "Validation de la ligne"},
+      {"label": "Rejeter", "id": "btn-reject", "action": "Refus de la ligne"}
+    ],
+    "sections": ["KPIs (Total, En attente, Budget)", "Tableau des Dépenses", "Panneau Intelligence Gamis (Audit IA)"]
+  },
+  {
+    "page_id": "SCREEN_5",
+    "title": "Journal Comptable - Gemex/Gamis",
+    "role": "Consultation des écritures comptables",
+    "layout": "Filtres contextuels + Tableau de transactions",
+    "fields": [
+      {"label": "Recherche globale", "id": "input-search-global", "type": "text"},
+      {"label": "Intervalle de dates", "id": "input-date-range", "type": "date-range"},
+      {"label": "Type de flux", "id": "filter-type-segmented", "type": "segmented-control"}
+    ],
+    "functions": [
+      {"label": "Nouvelle écriture", "id": "btn-add-entry", "action": "Saisie manuelle"},
+      {"label": "Exporter", "id": "btn-export", "action": "Export comptable"}
+    ],
+    "sections": ["Barre d'outils", "Tableau Transactions", "Widgets de synthèse (Graphiques bas de page)"]
+  },
+  {
+    "page_id": "SCREEN_29",
+    "title": "Enregistrement des Salaires - Gemex/Gamis",
+    "role": "Réconciliation paie et comptabilité",
+    "layout": "KPIs + Tableau par département",
+    "fields": [
+      {"label": "Période de paie", "id": "select-month-filter", "type": "dropdown"},
+      {"label": "Recherche", "id": "input-search-salary", "type": "text"}
+    ],
+    "functions": [
+      {"label": "Générer écritures", "id": "btn-generate-ledger", "action": "Validation comptable finale"},
+      {"label": "Exporter CSV", "id": "btn-export-csv", "action": "Exportation données"}
+    ],
+    "sections": ["KPIs (Net, Charges, Coût total)", "Tableau des Provisions", "Bannière de statut"]
+  },
+  {
+    "page_id": "SCREEN_30",
+    "title": "Détail Bulletin de Paie - Gemex/Gamis",
+    "role": "Vue détaillée d'un bulletin individuel",
+    "layout": "Profil + Résumé financier + Stepper de validation",
+    "fields": [
+      {"label": "Salaire Brut", "id": "field-gross-salary", "type": "currency"},
+      {"label": "Net à payer", "id": "field-net-pay", "type": "currency"}
+    ],
+    "functions": [
+      {"label": "Aperçu PDF", "id": "btn-preview-pdf", "action": "Génération de l'aperçu"},
+      {"label": "Valider", "id": "btn-validate", "action": "Approbation RH"},
+      {"label": "Ajouter un élément", "id": "btn-add-variable", "action": "Ajout prime/indemnité"}
+    ],
+    "sections": ["Header Collaborateur", "Résumé Financier", "Détail Variables", "Stepper de Workflow"]
+  },
+  {
+    "page_id": "SCREEN_39",
+    "title": "Profil Entreprise / Configuration Fiscale - Gemex/Gamis",
+    "role": "Paramétrage identité et fiscalité",
+    "layout": "Split layout (Formulaire / Preview)",
+    "fields": [
+      {"label": "Nom Légal", "id": "input-legal-name", "type": "text"},
+      {"label": "SIRET", "id": "input-business-id", "type": "text"},
+      {"label": "Couleur Primaire", "id": "input-primary-color", "type": "color"},
+      {"label": "Taux de Taxe", "id": "table-tax-rates", "type": "table"}
+    ],
+    "functions": [
+      {"label": "Sauvegarder", "id": "btn-save-identity", "action": "Enregistrement config"},
+      {"label": "Aperçu Plein Écran", "id": "btn-preview-fullscreen", "action": "Visualisation documents"}
+    ],
+    "sections": ["Infos Légales", "Identité Visuelle", "Config Fiscale", "Preview Documents"]
+  },
+  {
+    "page_id": "SCREEN_10",
+    "title": "Liste des Collaborateurs - Gamis",
+    "role": "Annuaire et gestion du personnel",
+    "layout": "KPIs + Filtres + Table de données",
+    "fields": [
+      {"label": "Recherche Collaborateur", "id": "input-search-collaborateur", "type": "text"},
+      {"label": "Département", "id": "select-department", "type": "dropdown"},
+      {"label": "Statut", "id": "filter-status-group", "type": "segmented-control"}
+    ],
+    "functions": [
+      {"label": "Ajouter un employé", "id": "btn-add-employee", "action": "Nouveau profil"},
+      {"label": "Voir le pipeline", "id": "btn-view-pipeline", "action": "Suivi recrutement"}
+    ],
+    "sections": ["KPIs Effectifs", "Barre de filtres", "Tableau Collaborateurs"]
+  },
+  {
+    "page_id": "SCREEN_11",
+    "title": "Tableau de Bord - Gemex",
+    "role": "Vue d'ensemble financière",
+    "layout": "Dashboard modulaire",
+    "fields": [],
+    "functions": [
+      {"label": "Nouvelle écriture", "id": "btn-add-entry", "action": "Action rapide"},
+      {"label": "Filtre Période", "id": "btn-period-filter", "action": "Changement vue"}
+    ],
+    "sections": ["KPI Cards", "Graphique Évolution", "Liste des validations urgentes", "Tableau Journaux récents"]
+  },
+  {
+    "page_id": "SCREEN_12",
+    "title": "Tableau de Bord RH - Gemex",
+    "role": "Synthèse stratégique RH",
+    "layout": "KPIs + Graphiques + Alertes",
+    "fields": [],
+    "functions": [
+      {"label": "Nouveau Contrat", "id": "btn-new-contract", "action": "Recrutement"},
+      {"label": "Exporter PDF", "id": "btn-export-pdf", "action": "Reporting"}
+    ],
+    "sections": ["KPIs RH", "Répartition Département (Donut)", "Calendrier Absences", "Panel Alertes (Fin essai, etc.)"]
+  },
+  {
+    "page_id": "SCREEN_13",
+    "title": "Gestion de la Paie - Gamis",
+    "role": "Interface de traitement des salaires",
+    "layout": "Filtres + Tableau de masse",
+    "fields": [
+      {"label": "Période", "id": "select-period", "type": "dropdown"},
+      {"label": "Statut", "id": "filter-status-group", "type": "segmented"}
+    ],
+    "functions": [
+      {"label": "Valider la sélection", "id": "btn-validate-selection", "action": "Approbation groupée"},
+      {"label": "Exporter PDF", "id": "btn-export-pdf", "action": "Rapport mensuel"}
+    ],
+    "sections": ["Header Actions", "Filtres", "Tableau de paie", "KPIs (Net moyen, Total)"]
+  },
+  {
+    "page_id": "SCREEN_14",
+    "title": "Facturation - Gemex",
+    "role": "Gestion des factures clients",
+    "layout": "KPIs + Liste (Cards en mobile)",
+    "fields": [
+      {"label": "Client", "id": "select-client", "type": "dropdown"},
+      {"label": "Échéance", "id": "input-due-date", "type": "date"}
+    ],
+    "functions": [
+      {"label": "+ Nouvelle Facture", "id": "btn-new-invoice", "action": "Création"},
+      {"label": "Filtrer", "id": "btn-filter-status", "action": "Filtrage par état"}
+    ],
+    "sections": ["KPIs Encaissements", "Liste des Factures", "Actions contextuelles"]
+  },
+  {
+    "page_id": "SCREEN_15",
+    "title": "Gestion des Bulletins - Gemex",
+    "role": "Traitement par lot des bulletins de paie",
+    "layout": "Tableau de bord de suivi + Actions groupées",
+    "fields": [
+      {"label": "Département", "id": "select-dept", "type": "dropdown"}
+    ],
+    "functions": [
+      {"label": "Validation groupée", "id": "btn-batch-validate", "action": "Traitement de masse"},
+      {"label": "Export PDF", "id": "btn-batch-export", "action": "Exportation globale"}
+    ],
+    "sections": ["Filtres", "Tableau de suivi", "Statistiques de validation"]
+  },
+  {
+    "page_id": "SCREEN_18",
+    "title": "Détail du Dossier - Gemex",
+    "role": "Gestion de projet / dossier client",
+    "layout": "Tabs (Résumé, Documents, Finances, Timeline)",
+    "fields": [],
+    "functions": [
+      {"label": "Uploader", "id": "btn-upload", "action": "Ajout document"},
+      {"label": "Contacter", "id": "btn-contact", "action": "Communication client"}
+    ],
+    "sections": ["Header Contextuel", "Système d'onglets", "Panneau Financier (Burn rate)"]
+  }
+]

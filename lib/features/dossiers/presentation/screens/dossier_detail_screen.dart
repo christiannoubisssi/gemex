@@ -73,12 +73,54 @@ class _DossierDetailScreenState extends ConsumerState<DossierDetailScreen>
               ],
             ),
           ),
-          body: TabBarView(
-            controller: _tabController,
+          body: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _ResumeTab(dossier: dossier),
-              _DocumentsTab(dossier: dossier),
-              _DevisFactureTab(dossier: dossier),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _ResumeTab(dossier: dossier),
+                    _DocumentsTab(dossier: dossier),
+                    _DevisFactureTab(dossier: dossier),
+                  ],
+                ),
+              ),
+              if (MediaQuery.of(context).size.width >= 800)
+                Container(
+                  width: 280,
+                  decoration: const BoxDecoration(
+                    color: AppColors.pageBg,
+                    border: Border(left: BorderSide(color: AppColors.borderLight)),
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('Actions Rapides', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        const SizedBox(height: 16),
+                        ElevatedButton.icon(
+                          onPressed: () => context.push('/dossiers/${dossier.id}/edit'),
+                          icon: const Icon(Icons.edit_outlined),
+                          label: const Text('Modifier le dossier'),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.bar_chart_outlined),
+                          label: const Text('Voir statistiques'),
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: () => context.push('/dossiers/${dossier.id}/pieces-jointes'),
+                          icon: const Icon(Icons.attach_file),
+                          label: const Text('Gérer les pièces'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
         );

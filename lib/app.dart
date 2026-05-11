@@ -14,7 +14,7 @@ class AvarieApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
-      title: 'AvarieApp',
+      title: 'Gemex ERP',
       theme: AppTheme.light,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
