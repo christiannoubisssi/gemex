@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
 
 final factureRepositoryProvider = Provider<FactureRepository>((ref) =>
@@ -150,13 +151,13 @@ class FactureRepository {
 
     if (_ref.read(isOnlineProvider)) {
       try {
-        await _supabase.from('factures').insert({...data, 'id': id});
+        await _supabase.from('factures').insert(toJsonSafe({...data, 'id': id}));
         await _db.facturesDao.markSynced(id);
       } catch (_) {
-        await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode({...data, 'id': id}));
+        await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
       }
     } else {
-      await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode({...data, 'id': id}));
+      await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
     return id;
   }

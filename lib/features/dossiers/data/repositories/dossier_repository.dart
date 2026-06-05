@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
 
 final dossierRepositoryProvider = Provider<DossierRepository>((ref) {
@@ -97,7 +98,7 @@ class DossierRepository {
         entityType: 'dossier',
         entityId: id,
         operation: 'create',
-        payload: jsonEncode({...data, 'id': id}),
+        payload: jsonEncode(toJsonSafe({...data, 'id': id})),
       );
     }
 
@@ -149,7 +150,7 @@ class DossierRepository {
         entityType: 'dossier',
         entityId: id,
         operation: 'update',
-        payload: jsonEncode({...data, 'id': id}),
+        payload: jsonEncode(toJsonSafe({...data, 'id': id})),
       );
     }
   }
@@ -205,7 +206,7 @@ class DossierRepository {
       if (operation == 'create') {
         final response = await _supabase
             .from('dossiers')
-            .insert(data)
+            .insert(toJsonSafe(data))
             .select('numero')
             .single();
         final serverNumero = response['numero'] as String?;
@@ -215,7 +216,7 @@ class DossierRepository {
           await _db.dossiersDao.markSynced(id);
         }
       } else {
-        await _supabase.from('dossiers').update(data).eq('id', id);
+        await _supabase.from('dossiers').update(toJsonSafe(data)).eq('id', id);
         await _db.dossiersDao.markSynced(id);
       }
     } catch (_) {
@@ -223,7 +224,7 @@ class DossierRepository {
         entityType: 'dossier',
         entityId: id,
         operation: operation,
-        payload: jsonEncode({...data, 'id': id}),
+        payload: jsonEncode(toJsonSafe({...data, 'id': id})),
       );
     }
   }

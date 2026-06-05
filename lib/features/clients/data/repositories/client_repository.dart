@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
+import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
 
 final clientRepositoryProvider = Provider<ClientRepository>((ref) {
@@ -48,7 +49,7 @@ class ClientRepository {
     if (_ref.read(isOnlineProvider)) {
       await _trySync(id, {...data, 'id': id}, 'create');
     } else {
-      await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: 'create', payload: jsonEncode({...data, 'id': id}));
+      await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
     return id;
   }
@@ -68,20 +69,20 @@ class ClientRepository {
     if (_ref.read(isOnlineProvider)) {
       await _trySync(id, data, 'update');
     } else {
-      await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: 'update', payload: jsonEncode({...data, 'id': id}));
+      await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: 'update', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
   }
 
   Future<void> _trySync(String id, Map<String, dynamic> data, String op) async {
     try {
       if (op == 'create') {
-        await _supabase.from('clients').insert(data);
+        await _supabase.from('clients').insert(toJsonSafe(data));
       } else {
-        await _supabase.from('clients').update(data).eq('id', id);
+        await _supabase.from('clients').update(toJsonSafe(data)).eq('id', id);
       }
       await _db.clientsDao.markSynced(id);
     } catch (_) {
-      await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: op, payload: jsonEncode({...data, 'id': id}));
+      await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: op, payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
   }
 }

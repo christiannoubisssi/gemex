@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
 import '../../../../core/utils/format_utils.dart';
+import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
 
 final devisRepositoryProvider = Provider<DevisRepository>((ref) =>
@@ -86,7 +87,7 @@ class DevisRepository {
     if (_ref.read(isOnlineProvider)) {
       await _trySync(id, data, 'create');
     } else {
-      await _db.syncQueueDao.enqueue(entityType: 'devis', entityId: id, operation: 'create', payload: jsonEncode({...data, 'id': id}));
+      await _db.syncQueueDao.enqueue(entityType: 'devis', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
     return id;
   }
@@ -104,7 +105,7 @@ class DevisRepository {
   Future<void> _trySync(String id, Map<String, dynamic> data, String op) async {
     try {
       if (op == 'create') {
-        final resp = await _supabase.from('devis').insert({...data, 'id': id}).select('numero').single();
+        final resp = await _supabase.from('devis').insert(toJsonSafe({...data, 'id': id})).select('numero').single();
         final serverNumero = resp['numero'] as String?;
         if (serverNumero != null) {
           await _db.devisDao.updateStatut(id, 'brouillon');
@@ -112,7 +113,7 @@ class DevisRepository {
         await _db.devisDao.markSynced(id);
       }
     } catch (_) {
-      await _db.syncQueueDao.enqueue(entityType: 'devis', entityId: id, operation: op, payload: jsonEncode({...data, 'id': id}));
+      await _db.syncQueueDao.enqueue(entityType: 'devis', entityId: id, operation: op, payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
   }
 }
