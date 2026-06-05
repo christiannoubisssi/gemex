@@ -51,9 +51,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
 
-    // Affiche les erreurs de connexion via ref.listen (pattern Riverpod correct)
-    ref.listen<AsyncValue<void>>(authNotifierProvider, (_, next) {
+    ref.listen<AsyncValue<void>>(authNotifierProvider, (previous, next) {
       if (next.hasError) {
+        // Affiche l'erreur de connexion
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_formatError(next.error!)),
@@ -61,6 +61,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             duration: const Duration(seconds: 6),
           ),
         );
+      } else if (previous?.isLoading == true && next.hasValue) {
+        // Connexion réussie → redirection explicite vers le tableau de bord
+        context.go('/');
       }
     });
 

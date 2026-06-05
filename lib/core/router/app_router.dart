@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/data/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -49,7 +50,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/',
     refreshListenable: listenable,
     redirect: (context, state) {
-      final isAuthenticated = ref.read(isAuthenticatedProvider);
+      // Lecture directe Supabase — toujours à jour même si les providers sont en cache
+      final isAuthenticated =
+          Supabase.instance.client.auth.currentUser != null;
       final isLoginRoute = state.matchedLocation.startsWith('/login');
 
       if (!isAuthenticated && !isLoginRoute) return '/login';
