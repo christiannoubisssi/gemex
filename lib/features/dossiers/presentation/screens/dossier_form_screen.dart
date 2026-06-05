@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/save_overlay.dart';
 import '../../../../database/app_database.dart';
 import '../../../clients/data/repositories/client_repository.dart';
 import '../../../clients/presentation/providers/client_provider.dart';
@@ -126,7 +127,10 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
+    return SaveOverlay(
+      saving: _loading && (_existing != null || !isEditing),
+      label: isEditing ? 'Mise à jour du dossier…' : 'Création du dossier…',
+      child: Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? 'Modifier le dossier' : 'Nouveau dossier'),
         actions: [
@@ -300,17 +304,12 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
           padding: const EdgeInsets.all(16),
           child: ElevatedButton(
             onPressed: _loading ? null : _submit,
-            child: _loading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2))
-                : Text(isEditing ? 'Enregistrer' : 'Créer le dossier'),
+            child: Text(isEditing ? 'Enregistrer' : 'Créer le dossier'),
           ),
         ),
       ),
-    );
+    ), // Scaffold
+    ); // SaveOverlay
   }
 }
 

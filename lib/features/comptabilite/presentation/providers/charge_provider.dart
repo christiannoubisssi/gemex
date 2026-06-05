@@ -49,18 +49,27 @@ class ChargeNotifier extends AsyncNotifier<void> {
           saisiPar: saisiPar,
           notes: notes,
         ));
+    if (!state.hasError) _invalidateAll();
   }
 
   Future<void> updateCharge(ChargesCompanion companion) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
         () => ref.read(chargeRepositoryProvider).update(companion));
+    if (!state.hasError) _invalidateAll();
   }
 
   Future<void> deleteCharge(String id) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
         () => ref.read(chargeRepositoryProvider).delete(id));
+    if (!state.hasError) _invalidateAll();
+  }
+
+  void _invalidateAll() {
+    ref.invalidate(chargesProvider);
+    ref.invalidate(totalChargesProvider);
+    ref.invalidate(chargesParCategorieProvider);
   }
 }
 

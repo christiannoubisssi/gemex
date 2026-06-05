@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/widgets/save_overlay.dart';
 import '../../../../database/app_database.dart';
 import '../../data/repositories/client_repository.dart';
 import '../providers/client_provider.dart';
@@ -54,7 +55,10 @@ class _ClientFormScreenState extends ConsumerState<ClientFormScreen> {
     if (_loading && _existing == null && isEditing) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    return Scaffold(
+    return SaveOverlay(
+      saving: _loading && _existing != null || (_loading && !isEditing),
+      label: isEditing ? 'Mise à jour du client…' : 'Création du client…',
+      child: Scaffold(
       appBar: AppBar(title: Text(isEditing ? 'Modifier client' : 'Nouveau client')),
       body: FormBuilder(
         key: _formKey,
@@ -124,12 +128,11 @@ class _ClientFormScreenState extends ConsumerState<ClientFormScreen> {
           padding: const EdgeInsets.all(16),
           child: ElevatedButton(
             onPressed: _loading ? null : _submit,
-            child: _loading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : Text(isEditing ? 'Enregistrer' : 'Créer le client'),
+            child: Text(isEditing ? 'Enregistrer' : 'Créer le client'),
           ),
         ),
       ),
+    ), // SaveOverlay
     );
   }
 }

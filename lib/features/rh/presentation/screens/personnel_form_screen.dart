@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:drift/drift.dart' show Value;
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/save_overlay.dart';
 import '../../../../database/app_database.dart';
 import '../../data/repositories/personnel_repository.dart';
 import '../providers/personnel_provider.dart';
@@ -120,20 +121,35 @@ class _PersonnelFormScreenState extends ConsumerState<PersonnelFormScreen> {
     if (mounted) {
       final st = ref.read(personnelNotifierProvider);
       if (st.hasError) {
+        setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur : ${st.error}'), backgroundColor: AppColors.danger),
+          SnackBar(
+            content: Text('Erreur : ${st.error}'),
+            backgroundColor: AppColors.danger,
+          ),
         );
       } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_existing == null
+                ? '✓ Employé ajouté avec succès'
+                : '✓ Employé mis à jour'),
+            backgroundColor: AppColors.success,
+            duration: const Duration(seconds: 2),
+          ),
+        );
         Navigator.of(context).pop(true);
       }
     }
-    setState(() => _saving = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final fmt = DateFormat('dd/MM/yyyy');
-    return Scaffold(
+    return SaveOverlay(
+      saving: _saving,
+      label: _existing == null ? 'Ajout de l\'employé…' : 'Mise à jour…',
+      child: Scaffold(
       appBar: AppBar(
         title: Text(widget.id == null ? 'Nouvel employé' : 'Modifier employé'),
       ),
@@ -243,6 +259,7 @@ class _PersonnelFormScreenState extends ConsumerState<PersonnelFormScreen> {
           ),
         ),
       ),
+    ), // SaveOverlay
     );
   }
 }

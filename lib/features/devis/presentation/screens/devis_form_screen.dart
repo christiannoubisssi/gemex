@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/save_overlay.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../database/app_database.dart';
 import '../../../clients/presentation/providers/client_provider.dart';
@@ -129,7 +130,10 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
     final taxes = taxesAsync.valueOrNull ?? [];
     final isWide = MediaQuery.of(context).size.width >= 900;
 
-    return Scaffold(
+    return SaveOverlay(
+      saving: _loading,
+      label: 'Création du devis…',
+      child: Scaffold(
       backgroundColor: AppColors.pageBg,
       appBar: AppBar(
         title: const Text('Nouveau devis'),
@@ -234,7 +238,8 @@ class _DevisFormScreenState extends ConsumerState<DevisFormScreen> {
           ],
         ),
       ),
-    );
+    ), // Scaffold
+    ); // SaveOverlay
   }
 
   Widget _buildLeftColumn(List<Taxe> taxes, AsyncValue<List<Client>> clientsAsync, AsyncValue<List<Dossier>> dossiersAsync) {
