@@ -1,12 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:drift/drift.dart' as drift;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/network/connectivity_service.dart';
 import '../../database/app_database.dart';
+import '../../features/clients/presentation/providers/client_provider.dart';
 
 enum SyncStatus { idle, syncing, error, offline }
 
@@ -27,6 +29,9 @@ class SyncService {
       : _db = db, _supabase = supabase, _ref = ref;
 
   void start() {
+    // Pull initial si déjà connecté au démarrage (ex : rechargement page web)
+    if (_ref.read(isOnlineProvider)) syncNow();
+
     _ref.listen<bool>(isOnlineProvider, (prev, isOnline) {
       if (isOnline && prev != true) {
         syncNow();
@@ -50,6 +55,10 @@ class SyncService {
     _ref.read(syncStatusProvider.notifier).state = SyncStatus.syncing;
 
     try {
+      // 1. Récupérer depuis Supabase → base locale (partage entre utilisateurs)
+      await _pullClients();
+
+      // 2. Pousser les modifications locales en attente vers Supabase
       final pending = await _db.syncQueueDao.getPending(maxAttempts: AppConstants.maxSyncAttempts);
       for (final item in pending) {
         await _processItem(item);
@@ -61,6 +70,40 @@ class SyncService {
       _isSyncing = false;
     }
   }
+
+  // ─── Pull : Supabase → Drift local ──────────────────────────────────────
+
+  /// Récupère tous les clients depuis Supabase et les upsert en local.
+  /// Permet à tout utilisateur de voir les clients créés par les autres.
+  Future<void> _pullClients() async {
+    try {
+      final rows = await _supabase.from('clients').select() as List;
+      for (final raw in rows) {
+        final m = Map<String, dynamic>.from(raw as Map);
+        await _db.clientsDao.upsert(ClientsCompanion(
+          id:           drift.Value(m['id'] as String),
+          entrepriseId: drift.Value(m['entreprise_id'] as String? ?? 'default'),
+          typeClient:   drift.Value(m['type_client'] as String? ?? AppConstants.clientEntreprise),
+          nom:          drift.Value(m['nom'] as String? ?? ''),
+          contactNom:   drift.Value(m['contact_nom'] as String?),
+          email:        drift.Value(m['email'] as String?),
+          telephone:    drift.Value(m['telephone'] as String?),
+          adresse:      drift.Value(m['adresse'] as String?),
+          ville:        drift.Value(m['ville'] as String?),
+          pays:         drift.Value(m['pays'] as String? ?? 'Gabon'),
+          notes:        drift.Value(m['notes'] as String?),
+          syncStatus:   const drift.Value('synced'),
+        ));
+      }
+      // Rafraîchir les providers liés aux clients dans l'UI
+      _ref.invalidate(clientsProvider);
+      _ref.invalidate(clientsMapProvider);
+    } catch (_) {
+      // Échec silencieux — les données locales restent intactes
+    }
+  }
+
+  // ─── Push : Drift local → Supabase ──────────────────────────────────────
 
   Future<void> _processItem(SyncQueueData item) async {
     try {
