@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/services/app_logger.dart';
+import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
 import '../../data/repositories/dossier_repository.dart';
 
@@ -45,12 +47,17 @@ class DossierNotifier extends AsyncNotifier<void> {
   Future<String?> create(Map<String, dynamic> data) async {
     state = const AsyncLoading();
     try {
-      final id = await ref.read(dossierRepositoryProvider).create(data);
+      // Sanitiser dès le notifier : convertit DateTime → ISO string
+      final safeData = toJsonSafe(data);
+      AppLogger.i('DossierNotifier', 'Création dossier…');
+      final id = await ref.read(dossierRepositoryProvider).create(safeData);
       state = const AsyncData(null);
       ref.invalidate(dossiersProvider);
       ref.invalidate(dossierStatsProvider);
+      AppLogger.i('DossierNotifier', 'Dossier créé : $id');
       return id;
     } catch (e, s) {
+      AppLogger.e('DossierNotifier', 'Erreur création dossier', error: e, stack: s);
       state = AsyncError(e, s);
       return null;
     }
@@ -59,7 +66,7 @@ class DossierNotifier extends AsyncNotifier<void> {
   Future<void> updateDossier(String id, Map<String, dynamic> data) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
-      await ref.read(dossierRepositoryProvider).update(id, data);
+      await ref.read(dossierRepositoryProvider).update(id, toJsonSafe(data));
       ref.invalidate(dossierDetailProvider(id));
       ref.invalidate(dossiersProvider);
     });

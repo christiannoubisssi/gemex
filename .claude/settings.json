@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter run *)",
+      "Read(//c/Users/Christian/AppData/Local/Pub/Cache/hosted/pub.dev/drift-2.31.0/lib/**)",
+      "Read(//c/Users/Christian/AppData/Local/Pub/Cache/hosted/pub.dev/sqlite3-2.9.4/**)",
+      "Read(//c/Users/Christian/AppData/Local/Pub/Cache/hosted/pub.dev/drift_flutter-0.2.8/**)",
+      "Read(//c/Users/Christian/AppData/Local/Pub/Cache/**)",
+      "Bash(dart compile *)",
+      "Bash(git commit -m ' *)",
+      "Bash(flutter build *)",
+      "PowerShell(cd \"d:/Dev_pro/dev/gemex\"; icacls \".git/objects\" /grant \"${env:USERNAME}:\\(OI\\)\\(CI\\)F\" /T 2>&1 | Select-Object -Last 3)",
+      "PowerShell($f = \"d:/Dev_pro/dev/gemex/build/web/canvaskit/chromium/canvaskit.js\"; if \\(Test-Path $f\\) { $info = Get-Item $f; Write-Output \"Size: $\\($info.Length\\) bytes, Attributes: $\\($info.Attributes\\), IsReadOnly: $\\($info.IsReadOnly\\)\" } else { Write-Output \"File not found\" })",
+      "PowerShell($obj = \"d:/Dev_pro/dev/gemex/.git/objects/52/7b665b052f9cf5f47314ee9406230e8d86aad9\"; if \\(Test-Path $obj\\) { $info = Get-Item $obj; Write-Output \"EXISTS - Attributes: $\\($info.Attributes\\), IsReadOnly: $\\($info.IsReadOnly\\)\" } else { Write-Output \"Object does not exist yet\" })",
+      "PowerShell($dir = \"d:/Dev_pro/dev/gemex/.git/objects/52\"; if \\(!\\(Test-Path $dir\\)\\) { New-Item -ItemType Directory -Path $dir -Force | Out-Null; Write-Output \"Created dir\" } else { Write-Output \"Dir exists\" }; icacls $dir /grant \"${env:USERNAME}:\\(OI\\)\\(CI\\)F\" | Select-Object -Last 1)",
+      "Bash(dart analyze *)",
+      "Bash(rtk grep *)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Christian\\AppData\\Local\\Pub\\Cache\\hosted\\pub.dev\\drift-2.31.0\\extension\\devtools\\build"
+    ]
+  }
+}

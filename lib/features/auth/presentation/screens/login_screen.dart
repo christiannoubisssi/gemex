@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/services/app_logger.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/auth_provider.dart';
 
@@ -31,6 +33,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           _emailController.text.trim(),
           _passwordController.text,
         );
+    // Navigation directe après l'await — fiable même en Flutter Web
+    // (ref.listen peut rater le transit AsyncLoading→AsyncData si rebuild entre-temps)
+    if (mounted) {
+      final st = ref.read(authNotifierProvider);
+      if (!st.hasError &&
+          Supabase.instance.client.auth.currentUser != null) {
+        AppLogger.i('LoginScreen', 'Connexion réussie — redirection dashboard');
+        context.go('/');
+      }
+    }
   }
 
   String _formatError(Object error) {
@@ -94,7 +106,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         const Icon(Icons.anchor, size: 48, color: Colors.white),
                   ),
                   const Text(
-                    'Gemex ERP',
+                    'Gamis',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 32,

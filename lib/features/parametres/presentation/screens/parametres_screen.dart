@@ -90,6 +90,23 @@ class ParametresScreen extends ConsumerWidget {
               ],
             ),
 
+            // ─── Section Diagnostic (admin) ───────────────────────────────
+            if (isAdmin) ...[
+              const SizedBox(height: 24),
+              const _SectionHeader('Diagnostic'),
+              const SizedBox(height: 12),
+              _SettingsGrid(
+                children: [
+                  _SettingsTile(
+                    icon: Icons.terminal_outlined,
+                    title: 'Console de logs',
+                    subtitle: 'Consulter les événements applicatifs en temps réel',
+                    onTap: () => context.push('/logs'),
+                  ),
+                ],
+              ),
+            ],
+
             // ─── Section Données de démonstration — visible par tous ─────
             const SizedBox(height: 24),
             const _SectionHeader('Données de démonstration'),

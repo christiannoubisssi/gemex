@@ -42,6 +42,7 @@ import '../../features/parametres/presentation/screens/securite_screen.dart';
 import '../../features/pieces_jointes/presentation/screens/pieces_jointes_screen.dart';
 import '../../features/securite/presentation/screens/scanner_screen.dart';
 import '../shell/main_shell.dart';
+import '../widgets/log_console_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final listenable = GoRouterRefreshStream(ref.watch(authStateProvider.stream));
@@ -213,6 +214,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
           GoRoute(path: '/securite/scanner', builder: (_, __) => const ScannerScreen()),
+          GoRoute(path: '/logs', builder: (_, __) => const LogConsoleScreen()),
           GoRoute(
             path: '/dossiers/:dossierId/pieces-jointes',
             builder: (_, state) =>

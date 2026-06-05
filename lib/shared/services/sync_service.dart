@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/network/connectivity_service.dart';
+import '../../core/services/app_logger.dart';
 import '../../database/app_database.dart';
 import '../../features/clients/presentation/providers/client_provider.dart';
 
@@ -55,16 +56,20 @@ class SyncService {
     _ref.read(syncStatusProvider.notifier).state = SyncStatus.syncing;
 
     try {
+      AppLogger.i('SyncService', 'Début de la synchronisation');
       // 1. Récupérer depuis Supabase → base locale (partage entre utilisateurs)
       await _pullClients();
 
       // 2. Pousser les modifications locales en attente vers Supabase
       final pending = await _db.syncQueueDao.getPending(maxAttempts: AppConstants.maxSyncAttempts);
+      AppLogger.d('SyncService', '${pending.length} élément(s) en attente');
       for (final item in pending) {
         await _processItem(item);
       }
+      AppLogger.i('SyncService', 'Synchronisation terminée');
       _ref.read(syncStatusProvider.notifier).state = SyncStatus.idle;
-    } catch (e) {
+    } catch (e, s) {
+      AppLogger.e('SyncService', 'Erreur de synchronisation', error: e, stack: s);
       _ref.read(syncStatusProvider.notifier).state = SyncStatus.error;
     } finally {
       _isSyncing = false;
@@ -124,7 +129,10 @@ class SyncService {
       }
       await _db.syncQueueDao.deleteItem(item.id);
       await _markEntitySynced(item.entityType, item.entityId);
-    } catch (_) {
+    } catch (e) {
+      AppLogger.w('SyncService',
+          'Échec sync ${item.entityType}#${item.entityId} (tentative ${item.attempts + 1})',
+          error: e);
       await _db.syncQueueDao.incrementAttempts(item.id);
       if (item.attempts + 1 >= AppConstants.maxSyncAttempts) {
         await _markEntityConflict(item.entityType, item.entityId);

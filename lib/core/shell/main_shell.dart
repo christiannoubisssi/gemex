@@ -173,7 +173,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                   ),
                   const SizedBox(width: 10),
                   const Text(
-                    'Gemex ERP',
+                    'Gamis',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -253,7 +253,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                       ),
                       const SizedBox(width: 12),
                       const Text(
-                        'Gemex ERP',
+                        'Gamis',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 18,
