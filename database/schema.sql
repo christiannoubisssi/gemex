@@ -68,8 +68,10 @@ create table if not exists public.document_sequences (
   primary key (type, annee)
 );
 
+-- security definer : permet d'écrire dans document_sequences (RLS) même
+-- quand la fonction est appelée par le trigger lors d'un insert authentifié
 create or replace function public.next_numero(p_type text, p_annee int)
-returns text language plpgsql as $$
+returns text language plpgsql security definer set search_path = public as $$
 declare
   v_next int;
   v_prefix text;
