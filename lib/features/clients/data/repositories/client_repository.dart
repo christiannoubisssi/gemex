@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
+import '../../../../core/services/app_logger.dart';
 import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
 
@@ -81,7 +82,9 @@ class ClientRepository {
         await _supabase.from('clients').update(toJsonSafe(data)).eq('id', id);
       }
       await _db.clientsDao.markSynced(id);
-    } catch (_) {
+      AppLogger.i('ClientRepository', 'Client $id synchronisé avec Supabase');
+    } catch (e, s) {
+      AppLogger.e('ClientRepository', 'Échec sync Supabase client $id ($op)', error: e, stack: s);
       await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: op, payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
   }

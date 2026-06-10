@@ -52,6 +52,14 @@ class DevisDao extends DatabaseAccessor<AppDatabase> with _$DevisDaoMixin {
     ));
   }
 
+  Future<void> updateNumero(String id, String numero) {
+    return (update(devis)..where((d) => d.id.equals(id))).write(DevisCompanion(
+      numero: Value(numero),
+      syncStatus: const Value('synced'),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
   Future<void> markSynced(String id) {
     return (update(devis)..where((d) => d.id.equals(id)))
         .write(const DevisCompanion(syncStatus: Value('synced')));

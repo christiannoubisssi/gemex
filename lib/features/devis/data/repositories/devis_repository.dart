@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
+import '../../../../core/services/app_logger.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
@@ -84,10 +85,23 @@ class DevisRepository {
       }
     });
 
+    // Champs calculés localement (absents de `data`) mais requis côté Supabase
+    final syncData = {
+      ...data,
+      'id': id,
+      'annee': now.year,
+      'montant_ht': montantHt,
+      'taux_tva': tauxTva,
+      'montant_tva': montantTva,
+      'taux_tps': tauxTps,
+      'montant_tps': montantTps,
+      'montant_ttc': montantTtc,
+    };
+
     if (_ref.read(isOnlineProvider)) {
-      await _trySync(id, data, 'create');
+      await _trySync(id, syncData, 'create');
     } else {
-      await _db.syncQueueDao.enqueue(entityType: 'devis', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
+      await _db.syncQueueDao.enqueue(entityType: 'devis', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
     }
     return id;
   }
@@ -108,11 +122,14 @@ class DevisRepository {
         final resp = await _supabase.from('devis').insert(toJsonSafe({...data, 'id': id})).select('numero').single();
         final serverNumero = resp['numero'] as String?;
         if (serverNumero != null) {
-          await _db.devisDao.updateStatut(id, 'brouillon');
+          await _db.devisDao.updateNumero(id, serverNumero);
+        } else {
+          await _db.devisDao.markSynced(id);
         }
-        await _db.devisDao.markSynced(id);
       }
-    } catch (_) {
+      AppLogger.i('DevisRepository', 'Devis $id synchronisé avec Supabase');
+    } catch (e, s) {
+      AppLogger.e('DevisRepository', 'Échec sync Supabase devis $id ($op)', error: e, stack: s);
       await _db.syncQueueDao.enqueue(entityType: 'devis', entityId: id, operation: op, payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
   }

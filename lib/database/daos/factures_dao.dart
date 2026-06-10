@@ -108,6 +108,14 @@ class FacturesDao extends DatabaseAccessor<AppDatabase> with _$FacturesDaoMixin 
     return (totalRecouvre / totalEmis) * 100;
   }
 
+  Future<void> updateNumero(String id, String numero) {
+    return (update(factures)..where((f) => f.id.equals(id))).write(FacturesCompanion(
+      numero: Value(numero),
+      syncStatus: const Value('synced'),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
   Future<void> markSynced(String id) {
     return (update(factures)..where((f) => f.id.equals(id)))
         .write(const FacturesCompanion(syncStatus: Value('synced')));

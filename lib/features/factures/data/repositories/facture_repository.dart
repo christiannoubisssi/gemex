@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
+import '../../../../core/services/app_logger.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
@@ -76,18 +77,42 @@ class FactureRepository {
       }
     });
 
+    // Payload complet : 'client_id' est requis (NOT NULL) côté Supabase
+    final syncData = {
+      'id': id,
+      'entreprise_id': devis.entrepriseId,
+      'client_id': devis.clientId,
+      'devis_id': devisId,
+      'dossier_id': devis.dossierId,
+      'annee': now.year,
+      'date_emission': now.toIso8601String(),
+      'date_echeance': now.add(const Duration(days: 30)).toIso8601String(),
+      'montant_ht': devis.montantHt,
+      'taux_tva': devis.tauxTva,
+      'montant_tva': devis.montantTva,
+      'taux_tps': devis.tauxTps,
+      'montant_tps': devis.montantTps,
+      'montant_ttc': devis.montantTtc,
+      'montant_restant': devis.montantTtc,
+      'objet': devis.objet,
+    };
+
     if (_ref.read(isOnlineProvider)) {
       try {
-        final resp = await _supabase.from('factures').insert({'id': id, 'devis_id': devisId}).select('numero').single();
+        final resp = await _supabase.from('factures').insert(toJsonSafe(syncData)).select('numero').single();
         final serverNumero = resp['numero'] as String?;
         if (serverNumero != null) {
+          await _db.facturesDao.updateNumero(id, serverNumero);
+        } else {
           await _db.facturesDao.markSynced(id);
         }
-      } catch (_) {
-        await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode({'id': id, 'devis_id': devisId}));
+        AppLogger.i('FactureRepository', 'Facture $id synchronisée avec Supabase');
+      } catch (e, s) {
+        AppLogger.e('FactureRepository', 'Échec sync Supabase facture $id (createFromDevis)', error: e, stack: s);
+        await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
       }
     } else {
-      await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode({'id': id, 'devis_id': devisId}));
+      await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
     }
     return id;
   }
@@ -149,15 +174,36 @@ class FactureRepository {
       }
     });
 
+    // Champs calculés localement (absents de `data`) mais requis côté Supabase
+    final syncData = {
+      ...data,
+      'id': id,
+      'annee': now.year,
+      'montant_ht': montantHt,
+      'taux_tva': tauxTva,
+      'montant_tva': montantTva,
+      'taux_tps': tauxTps,
+      'montant_tps': montantTps,
+      'montant_ttc': montantTtc,
+      'montant_restant': montantTtc,
+    };
+
     if (_ref.read(isOnlineProvider)) {
       try {
-        await _supabase.from('factures').insert(toJsonSafe({...data, 'id': id}));
-        await _db.facturesDao.markSynced(id);
-      } catch (_) {
-        await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
+        final resp = await _supabase.from('factures').insert(toJsonSafe(syncData)).select('numero').single();
+        final serverNumero = resp['numero'] as String?;
+        if (serverNumero != null) {
+          await _db.facturesDao.updateNumero(id, serverNumero);
+        } else {
+          await _db.facturesDao.markSynced(id);
+        }
+        AppLogger.i('FactureRepository', 'Facture $id synchronisée avec Supabase');
+      } catch (e, s) {
+        AppLogger.e('FactureRepository', 'Échec sync Supabase facture $id (create)', error: e, stack: s);
+        await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
       }
     } else {
-      await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
+      await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
     }
     return id;
   }
@@ -175,7 +221,9 @@ class FactureRepository {
           }).eq('id', id);
           await _db.facturesDao.markSynced(id);
         }
-      } catch (_) {}
+      } catch (e, s) {
+        AppLogger.e('FactureRepository', 'Échec sync Supabase facture $id (paiement)', error: e, stack: s);
+      }
     }
   }
 }
