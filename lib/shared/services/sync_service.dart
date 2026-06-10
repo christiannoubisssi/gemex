@@ -110,21 +110,31 @@ class SyncService {
 
   // ─── Push : Drift local → Supabase ──────────────────────────────────────
 
+  /// Tables Supabase dont le nom ne suit pas la convention `${entityType}s`.
+  static const Map<String, String> _tableOverrides = {
+    'piece_jointe': 'pieces_jointes',
+    'charge_modele': 'charges_modeles',
+    'personnel': 'personnel',
+  };
+
+  /// Types d'entités correspondant aux lignes de documents (payload = liste).
+  static const Set<String> _lignesTypes = {'devis_lignes', 'factures_lignes', 'charges_modele_lines'};
+
   Future<void> _processItem(SyncQueueData item) async {
     try {
       if (item.operation == 'upload' && item.entityType == 'piece_jointe') {
         await _uploadPieceJointe(item);
+      } else if (_lignesTypes.contains(item.entityType)) {
+        await _processLignesItem(item);
       } else {
-        final table = item.entityType == 'piece_jointe'
-            ? 'pieces_jointes'
-            : '${item.entityType}s';
+        final table = _tableOverrides[item.entityType] ?? '${item.entityType}s';
         switch (item.operation) {
           case 'create':
             await _supabase.from(table).insert(_parsePayload(item.payload));
           case 'update':
             await _supabase.from(table).update(_parsePayload(item.payload)).eq('id', item.entityId);
           case 'delete':
-            await _supabase.from(table).update({'deleted_at': DateTime.now().toIso8601String()}).eq('id', item.entityId);
+            await _supabase.from(table).delete().eq('id', item.entityId);
         }
       }
       await _db.syncQueueDao.deleteItem(item.id);
@@ -138,6 +148,23 @@ class SyncService {
         await _markEntityConflict(item.entityType, item.entityId);
       }
     }
+  }
+
+  /// Pousse les lignes d'un devis/facture/modèle (payload : `{'lignes': [...]}`).
+  /// Si `replace_key`/`replace_value` sont fournis, supprime d'abord les lignes
+  /// existantes correspondantes (remplacement complet, ex : modèles de charges).
+  Future<void> _processLignesItem(SyncQueueData item) async {
+    final payload = _parsePayload(item.payload);
+    final lignes = (payload['lignes'] as List? ?? [])
+        .map((l) => Map<String, dynamic>.from(l as Map))
+        .toList();
+    final replaceKey = payload['replace_key'] as String?;
+    final replaceValue = payload['replace_value'] as String?;
+    if (replaceKey != null && replaceValue != null) {
+      await _supabase.from(item.entityType).delete().eq(replaceKey, replaceValue);
+    }
+    if (lignes.isEmpty) return;
+    await _supabase.from(item.entityType).upsert(lignes);
   }
 
   Future<void> _uploadPieceJointe(SyncQueueData item) async {
@@ -171,6 +198,10 @@ class SyncService {
       case 'devis': await _db.devisDao.markSynced(entityId);
       case 'facture': await _db.facturesDao.markSynced(entityId);
       case 'charge': await _db.chargesDao.markSynced(entityId);
+      case 'charge_modele': await _db.chargesModelesDao.markSynced(entityId);
+      case 'personnel': await _db.personnelDao.markSynced(entityId);
+      case 'conge': await _db.congesDao.markSynced(entityId);
+      case 'salaire': await _db.salairesDao.markSynced(entityId);
       case 'piece_jointe': await _db.piecesJointesDao.markSynced(entityId);
     }
   }

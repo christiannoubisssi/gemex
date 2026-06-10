@@ -72,7 +72,11 @@ class ChargesModelesDao extends DatabaseAccessor<AppDatabase>
 
   Future<void> markSynced(String id) async {
     await (update(chargesModeles)..where((t) => t.id.equals(id))).write(
-      const ChargesModelesCompanion(statut: Value.absent()),
+      const ChargesModelesCompanion(syncStatus: Value('synced')),
     );
+  }
+
+  Future<List<ChargesModele>> getPending() {
+    return (select(chargesModeles)..where((t) => t.syncStatus.equals('pending'))).get();
   }
 }

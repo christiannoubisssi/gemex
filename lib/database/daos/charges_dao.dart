@@ -44,6 +44,10 @@ class ChargesDao extends DatabaseAccessor<AppDatabase> with _$ChargesDaoMixin {
     return (select(charges)..where((c) => c.syncStatus.equals('pending'))).get();
   }
 
+  Future<Charge?> getById(String id) {
+    return (select(charges)..where((c) => c.id.equals(id))).getSingleOrNull();
+  }
+
   Future<List<Charge>> getByDossier(String dossierId) {
     return (select(charges)
           ..where((c) => c.dossierId.equals(dossierId))

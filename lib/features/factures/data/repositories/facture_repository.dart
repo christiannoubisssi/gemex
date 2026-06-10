@@ -41,6 +41,9 @@ class FactureRepository {
     final now = DateTime.now();
     final numero = FormatUtils.generateLocalNumero('FAC');
 
+    // IDs générés à l'avance pour pouvoir synchroniser les lignes avec Supabase
+    final ligneIds = List.generate(lignes.length, (_) => const Uuid().v4());
+
     await _db.transaction(() async {
       await _db.facturesDao.upsertFacture(FacturesCompanion.insert(
         id: id,
@@ -65,7 +68,7 @@ class FactureRepository {
       for (var i = 0; i < lignes.length; i++) {
         final l = lignes[i];
         await _db.facturesDao.upsertLigne(FacturesLignesCompanion.insert(
-          id: const Uuid().v4(),
+          id: ligneIds[i],
           factureId: id,
           ordre: drift.Value(i),
           designation: l.designation,
@@ -97,6 +100,20 @@ class FactureRepository {
       'objet': devis.objet,
     };
 
+    final lignesPayload = [
+      for (var i = 0; i < lignes.length; i++)
+        {
+          'id': ligneIds[i],
+          'facture_id': id,
+          'ordre': i,
+          'designation': lignes[i].designation,
+          'quantite': lignes[i].quantite,
+          'unite': lignes[i].unite,
+          'prix_unit': lignes[i].prixUnit,
+          'montant_ht': lignes[i].montantHt,
+        },
+    ];
+
     if (_ref.read(isOnlineProvider)) {
       try {
         final resp = await _supabase.from('factures').insert(toJsonSafe(syncData)).select('numero').single();
@@ -111,8 +128,12 @@ class FactureRepository {
         AppLogger.e('FactureRepository', 'Échec sync Supabase facture $id (createFromDevis)', error: e, stack: s);
         await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
       }
+      await _syncLignes(id, lignesPayload);
     } else {
       await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
+      if (lignesPayload.isNotEmpty) {
+        await _db.syncQueueDao.enqueue(entityType: 'factures_lignes', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({'lignes': lignesPayload})));
+      }
     }
     return id;
   }
@@ -134,6 +155,9 @@ class FactureRepository {
     final montantTva = montantHt * tauxTva / 100;
     final montantTps = montantHt * tauxTps / 100;
     final montantTtc = montantHt + montantTva + montantTps;
+
+    // IDs générés à l'avance pour pouvoir synchroniser les lignes avec Supabase
+    final ligneIds = List.generate(lignes.length, (_) => const Uuid().v4());
 
     await _db.transaction(() async {
       await _db.facturesDao.upsertFacture(FacturesCompanion.insert(
@@ -162,7 +186,7 @@ class FactureRepository {
         final qte = (l['quantite'] as num?)?.toDouble() ?? 1;
         final pu = (l['prix_unit'] as num?)?.toDouble() ?? 0;
         await _db.facturesDao.upsertLigne(FacturesLignesCompanion.insert(
-          id: const Uuid().v4(),
+          id: ligneIds[i],
           factureId: id,
           ordre: drift.Value(i),
           designation: l['designation'] as String,
@@ -188,6 +212,21 @@ class FactureRepository {
       'montant_restant': montantTtc,
     };
 
+    final lignesPayload = [
+      for (var i = 0; i < lignes.length; i++)
+        {
+          'id': ligneIds[i],
+          'facture_id': id,
+          'ordre': i,
+          'designation': lignes[i]['designation'] as String,
+          'quantite': (lignes[i]['quantite'] as num?)?.toDouble() ?? 1,
+          'unite': lignes[i]['unite'] as String? ?? 'forfait',
+          'prix_unit': (lignes[i]['prix_unit'] as num?)?.toDouble() ?? 0,
+          'montant_ht': ((lignes[i]['quantite'] as num?)?.toDouble() ?? 1) *
+              ((lignes[i]['prix_unit'] as num?)?.toDouble() ?? 0),
+        },
+    ];
+
     if (_ref.read(isOnlineProvider)) {
       try {
         final resp = await _supabase.from('factures').insert(toJsonSafe(syncData)).select('numero').single();
@@ -202,10 +241,25 @@ class FactureRepository {
         AppLogger.e('FactureRepository', 'Échec sync Supabase facture $id (create)', error: e, stack: s);
         await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
       }
+      await _syncLignes(id, lignesPayload);
     } else {
       await _db.syncQueueDao.enqueue(entityType: 'facture', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
+      if (lignesPayload.isNotEmpty) {
+        await _db.syncQueueDao.enqueue(entityType: 'factures_lignes', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({'lignes': lignesPayload})));
+      }
     }
     return id;
+  }
+
+  /// Pousse les lignes d'une facture vers Supabase (table `factures_lignes`).
+  Future<void> _syncLignes(String factureId, List<Map<String, dynamic>> lignes) async {
+    if (lignes.isEmpty) return;
+    try {
+      await _supabase.from('factures_lignes').upsert(lignes.map(toJsonSafe).toList());
+    } catch (e, s) {
+      AppLogger.e('FactureRepository', 'Échec sync lignes facture $factureId', error: e, stack: s);
+      await _db.syncQueueDao.enqueue(entityType: 'factures_lignes', entityId: factureId, operation: 'create', payload: jsonEncode(toJsonSafe({'lignes': lignes})));
+    }
   }
 
   Future<void> enregistrerPaiement(String id, double montant, String? mode, String? reference) async {

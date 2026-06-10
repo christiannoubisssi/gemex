@@ -47,6 +47,9 @@ class DevisRepository {
     final montantTps = montantHt * tauxTps / 100;
     final montantTtc = montantHt + montantTva + montantTps;
 
+    // IDs générés à l'avance pour pouvoir synchroniser les lignes avec Supabase
+    final ligneIds = List.generate(lignes.length, (_) => const Uuid().v4());
+
     await _db.transaction(() async {
       await _db.devisDao.upsertDevis(DevisCompanion.insert(
         id: id,
@@ -73,7 +76,7 @@ class DevisRepository {
         final qte = (l['quantite'] as num?)?.toDouble() ?? 1;
         final pu = (l['prix_unit'] as num?)?.toDouble() ?? 0;
         await _db.devisDao.upsertLigne(DevisLignesCompanion.insert(
-          id: const Uuid().v4(),
+          id: ligneIds[i],
           devisId: id,
           ordre: drift.Value(i),
           designation: l['designation'] as String,
@@ -98,12 +101,42 @@ class DevisRepository {
       'montant_ttc': montantTtc,
     };
 
+    final lignesPayload = [
+      for (var i = 0; i < lignes.length; i++)
+        {
+          'id': ligneIds[i],
+          'devis_id': id,
+          'ordre': i,
+          'designation': lignes[i]['designation'] as String,
+          'quantite': (lignes[i]['quantite'] as num?)?.toDouble() ?? 1,
+          'unite': lignes[i]['unite'] as String? ?? 'forfait',
+          'prix_unit': (lignes[i]['prix_unit'] as num?)?.toDouble() ?? 0,
+          'montant_ht': ((lignes[i]['quantite'] as num?)?.toDouble() ?? 1) *
+              ((lignes[i]['prix_unit'] as num?)?.toDouble() ?? 0),
+        },
+    ];
+
     if (_ref.read(isOnlineProvider)) {
       await _trySync(id, syncData, 'create');
+      await _syncLignes(id, lignesPayload);
     } else {
       await _db.syncQueueDao.enqueue(entityType: 'devis', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe(syncData)));
+      if (lignesPayload.isNotEmpty) {
+        await _db.syncQueueDao.enqueue(entityType: 'devis_lignes', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({'lignes': lignesPayload})));
+      }
     }
     return id;
+  }
+
+  /// Pousse les lignes d'un devis vers Supabase (table `devis_lignes`).
+  Future<void> _syncLignes(String devisId, List<Map<String, dynamic>> lignes) async {
+    if (lignes.isEmpty) return;
+    try {
+      await _supabase.from('devis_lignes').upsert(lignes.map(toJsonSafe).toList());
+    } catch (e, s) {
+      AppLogger.e('DevisRepository', 'Échec sync lignes devis $devisId', error: e, stack: s);
+      await _db.syncQueueDao.enqueue(entityType: 'devis_lignes', entityId: devisId, operation: 'create', payload: jsonEncode(toJsonSafe({'lignes': lignes})));
+    }
   }
 
   Future<void> updateStatut(String id, String statut) async {
