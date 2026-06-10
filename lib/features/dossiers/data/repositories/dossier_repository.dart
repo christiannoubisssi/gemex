@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
+import '../../../../core/services/app_logger.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
@@ -91,14 +92,19 @@ class DossierRepository {
 
     await _db.dossiersDao.upsert(companion);
 
-    if (_ref.read(isOnlineProvider)) {
-      await _syncToSupabase(id, {...data, 'id': id}, 'create');
+    // Champs calculés localement (absents de `data`) mais requis côté Supabase
+    final syncData = {...data, 'id': id, 'titre': titre, 'annee': now.year};
+
+    final online = _ref.read(isOnlineProvider);
+    AppLogger.d('DossierRepository', 'create $id — isOnline=$online');
+    if (online) {
+      await _syncToSupabase(id, syncData, 'create');
     } else {
       await _db.syncQueueDao.enqueue(
         entityType: 'dossier',
         entityId: id,
         operation: 'create',
-        payload: jsonEncode(toJsonSafe({...data, 'id': id})),
+        payload: jsonEncode(toJsonSafe(syncData)),
       );
     }
 
@@ -215,11 +221,14 @@ class DossierRepository {
         } else {
           await _db.dossiersDao.markSynced(id);
         }
+        AppLogger.i('DossierRepository', 'Dossier $id synchronisé avec Supabase');
       } else {
         await _supabase.from('dossiers').update(toJsonSafe(data)).eq('id', id);
         await _db.dossiersDao.markSynced(id);
+        AppLogger.i('DossierRepository', 'Dossier $id (update) synchronisé avec Supabase');
       }
-    } catch (_) {
+    } catch (e, s) {
+      AppLogger.e('DossierRepository', 'Échec sync Supabase dossier $id ($operation)', error: e, stack: s);
       await _db.syncQueueDao.enqueue(
         entityType: 'dossier',
         entityId: id,
