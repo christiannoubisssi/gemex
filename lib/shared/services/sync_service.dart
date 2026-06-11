@@ -59,6 +59,7 @@ class SyncService {
       AppLogger.i('SyncService', 'Début de la synchronisation');
       // 1. Récupérer depuis Supabase → base locale (partage entre utilisateurs)
       await _pullClients();
+      await _pullClientContacts();
 
       // 2. Pousser les modifications locales en attente vers Supabase
       final pending = await _db.syncQueueDao.getPending(maxAttempts: AppConstants.maxSyncAttempts);
@@ -96,6 +97,9 @@ class SyncService {
           adresse:      drift.Value(m['adresse'] as String?),
           ville:        drift.Value(m['ville'] as String?),
           pays:         drift.Value(m['pays'] as String? ?? 'Gabon'),
+          numeroTva:    drift.Value(m['numero_tva'] as String?),
+          rccm:         drift.Value(m['rccm'] as String?),
+          nif:          drift.Value(m['nif'] as String?),
           notes:        drift.Value(m['notes'] as String?),
           syncStatus:   const drift.Value('synced'),
         ));
@@ -103,6 +107,27 @@ class SyncService {
       // Rafraîchir les providers liés aux clients dans l'UI
       _ref.invalidate(clientsProvider);
       _ref.invalidate(clientsMapProvider);
+    } catch (_) {
+      // Échec silencieux — les données locales restent intactes
+    }
+  }
+
+  /// Récupère tous les contacts clients depuis Supabase et les upsert en local.
+  Future<void> _pullClientContacts() async {
+    try {
+      final rows = await _supabase.from('client_contacts').select() as List;
+      for (final raw in rows) {
+        final m = Map<String, dynamic>.from(raw as Map);
+        await _db.clientContactsDao.upsert(ClientContactsCompanion(
+          id:         drift.Value(m['id'] as String),
+          clientId:   drift.Value(m['client_id'] as String),
+          nom:        drift.Value(m['nom'] as String? ?? ''),
+          fonction:   drift.Value(m['fonction'] as String?),
+          telephone:  drift.Value(m['telephone'] as String?),
+          email:      drift.Value(m['email'] as String?),
+          syncStatus: const drift.Value('synced'),
+        ));
+      }
     } catch (_) {
       // Échec silencieux — les données locales restent intactes
     }
@@ -203,6 +228,7 @@ class SyncService {
       case 'conge': await _db.congesDao.markSynced(entityId);
       case 'salaire': await _db.salairesDao.markSynced(entityId);
       case 'piece_jointe': await _db.piecesJointesDao.markSynced(entityId);
+      case 'client_contact': await _db.clientContactsDao.markSynced(entityId);
     }
   }
 

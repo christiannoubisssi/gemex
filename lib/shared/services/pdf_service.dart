@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -16,6 +18,7 @@ class PdfService {
     Client? client,
     String? nomEntreprise,
     String? adresseEntreprise,
+    Uint8List? logoBytes,
   }) async {
     final doc = pw.Document();
     final roboto = await PdfGoogleFonts.robotoRegular();
@@ -53,6 +56,7 @@ class PdfService {
             client: client,
             roboto: roboto,
             robotoBold: robotoBold,
+            logoBytes: logoBytes,
           ),
           pw.SizedBox(height: 24),
           if (devis.objet != null) ...[
@@ -112,6 +116,7 @@ class PdfService {
     Client? client,
     String? nomEntreprise,
     String? adresseEntreprise,
+    Uint8List? logoBytes,
   }) async {
     final doc = pw.Document();
     final roboto = await PdfGoogleFonts.robotoRegular();
@@ -149,6 +154,7 @@ class PdfService {
             client: client,
             roboto: roboto,
             robotoBold: robotoBold,
+            logoBytes: logoBytes,
           ),
           pw.SizedBox(height: 24),
           if (facture.objet != null) ...[
@@ -217,6 +223,7 @@ class PdfService {
     required Client? client,
     required pw.Font roboto,
     required pw.Font robotoBold,
+    Uint8List? logoBytes,
   }) {
     return pw.Row(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -226,21 +233,24 @@ class PdfService {
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
-              pw.Container(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: pw.BoxDecoration(
-                  color: const PdfColor.fromInt(0xFF0D2137),
-                  borderRadius: pw.BorderRadius.circular(4),
-                ),
-                child: pw.Text(
-                  'AvarieApp',
-                  style: pw.TextStyle(
-                    font: robotoBold,
-                    color: PdfColors.white,
-                    fontSize: 14,
+              if (logoBytes != null)
+                pw.Image(pw.MemoryImage(logoBytes), height: 50)
+              else
+                pw.Container(
+                  padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: pw.BoxDecoration(
+                    color: const PdfColor.fromInt(0xFF0D2137),
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Text(
+                    'AvarieApp',
+                    style: pw.TextStyle(
+                      font: robotoBold,
+                      color: PdfColors.white,
+                      fontSize: 14,
+                    ),
                   ),
                 ),
-              ),
               pw.SizedBox(height: 8),
               pw.Text(nomEntreprise, style: pw.TextStyle(font: robotoBold, fontSize: 11)),
               pw.Text(adresseEntreprise, style: pw.TextStyle(font: roboto, fontSize: 9)),
@@ -272,6 +282,12 @@ class PdfService {
                 pw.Text(client.email!, style: pw.TextStyle(font: roboto, fontSize: 9)),
               if (client.telephone != null)
                 pw.Text(client.telephone!, style: pw.TextStyle(font: roboto, fontSize: 9)),
+              if (client.numeroTva != null)
+                pw.Text('TVA : ${client.numeroTva}', style: pw.TextStyle(font: roboto, fontSize: 9)),
+              if (client.rccm != null)
+                pw.Text('RCCM : ${client.rccm}', style: pw.TextStyle(font: roboto, fontSize: 9)),
+              if (client.nif != null)
+                pw.Text('NIF : ${client.nif}', style: pw.TextStyle(font: roboto, fontSize: 9)),
             ],
           ],
         ),

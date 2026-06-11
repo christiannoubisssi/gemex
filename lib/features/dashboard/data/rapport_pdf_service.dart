@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -10,7 +11,7 @@ class RapportPdfService {
   static final _fcfa = NumberFormat('#,###', 'fr_FR');
   static final _date = DateFormat('MMMM yyyy', 'fr_FR');
 
-  static Future<pw.Document> generer(DashboardStats stats) async {
+  static Future<pw.Document> generer(DashboardStats stats, {Uint8List? logoBytes}) async {
     final doc = pw.Document();
     final roboto = await PdfGoogleFonts.robotoRegular();
     final robotoBold = await PdfGoogleFonts.robotoBold();
@@ -48,8 +49,16 @@ class RapportPdfService {
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
-              pw.Text('RAPPORT MENSUEL',
-                  style: pw.TextStyle(font: robotoBold, fontSize: 18, color: navy)),
+              pw.Row(
+                children: [
+                  if (logoBytes != null) ...[
+                    pw.Image(pw.MemoryImage(logoBytes), height: 36),
+                    pw.SizedBox(width: 8),
+                  ],
+                  pw.Text('RAPPORT MENSUEL',
+                      style: pw.TextStyle(font: robotoBold, fontSize: 18, color: navy)),
+                ],
+              ),
               pw.Text(_date.format(now).toUpperCase(),
                   style: pw.TextStyle(font: roboto, fontSize: 12, color: teal)),
             ],

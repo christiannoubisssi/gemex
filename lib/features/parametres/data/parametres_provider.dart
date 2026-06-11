@@ -1,8 +1,13 @@
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'parametres_service.dart';
 
 final entrepriseProvider = FutureProvider.autoDispose<Map<String, String>>(
   (_) => ParametresService.getEntreprise(),
+);
+
+final logoBytesProvider = FutureProvider.autoDispose<Uint8List?>(
+  (_) => ParametresService.getLogoBytes(),
 );
 
 final fiscalProvider = FutureProvider.autoDispose<Map<String, dynamic>>(

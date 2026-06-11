@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../data/dashboard_provider.dart';
 import '../../../dashboard/data/rapport_pdf_service.dart';
+import '../../../parametres/data/parametres_provider.dart';
 import '../../../parametres/data/user_management_service.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -28,7 +29,8 @@ class DashboardScreen extends ConsumerWidget {
               icon: const Icon(Icons.picture_as_pdf_outlined),
               tooltip: 'Rapport mensuel PDF',
               onPressed: () async {
-                final pdf = await RapportPdfService.generer(async.value!);
+                final logoBytes = await ref.read(logoBytesProvider.future);
+                final pdf = await RapportPdfService.generer(async.value!, logoBytes: logoBytes);
                 await Printing.layoutPdf(onLayout: (_) => pdf.save());
               },
             ),

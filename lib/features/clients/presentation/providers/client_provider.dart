@@ -48,3 +48,47 @@ final clientsMapProvider = FutureProvider.autoDispose<Map<String, String>>((ref)
   final clients = await ref.read(clientRepositoryProvider).getAll();
   return {for (final c in clients) c.id: c.nom};
 });
+
+// ── Contacts client ──────────────────────────────────────────────────────────
+
+final clientContactsProvider = FutureProvider.autoDispose.family<List<ClientContact>, String>(
+  (ref, clientId) async => ref.read(clientRepositoryProvider).getContacts(clientId),
+);
+
+class ClientContactNotifier extends AsyncNotifier<void> {
+  @override
+  Future<void> build() async {}
+
+  Future<void> add(String clientId, Map<String, dynamic> data) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(clientRepositoryProvider).addContact(
+            clientId: clientId,
+            nom: data['nom'] as String,
+            fonction: data['fonction'] as String?,
+            telephone: data['telephone'] as String?,
+            email: data['email'] as String?,
+          );
+      ref.invalidate(clientContactsProvider(clientId));
+    });
+  }
+
+  Future<void> updateContact(String clientId, String id, Map<String, dynamic> data) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(clientRepositoryProvider).updateContact(id, data);
+      ref.invalidate(clientContactsProvider(clientId));
+    });
+  }
+
+  Future<void> delete(String clientId, String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(clientRepositoryProvider).deleteContact(id);
+      ref.invalidate(clientContactsProvider(clientId));
+    });
+  }
+}
+
+final clientContactNotifierProvider =
+    AsyncNotifierProvider<ClientContactNotifier, void>(() => ClientContactNotifier());

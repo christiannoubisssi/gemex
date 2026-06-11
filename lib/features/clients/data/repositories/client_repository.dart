@@ -42,6 +42,9 @@ class ClientRepository {
       adresse: drift.Value(data['adresse'] as String?),
       ville: drift.Value(data['ville'] as String?),
       pays: const drift.Value('Gabon'),
+      numeroTva: drift.Value(data['numero_tva'] as String?),
+      rccm: drift.Value(data['rccm'] as String?),
+      nif: drift.Value(data['nif'] as String?),
       notes: drift.Value(data['notes'] as String?),
       syncStatus: const drift.Value(AppConstants.syncPending),
     );
@@ -63,6 +66,9 @@ class ClientRepository {
       telephone: data.containsKey('telephone') ? drift.Value(data['telephone'] as String?) : const drift.Value.absent(),
       adresse: data.containsKey('adresse') ? drift.Value(data['adresse'] as String?) : const drift.Value.absent(),
       ville: data.containsKey('ville') ? drift.Value(data['ville'] as String?) : const drift.Value.absent(),
+      numeroTva: data.containsKey('numero_tva') ? drift.Value(data['numero_tva'] as String?) : const drift.Value.absent(),
+      rccm: data.containsKey('rccm') ? drift.Value(data['rccm'] as String?) : const drift.Value.absent(),
+      nif: data.containsKey('nif') ? drift.Value(data['nif'] as String?) : const drift.Value.absent(),
       notes: data.containsKey('notes') ? drift.Value(data['notes'] as String?) : const drift.Value.absent(),
       syncStatus: const drift.Value(AppConstants.syncPending),
       updatedAt: drift.Value(DateTime.now()),
@@ -87,5 +93,88 @@ class ClientRepository {
       AppLogger.e('ClientRepository', 'Échec sync Supabase client $id ($op)', error: e, stack: s);
       await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: op, payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
+  }
+
+  // ─── Contacts ────────────────────────────────────────────────────────────
+
+  Future<List<ClientContact>> getContacts(String clientId) =>
+      _db.clientContactsDao.getByClient(clientId);
+
+  Future<String> addContact({
+    required String clientId,
+    required String nom,
+    String? fonction,
+    String? telephone,
+    String? email,
+  }) async {
+    final id = const Uuid().v4();
+    final now = DateTime.now();
+    await _db.clientContactsDao.upsert(ClientContactsCompanion.insert(
+      id: id,
+      clientId: clientId,
+      nom: nom,
+      fonction: drift.Value(fonction),
+      telephone: drift.Value(telephone),
+      email: drift.Value(email),
+      createdAt: drift.Value(now),
+      updatedAt: drift.Value(now),
+    ));
+
+    final syncData = {
+      'id': id,
+      'client_id': clientId,
+      'nom': nom,
+      'fonction': fonction,
+      'telephone': telephone,
+      'email': email,
+      'created_at': now.toIso8601String(),
+      'updated_at': now.toIso8601String(),
+    };
+    await _trySyncContact(id, syncData, 'create');
+    return id;
+  }
+
+  Future<void> updateContact(String id, Map<String, dynamic> data) async {
+    await _db.clientContactsDao.upsert(ClientContactsCompanion(
+      id: drift.Value(id),
+      nom: data.containsKey('nom') ? drift.Value(data['nom'] as String) : const drift.Value.absent(),
+      fonction: data.containsKey('fonction') ? drift.Value(data['fonction'] as String?) : const drift.Value.absent(),
+      telephone: data.containsKey('telephone') ? drift.Value(data['telephone'] as String?) : const drift.Value.absent(),
+      email: data.containsKey('email') ? drift.Value(data['email'] as String?) : const drift.Value.absent(),
+      syncStatus: const drift.Value(AppConstants.syncPending),
+      updatedAt: drift.Value(DateTime.now()),
+    ));
+    await _trySyncContact(id, data, 'update');
+  }
+
+  Future<void> deleteContact(String id) async {
+    await _db.clientContactsDao.deleteById(id);
+    if (_ref.read(isOnlineProvider)) {
+      try {
+        await _supabase.from('client_contacts').delete().eq('id', id);
+        return;
+      } catch (e, s) {
+        AppLogger.e('ClientRepository', 'Échec suppression Supabase contact $id', error: e, stack: s);
+      }
+    }
+    await _db.syncQueueDao.enqueue(entityType: 'client_contact', entityId: id, operation: 'delete', payload: '{}');
+  }
+
+  Future<void> _trySyncContact(String id, Map<String, dynamic> data, String op) async {
+    if (_ref.read(isOnlineProvider)) {
+      try {
+        if (op == 'create') {
+          await _supabase.from('client_contacts').insert(toJsonSafe({...data, 'id': id}));
+        } else {
+          await _supabase.from('client_contacts').update(toJsonSafe(data)).eq('id', id);
+        }
+        await _db.clientContactsDao.markSynced(id);
+        AppLogger.i('ClientRepository', 'Contact $id synchronisé avec Supabase');
+        return;
+      } catch (e, s) {
+        AppLogger.e('ClientRepository', 'Échec sync Supabase contact $id ($op)', error: e, stack: s);
+      }
+    }
+    await _db.syncQueueDao.enqueue(entityType: 'client_contact', entityId: id, operation: op, payload: jsonEncode(toJsonSafe({...data, 'id': id})));
   }
 }

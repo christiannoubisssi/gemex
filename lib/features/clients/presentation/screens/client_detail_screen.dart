@@ -10,6 +10,7 @@ import '../../../dossiers/presentation/providers/dossier_provider.dart';
 import '../../../dossiers/presentation/widgets/status_badge.dart';
 import '../../../factures/presentation/providers/facture_provider.dart';
 import '../providers/client_provider.dart';
+import '../widgets/contact_form_dialog.dart';
 
 class ClientDetailScreen extends ConsumerStatefulWidget {
   final String id;
@@ -194,6 +195,35 @@ class _ProfilTab extends StatelessWidget {
           ),
         const SizedBox(height: 12),
 
+        // Informations fiscales
+        if (client.numeroTva != null || client.rccm != null || client.nif != null)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Informations fiscales',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.navy)),
+                    const Divider(height: 16),
+                    if (client.numeroTva != null)
+                      _InfoRow(Icons.receipt_long_outlined, 'TVA : ${client.numeroTva}'),
+                    if (client.rccm != null)
+                      _InfoRow(Icons.badge_outlined, 'RCCM : ${client.rccm}'),
+                    if (client.nif != null)
+                      _InfoRow(Icons.fingerprint_outlined, 'NIF : ${client.nif}'),
+                  ]),
+            ),
+          ),
+        if (client.numeroTva != null || client.rccm != null || client.nif != null)
+          const SizedBox(height: 12),
+
+        // Contacts
+        _ContactsCard(clientId: client.id),
+        const SizedBox(height: 12),
+
         // Résumé financier
         Card(
           child: Padding(
@@ -253,6 +283,130 @@ class _ProfilTab extends StatelessWidget {
       'armateur': 'Armateur',
     };
     return labels[t] ?? t;
+  }
+}
+
+// ── Carte Contacts ───────────────────────────────────────────────────────────
+
+class _ContactsCard extends ConsumerWidget {
+  final String clientId;
+  const _ContactsCard({required this.clientId});
+
+  Future<void> _ouvrirFormulaire(BuildContext context, {ClientContact? contact}) {
+    return showDialog(
+      context: context,
+      builder: (_) => ContactFormDialog(clientId: clientId, contact: contact),
+    );
+  }
+
+  Future<void> _confirmerSuppression(BuildContext context, WidgetRef ref, ClientContact contact) async {
+    final confirme = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Supprimer le contact'),
+        content: Text('Voulez-vous vraiment supprimer "${contact.nom}" ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Supprimer', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirme == true) {
+      await ref.read(clientContactNotifierProvider.notifier).delete(clientId, contact.id);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final contactsAsync = ref.watch(clientContactsProvider(clientId));
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              const Expanded(
+                child: Text('Contacts',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
+              ),
+              TextButton.icon(
+                onPressed: () => _ouvrirFormulaire(context),
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Ajouter'),
+                style: TextButton.styleFrom(foregroundColor: AppColors.teal),
+              ),
+            ]),
+            const Divider(height: 16),
+            contactsAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => Text('Erreur : $e'),
+              data: (contacts) {
+                if (contacts.isEmpty) {
+                  return const Text('Aucun contact enregistré.',
+                      style: TextStyle(color: Colors.grey));
+                }
+                return Column(
+                  children: contacts
+                      .map((c) => _ContactTile(
+                            contact: c,
+                            onEdit: () => _ouvrirFormulaire(context, contact: c),
+                            onDelete: () => _confirmerSuppression(context, ref, c),
+                          ))
+                      .toList(),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ContactTile extends StatelessWidget {
+  final ClientContact contact;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+  const _ContactTile({required this.contact, required this.onEdit, required this.onDelete});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Icon(Icons.person_outline, size: 18, color: AppColors.teal),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(contact.nom, style: const TextStyle(fontWeight: FontWeight.w600)),
+            if (contact.fonction != null)
+              Text(contact.fonction!, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            if (contact.telephone != null)
+              Text(contact.telephone!, style: const TextStyle(fontSize: 12)),
+            if (contact.email != null)
+              Text(contact.email!, style: const TextStyle(fontSize: 12)),
+          ]),
+        ),
+        IconButton(
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          onPressed: onEdit,
+          visualDensity: VisualDensity.compact,
+        ),
+        IconButton(
+          icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.danger),
+          onPressed: onDelete,
+          visualDensity: VisualDensity.compact,
+        ),
+      ]),
+    );
   }
 }
 

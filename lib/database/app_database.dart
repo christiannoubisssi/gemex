@@ -3,6 +3,7 @@ import 'package:drift/drift.dart';
 import 'connection/connection.dart';
 
 import 'tables/clients_table.dart';
+import 'tables/client_contacts_table.dart';
 import 'tables/dossiers_table.dart';
 import 'tables/devis_table.dart';
 import 'tables/factures_table.dart';
@@ -14,6 +15,7 @@ import 'tables/conges_table.dart';
 import 'tables/pieces_jointes_table.dart';
 import 'tables/sync_queue_table.dart';
 import 'daos/clients_dao.dart';
+import 'daos/client_contacts_dao.dart';
 import 'daos/dossiers_dao.dart';
 import 'daos/devis_dao.dart';
 import 'daos/factures_dao.dart';
@@ -31,6 +33,7 @@ part 'app_database.g.dart';
 @DriftDatabase(
   tables: [
     Clients,
+    ClientContacts,
     Dossiers,
     Devis,
     DevisLignes,
@@ -48,6 +51,7 @@ part 'app_database.g.dart';
   ],
   daos: [
     ClientsDao,
+    ClientContactsDao,
     DossiersDao,
     DevisDao,
     FacturesDao,
@@ -65,7 +69,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -79,6 +83,12 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(taxes);
         await m.addColumn(devisLignes, devisLignes.taxesJson);
         await m.addColumn(facturesLignes, facturesLignes.taxesJson);
+      }
+      if (from < 5) {
+        await m.addColumn(clients, clients.numeroTva);
+        await m.addColumn(clients, clients.rccm);
+        await m.addColumn(clients, clients.nif);
+        await m.createTable(clientContacts);
       }
     },
   );

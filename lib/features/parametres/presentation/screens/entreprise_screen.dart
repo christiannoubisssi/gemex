@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/parametres_service.dart';
@@ -19,6 +22,7 @@ class _EntrepriseScreenState extends ConsumerState<EntrepriseScreen> {
   final _nifCtrl = TextEditingController();
   bool _loading = true;
   bool _saving = false;
+  Uint8List? _logoBytes;
 
   @override
   void initState() {
@@ -34,7 +38,30 @@ class _EntrepriseScreenState extends ConsumerState<EntrepriseScreen> {
     _emailCtrl.text = data['email'] ?? '';
     _rccmCtrl.text = data['rccm'] ?? '';
     _nifCtrl.text = data['nif'] ?? '';
+    _logoBytes = await ParametresService.getLogoBytes();
     setState(() => _loading = false);
+  }
+
+  Future<void> _choisirLogo() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true,
+    );
+    final bytes = result?.files.single.bytes;
+    if (bytes == null) return;
+    await ParametresService.saveLogoBase64(base64Encode(bytes));
+    ref.invalidate(logoBytesProvider);
+    setState(() => _logoBytes = bytes);
+    if (mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Logo enregistré')));
+    }
+  }
+
+  Future<void> _supprimerLogo() async {
+    await ParametresService.removeLogo();
+    ref.invalidate(logoBytesProvider);
+    setState(() => _logoBytes = null);
   }
 
   Future<void> _save() async {
@@ -74,6 +101,8 @@ class _EntrepriseScreenState extends ConsumerState<EntrepriseScreen> {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
+              _logoSection(),
+              const SizedBox(height: 24),
               _field(_nomCtrl, 'Nom du cabinet', Icons.business_outlined, required: true),
               _field(_adresseCtrl, 'Adresse', Icons.location_on_outlined, maxLines: 3),
               _field(_telCtrl, 'Téléphone', Icons.phone_outlined, keyboard: TextInputType.phone),
@@ -95,6 +124,47 @@ class _EntrepriseScreenState extends ConsumerState<EntrepriseScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _logoSection() {
+    return Column(
+      children: [
+        Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: _logoBytes != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.memory(_logoBytes!, fit: BoxFit.contain),
+                )
+              : const Icon(Icons.image_outlined, size: 40, color: Colors.grey),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            OutlinedButton.icon(
+              icon: const Icon(Icons.upload_outlined, size: 18),
+              label: Text(_logoBytes == null ? 'Charger un logo' : 'Changer le logo'),
+              onPressed: _choisirLogo,
+            ),
+            if (_logoBytes != null) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                onPressed: _supprimerLogo,
+                tooltip: 'Supprimer le logo',
+              ),
+            ],
+          ],
+        ),
+      ],
     );
   }
 

@@ -36,8 +36,9 @@ const _ligneStatutLabels = {
 class ChargesModelePdfService {
   static Future<Uint8List> generate(
     ChargesModele modele,
-    List<ChargesModeleLine> lignes,
-  ) async {
+    List<ChargesModeleLine> lignes, {
+    Uint8List? logoBytes,
+  }) async {
     final pdf = pw.Document();
     final total = lignes.fold<double>(0, (s, l) => s + l.montant);
     final periode = '${_moisLabels[modele.mois]} ${modele.annee}';
@@ -56,16 +57,24 @@ class ChargesModelePdfService {
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
-                pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                pw.Row(
                   children: [
-                    pw.Text('MODÈLE DE CHARGES MENSUELLES',
-                        style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            fontSize: 14,
-                            color: PdfColors.blueGrey800)),
-                    pw.SizedBox(height: 2),
-                    pw.Text(modele.titre, style: const pw.TextStyle(fontSize: 11)),
+                    if (logoBytes != null) ...[
+                      pw.Image(pw.MemoryImage(logoBytes), height: 36),
+                      pw.SizedBox(width: 8),
+                    ],
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text('MODÈLE DE CHARGES MENSUELLES',
+                            style: pw.TextStyle(
+                                fontWeight: pw.FontWeight.bold,
+                                fontSize: 14,
+                                color: PdfColors.blueGrey800)),
+                        pw.SizedBox(height: 2),
+                        pw.Text(modele.titre, style: const pw.TextStyle(fontSize: 11)),
+                      ],
+                    ),
                   ],
                 ),
                 pw.Column(

@@ -11,6 +11,7 @@ import '../../../../core/widgets/save_overlay.dart';
 import '../../../../database/app_database.dart';
 import '../../../clients/data/repositories/client_repository.dart';
 import '../../../clients/presentation/providers/client_provider.dart';
+import '../../../clients/presentation/widgets/quick_client_dialog.dart';
 import '../../data/repositories/dossier_repository.dart';
 import '../providers/dossier_provider.dart';
 
@@ -458,10 +459,15 @@ class _ClientSelectorSheetState extends ConsumerState<_ClientSelectorSheet> {
                         color: AppColors.navy)),
               ),
               TextButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  // Navigate to client creation
-                  // After creation, user returns and selects the new client
+                onPressed: () async {
+                  final newClient = await showDialog<Client>(
+                    context: context,
+                    builder: (_) => const QuickClientDialog(),
+                  );
+                  if (newClient != null && context.mounted) {
+                    ref.invalidate(clientsProvider);
+                    Navigator.pop(context, newClient);
+                  }
                 },
                 icon: const Icon(Icons.add, size: 16),
                 label: const Text('Nouveau'),

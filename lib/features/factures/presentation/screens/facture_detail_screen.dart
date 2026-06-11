@@ -6,6 +6,7 @@ import '../../../../core/utils/format_utils.dart';
 import '../../../../database/app_database.dart';
 import '../../../../shared/services/email_service.dart';
 import '../../../../shared/services/pdf_service.dart';
+import '../../../parametres/data/parametres_provider.dart';
 import '../providers/facture_provider.dart';
 
 class FactureDetailScreen extends ConsumerWidget {
@@ -134,9 +135,14 @@ class FactureDetailScreen extends ConsumerWidget {
           onPressed: lignes == null
               ? null
               : () async {
+                  final entreprise = await ref.read(entrepriseProvider.future);
+                  final logoBytes = await ref.read(logoBytesProvider.future);
                   final pdf = await PdfService.genererFacture(
                     facture: facture,
                     lignes: lignes,
+                    nomEntreprise: entreprise['nom']?.isNotEmpty == true ? entreprise['nom'] : null,
+                    adresseEntreprise: entreprise['adresse']?.isNotEmpty == true ? entreprise['adresse'] : null,
+                    logoBytes: logoBytes,
                   );
                   await Printing.layoutPdf(onLayout: (_) => pdf.save());
                 },

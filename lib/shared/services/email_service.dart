@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../database/app_database.dart';
+import '../../features/parametres/data/parametres_service.dart';
 import 'pdf_service.dart';
 
 final emailServiceProvider = Provider<EmailService>((ref) => EmailService());
@@ -19,7 +20,15 @@ class EmailService {
     required String destinataire,
     String? nomDestinataire,
   }) async {
-    final pdf = await PdfService.genererDevis(devis: devis, lignes: lignes);
+    final entreprise = await ParametresService.getEntreprise();
+    final logoBytes = await ParametresService.getLogoBytes();
+    final pdf = await PdfService.genererDevis(
+      devis: devis,
+      lignes: lignes,
+      nomEntreprise: entreprise['nom']?.isNotEmpty == true ? entreprise['nom'] : null,
+      adresseEntreprise: entreprise['adresse']?.isNotEmpty == true ? entreprise['adresse'] : null,
+      logoBytes: logoBytes,
+    );
     final bytes = await pdf.save();
     await _invoke(
       type: 'devis',
@@ -37,7 +46,15 @@ class EmailService {
     required String destinataire,
     String? nomDestinataire,
   }) async {
-    final pdf = await PdfService.genererFacture(facture: facture, lignes: lignes);
+    final entreprise = await ParametresService.getEntreprise();
+    final logoBytes = await ParametresService.getLogoBytes();
+    final pdf = await PdfService.genererFacture(
+      facture: facture,
+      lignes: lignes,
+      nomEntreprise: entreprise['nom']?.isNotEmpty == true ? entreprise['nom'] : null,
+      adresseEntreprise: entreprise['adresse']?.isNotEmpty == true ? entreprise['adresse'] : null,
+      logoBytes: logoBytes,
+    );
     final bytes = await pdf.save();
     await _invoke(
       type: 'facture',

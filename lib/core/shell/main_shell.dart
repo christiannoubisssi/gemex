@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../theme/app_colors.dart';
 import '../../features/auth/data/auth_provider.dart';
+import '../../features/parametres/data/parametres_provider.dart';
 import '../../features/parametres/data/user_management_service.dart';
 import '../network/connectivity_service.dart';
 
@@ -142,6 +143,25 @@ class _MainShellState extends ConsumerState<MainShell> {
     );
   }
 
+  /// Logo de l'entreprise (ou icône par défaut si non configuré)
+  Widget _logoBox(double size, {required double iconSize}) {
+    final logoBytes = ref.watch(logoBytesProvider).valueOrNull;
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: logoBytes != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.memory(logoBytes, fit: BoxFit.contain),
+            )
+          : Icon(Icons.anchor, size: iconSize, color: Colors.white),
+    );
+  }
+
   Widget _buildNavigationRail(
     BuildContext context,
     List<_NavItemDef> items,
@@ -162,15 +182,7 @@ class _MainShellState extends ConsumerState<MainShell> {
             children: [
               Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Icon(Icons.anchor, size: 20, color: Colors.white),
-                  ),
+                  _logoBox(36, iconSize: 20),
                   const SizedBox(width: 10),
                   const Text(
                     'Gamis',
@@ -242,15 +254,7 @@ class _MainShellState extends ConsumerState<MainShell> {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(Icons.anchor, color: Colors.white),
-                      ),
+                      _logoBox(40, iconSize: 24),
                       const SizedBox(width: 12),
                       const Text(
                         'Gamis',

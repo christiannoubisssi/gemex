@@ -65,6 +65,22 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultValue: const Constant('Gabon'));
+  static const VerificationMeta _numeroTvaMeta =
+      const VerificationMeta('numeroTva');
+  @override
+  late final GeneratedColumn<String> numeroTva = GeneratedColumn<String>(
+      'numero_tva', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _rccmMeta = const VerificationMeta('rccm');
+  @override
+  late final GeneratedColumn<String> rccm = GeneratedColumn<String>(
+      'rccm', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _nifMeta = const VerificationMeta('nif');
+  @override
+  late final GeneratedColumn<String> nif = GeneratedColumn<String>(
+      'nif', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _notesMeta = const VerificationMeta('notes');
   @override
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
@@ -122,6 +138,9 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
         adresse,
         ville,
         pays,
+        numeroTva,
+        rccm,
+        nif,
         notes,
         totalFacture,
         totalPaye,
@@ -192,6 +211,18 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
       context.handle(
           _paysMeta, pays.isAcceptableOrUnknown(data['pays']!, _paysMeta));
     }
+    if (data.containsKey('numero_tva')) {
+      context.handle(_numeroTvaMeta,
+          numeroTva.isAcceptableOrUnknown(data['numero_tva']!, _numeroTvaMeta));
+    }
+    if (data.containsKey('rccm')) {
+      context.handle(
+          _rccmMeta, rccm.isAcceptableOrUnknown(data['rccm']!, _rccmMeta));
+    }
+    if (data.containsKey('nif')) {
+      context.handle(
+          _nifMeta, nif.isAcceptableOrUnknown(data['nif']!, _nifMeta));
+    }
     if (data.containsKey('notes')) {
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
@@ -249,6 +280,12 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
           .read(DriftSqlType.string, data['${effectivePrefix}ville']),
       pays: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}pays'])!,
+      numeroTva: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}numero_tva']),
+      rccm: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}rccm']),
+      nif: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nif']),
       notes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
       totalFacture: attachedDatabase.typeMapping
@@ -281,6 +318,9 @@ class Client extends DataClass implements Insertable<Client> {
   final String? adresse;
   final String? ville;
   final String pays;
+  final String? numeroTva;
+  final String? rccm;
+  final String? nif;
   final String? notes;
   final double totalFacture;
   final double totalPaye;
@@ -298,6 +338,9 @@ class Client extends DataClass implements Insertable<Client> {
       this.adresse,
       this.ville,
       required this.pays,
+      this.numeroTva,
+      this.rccm,
+      this.nif,
       this.notes,
       required this.totalFacture,
       required this.totalPaye,
@@ -327,6 +370,15 @@ class Client extends DataClass implements Insertable<Client> {
       map['ville'] = Variable<String>(ville);
     }
     map['pays'] = Variable<String>(pays);
+    if (!nullToAbsent || numeroTva != null) {
+      map['numero_tva'] = Variable<String>(numeroTva);
+    }
+    if (!nullToAbsent || rccm != null) {
+      map['rccm'] = Variable<String>(rccm);
+    }
+    if (!nullToAbsent || nif != null) {
+      map['nif'] = Variable<String>(nif);
+    }
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
@@ -358,6 +410,11 @@ class Client extends DataClass implements Insertable<Client> {
       ville:
           ville == null && nullToAbsent ? const Value.absent() : Value(ville),
       pays: Value(pays),
+      numeroTva: numeroTva == null && nullToAbsent
+          ? const Value.absent()
+          : Value(numeroTva),
+      rccm: rccm == null && nullToAbsent ? const Value.absent() : Value(rccm),
+      nif: nif == null && nullToAbsent ? const Value.absent() : Value(nif),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
       totalFacture: Value(totalFacture),
@@ -382,6 +439,9 @@ class Client extends DataClass implements Insertable<Client> {
       adresse: serializer.fromJson<String?>(json['adresse']),
       ville: serializer.fromJson<String?>(json['ville']),
       pays: serializer.fromJson<String>(json['pays']),
+      numeroTva: serializer.fromJson<String?>(json['numeroTva']),
+      rccm: serializer.fromJson<String?>(json['rccm']),
+      nif: serializer.fromJson<String?>(json['nif']),
       notes: serializer.fromJson<String?>(json['notes']),
       totalFacture: serializer.fromJson<double>(json['totalFacture']),
       totalPaye: serializer.fromJson<double>(json['totalPaye']),
@@ -404,6 +464,9 @@ class Client extends DataClass implements Insertable<Client> {
       'adresse': serializer.toJson<String?>(adresse),
       'ville': serializer.toJson<String?>(ville),
       'pays': serializer.toJson<String>(pays),
+      'numeroTva': serializer.toJson<String?>(numeroTva),
+      'rccm': serializer.toJson<String?>(rccm),
+      'nif': serializer.toJson<String?>(nif),
       'notes': serializer.toJson<String?>(notes),
       'totalFacture': serializer.toJson<double>(totalFacture),
       'totalPaye': serializer.toJson<double>(totalPaye),
@@ -424,6 +487,9 @@ class Client extends DataClass implements Insertable<Client> {
           Value<String?> adresse = const Value.absent(),
           Value<String?> ville = const Value.absent(),
           String? pays,
+          Value<String?> numeroTva = const Value.absent(),
+          Value<String?> rccm = const Value.absent(),
+          Value<String?> nif = const Value.absent(),
           Value<String?> notes = const Value.absent(),
           double? totalFacture,
           double? totalPaye,
@@ -441,6 +507,9 @@ class Client extends DataClass implements Insertable<Client> {
         adresse: adresse.present ? adresse.value : this.adresse,
         ville: ville.present ? ville.value : this.ville,
         pays: pays ?? this.pays,
+        numeroTva: numeroTva.present ? numeroTva.value : this.numeroTva,
+        rccm: rccm.present ? rccm.value : this.rccm,
+        nif: nif.present ? nif.value : this.nif,
         notes: notes.present ? notes.value : this.notes,
         totalFacture: totalFacture ?? this.totalFacture,
         totalPaye: totalPaye ?? this.totalPaye,
@@ -464,6 +533,9 @@ class Client extends DataClass implements Insertable<Client> {
       adresse: data.adresse.present ? data.adresse.value : this.adresse,
       ville: data.ville.present ? data.ville.value : this.ville,
       pays: data.pays.present ? data.pays.value : this.pays,
+      numeroTva: data.numeroTva.present ? data.numeroTva.value : this.numeroTva,
+      rccm: data.rccm.present ? data.rccm.value : this.rccm,
+      nif: data.nif.present ? data.nif.value : this.nif,
       notes: data.notes.present ? data.notes.value : this.notes,
       totalFacture: data.totalFacture.present
           ? data.totalFacture.value
@@ -489,6 +561,9 @@ class Client extends DataClass implements Insertable<Client> {
           ..write('adresse: $adresse, ')
           ..write('ville: $ville, ')
           ..write('pays: $pays, ')
+          ..write('numeroTva: $numeroTva, ')
+          ..write('rccm: $rccm, ')
+          ..write('nif: $nif, ')
           ..write('notes: $notes, ')
           ..write('totalFacture: $totalFacture, ')
           ..write('totalPaye: $totalPaye, ')
@@ -511,6 +586,9 @@ class Client extends DataClass implements Insertable<Client> {
       adresse,
       ville,
       pays,
+      numeroTva,
+      rccm,
+      nif,
       notes,
       totalFacture,
       totalPaye,
@@ -531,6 +609,9 @@ class Client extends DataClass implements Insertable<Client> {
           other.adresse == this.adresse &&
           other.ville == this.ville &&
           other.pays == this.pays &&
+          other.numeroTva == this.numeroTva &&
+          other.rccm == this.rccm &&
+          other.nif == this.nif &&
           other.notes == this.notes &&
           other.totalFacture == this.totalFacture &&
           other.totalPaye == this.totalPaye &&
@@ -550,6 +631,9 @@ class ClientsCompanion extends UpdateCompanion<Client> {
   final Value<String?> adresse;
   final Value<String?> ville;
   final Value<String> pays;
+  final Value<String?> numeroTva;
+  final Value<String?> rccm;
+  final Value<String?> nif;
   final Value<String?> notes;
   final Value<double> totalFacture;
   final Value<double> totalPaye;
@@ -568,6 +652,9 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     this.adresse = const Value.absent(),
     this.ville = const Value.absent(),
     this.pays = const Value.absent(),
+    this.numeroTva = const Value.absent(),
+    this.rccm = const Value.absent(),
+    this.nif = const Value.absent(),
     this.notes = const Value.absent(),
     this.totalFacture = const Value.absent(),
     this.totalPaye = const Value.absent(),
@@ -587,6 +674,9 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     this.adresse = const Value.absent(),
     this.ville = const Value.absent(),
     this.pays = const Value.absent(),
+    this.numeroTva = const Value.absent(),
+    this.rccm = const Value.absent(),
+    this.nif = const Value.absent(),
     this.notes = const Value.absent(),
     this.totalFacture = const Value.absent(),
     this.totalPaye = const Value.absent(),
@@ -609,6 +699,9 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     Expression<String>? adresse,
     Expression<String>? ville,
     Expression<String>? pays,
+    Expression<String>? numeroTva,
+    Expression<String>? rccm,
+    Expression<String>? nif,
     Expression<String>? notes,
     Expression<double>? totalFacture,
     Expression<double>? totalPaye,
@@ -628,6 +721,9 @@ class ClientsCompanion extends UpdateCompanion<Client> {
       if (adresse != null) 'adresse': adresse,
       if (ville != null) 'ville': ville,
       if (pays != null) 'pays': pays,
+      if (numeroTva != null) 'numero_tva': numeroTva,
+      if (rccm != null) 'rccm': rccm,
+      if (nif != null) 'nif': nif,
       if (notes != null) 'notes': notes,
       if (totalFacture != null) 'total_facture': totalFacture,
       if (totalPaye != null) 'total_paye': totalPaye,
@@ -649,6 +745,9 @@ class ClientsCompanion extends UpdateCompanion<Client> {
       Value<String?>? adresse,
       Value<String?>? ville,
       Value<String>? pays,
+      Value<String?>? numeroTva,
+      Value<String?>? rccm,
+      Value<String?>? nif,
       Value<String?>? notes,
       Value<double>? totalFacture,
       Value<double>? totalPaye,
@@ -667,6 +766,9 @@ class ClientsCompanion extends UpdateCompanion<Client> {
       adresse: adresse ?? this.adresse,
       ville: ville ?? this.ville,
       pays: pays ?? this.pays,
+      numeroTva: numeroTva ?? this.numeroTva,
+      rccm: rccm ?? this.rccm,
+      nif: nif ?? this.nif,
       notes: notes ?? this.notes,
       totalFacture: totalFacture ?? this.totalFacture,
       totalPaye: totalPaye ?? this.totalPaye,
@@ -710,6 +812,15 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     if (pays.present) {
       map['pays'] = Variable<String>(pays.value);
     }
+    if (numeroTva.present) {
+      map['numero_tva'] = Variable<String>(numeroTva.value);
+    }
+    if (rccm.present) {
+      map['rccm'] = Variable<String>(rccm.value);
+    }
+    if (nif.present) {
+      map['nif'] = Variable<String>(nif.value);
+    }
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
@@ -747,9 +858,479 @@ class ClientsCompanion extends UpdateCompanion<Client> {
           ..write('adresse: $adresse, ')
           ..write('ville: $ville, ')
           ..write('pays: $pays, ')
+          ..write('numeroTva: $numeroTva, ')
+          ..write('rccm: $rccm, ')
+          ..write('nif: $nif, ')
           ..write('notes: $notes, ')
           ..write('totalFacture: $totalFacture, ')
           ..write('totalPaye: $totalPaye, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ClientContactsTable extends ClientContacts
+    with TableInfo<$ClientContactsTable, ClientContact> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ClientContactsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _clientIdMeta =
+      const VerificationMeta('clientId');
+  @override
+  late final GeneratedColumn<String> clientId = GeneratedColumn<String>(
+      'client_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nomMeta = const VerificationMeta('nom');
+  @override
+  late final GeneratedColumn<String> nom = GeneratedColumn<String>(
+      'nom', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _fonctionMeta =
+      const VerificationMeta('fonction');
+  @override
+  late final GeneratedColumn<String> fonction = GeneratedColumn<String>(
+      'fonction', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _telephoneMeta =
+      const VerificationMeta('telephone');
+  @override
+  late final GeneratedColumn<String> telephone = GeneratedColumn<String>(
+      'telephone', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+      'email', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+      'sync_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        clientId,
+        nom,
+        fonction,
+        telephone,
+        email,
+        syncStatus,
+        createdAt,
+        updatedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'client_contacts';
+  @override
+  VerificationContext validateIntegrity(Insertable<ClientContact> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('client_id')) {
+      context.handle(_clientIdMeta,
+          clientId.isAcceptableOrUnknown(data['client_id']!, _clientIdMeta));
+    } else if (isInserting) {
+      context.missing(_clientIdMeta);
+    }
+    if (data.containsKey('nom')) {
+      context.handle(
+          _nomMeta, nom.isAcceptableOrUnknown(data['nom']!, _nomMeta));
+    } else if (isInserting) {
+      context.missing(_nomMeta);
+    }
+    if (data.containsKey('fonction')) {
+      context.handle(_fonctionMeta,
+          fonction.isAcceptableOrUnknown(data['fonction']!, _fonctionMeta));
+    }
+    if (data.containsKey('telephone')) {
+      context.handle(_telephoneMeta,
+          telephone.isAcceptableOrUnknown(data['telephone']!, _telephoneMeta));
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+          _emailMeta, email.isAcceptableOrUnknown(data['email']!, _emailMeta));
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+          _syncStatusMeta,
+          syncStatus.isAcceptableOrUnknown(
+              data['sync_status']!, _syncStatusMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ClientContact map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ClientContact(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      clientId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}client_id'])!,
+      nom: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nom'])!,
+      fonction: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}fonction']),
+      telephone: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}telephone']),
+      email: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}email']),
+      syncStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $ClientContactsTable createAlias(String alias) {
+    return $ClientContactsTable(attachedDatabase, alias);
+  }
+}
+
+class ClientContact extends DataClass implements Insertable<ClientContact> {
+  final String id;
+  final String clientId;
+  final String nom;
+  final String? fonction;
+  final String? telephone;
+  final String? email;
+  final String syncStatus;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const ClientContact(
+      {required this.id,
+      required this.clientId,
+      required this.nom,
+      this.fonction,
+      this.telephone,
+      this.email,
+      required this.syncStatus,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['client_id'] = Variable<String>(clientId);
+    map['nom'] = Variable<String>(nom);
+    if (!nullToAbsent || fonction != null) {
+      map['fonction'] = Variable<String>(fonction);
+    }
+    if (!nullToAbsent || telephone != null) {
+      map['telephone'] = Variable<String>(telephone);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    map['sync_status'] = Variable<String>(syncStatus);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ClientContactsCompanion toCompanion(bool nullToAbsent) {
+    return ClientContactsCompanion(
+      id: Value(id),
+      clientId: Value(clientId),
+      nom: Value(nom),
+      fonction: fonction == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fonction),
+      telephone: telephone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(telephone),
+      email:
+          email == null && nullToAbsent ? const Value.absent() : Value(email),
+      syncStatus: Value(syncStatus),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ClientContact.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ClientContact(
+      id: serializer.fromJson<String>(json['id']),
+      clientId: serializer.fromJson<String>(json['clientId']),
+      nom: serializer.fromJson<String>(json['nom']),
+      fonction: serializer.fromJson<String?>(json['fonction']),
+      telephone: serializer.fromJson<String?>(json['telephone']),
+      email: serializer.fromJson<String?>(json['email']),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'clientId': serializer.toJson<String>(clientId),
+      'nom': serializer.toJson<String>(nom),
+      'fonction': serializer.toJson<String?>(fonction),
+      'telephone': serializer.toJson<String?>(telephone),
+      'email': serializer.toJson<String?>(email),
+      'syncStatus': serializer.toJson<String>(syncStatus),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ClientContact copyWith(
+          {String? id,
+          String? clientId,
+          String? nom,
+          Value<String?> fonction = const Value.absent(),
+          Value<String?> telephone = const Value.absent(),
+          Value<String?> email = const Value.absent(),
+          String? syncStatus,
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      ClientContact(
+        id: id ?? this.id,
+        clientId: clientId ?? this.clientId,
+        nom: nom ?? this.nom,
+        fonction: fonction.present ? fonction.value : this.fonction,
+        telephone: telephone.present ? telephone.value : this.telephone,
+        email: email.present ? email.value : this.email,
+        syncStatus: syncStatus ?? this.syncStatus,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  ClientContact copyWithCompanion(ClientContactsCompanion data) {
+    return ClientContact(
+      id: data.id.present ? data.id.value : this.id,
+      clientId: data.clientId.present ? data.clientId.value : this.clientId,
+      nom: data.nom.present ? data.nom.value : this.nom,
+      fonction: data.fonction.present ? data.fonction.value : this.fonction,
+      telephone: data.telephone.present ? data.telephone.value : this.telephone,
+      email: data.email.present ? data.email.value : this.email,
+      syncStatus:
+          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClientContact(')
+          ..write('id: $id, ')
+          ..write('clientId: $clientId, ')
+          ..write('nom: $nom, ')
+          ..write('fonction: $fonction, ')
+          ..write('telephone: $telephone, ')
+          ..write('email: $email, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, clientId, nom, fonction, telephone, email,
+      syncStatus, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ClientContact &&
+          other.id == this.id &&
+          other.clientId == this.clientId &&
+          other.nom == this.nom &&
+          other.fonction == this.fonction &&
+          other.telephone == this.telephone &&
+          other.email == this.email &&
+          other.syncStatus == this.syncStatus &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ClientContactsCompanion extends UpdateCompanion<ClientContact> {
+  final Value<String> id;
+  final Value<String> clientId;
+  final Value<String> nom;
+  final Value<String?> fonction;
+  final Value<String?> telephone;
+  final Value<String?> email;
+  final Value<String> syncStatus;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const ClientContactsCompanion({
+    this.id = const Value.absent(),
+    this.clientId = const Value.absent(),
+    this.nom = const Value.absent(),
+    this.fonction = const Value.absent(),
+    this.telephone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ClientContactsCompanion.insert({
+    required String id,
+    required String clientId,
+    required String nom,
+    this.fonction = const Value.absent(),
+    this.telephone = const Value.absent(),
+    this.email = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        clientId = Value(clientId),
+        nom = Value(nom);
+  static Insertable<ClientContact> custom({
+    Expression<String>? id,
+    Expression<String>? clientId,
+    Expression<String>? nom,
+    Expression<String>? fonction,
+    Expression<String>? telephone,
+    Expression<String>? email,
+    Expression<String>? syncStatus,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (clientId != null) 'client_id': clientId,
+      if (nom != null) 'nom': nom,
+      if (fonction != null) 'fonction': fonction,
+      if (telephone != null) 'telephone': telephone,
+      if (email != null) 'email': email,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ClientContactsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? clientId,
+      Value<String>? nom,
+      Value<String?>? fonction,
+      Value<String?>? telephone,
+      Value<String?>? email,
+      Value<String>? syncStatus,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return ClientContactsCompanion(
+      id: id ?? this.id,
+      clientId: clientId ?? this.clientId,
+      nom: nom ?? this.nom,
+      fonction: fonction ?? this.fonction,
+      telephone: telephone ?? this.telephone,
+      email: email ?? this.email,
+      syncStatus: syncStatus ?? this.syncStatus,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (clientId.present) {
+      map['client_id'] = Variable<String>(clientId.value);
+    }
+    if (nom.present) {
+      map['nom'] = Variable<String>(nom.value);
+    }
+    if (fonction.present) {
+      map['fonction'] = Variable<String>(fonction.value);
+    }
+    if (telephone.present) {
+      map['telephone'] = Variable<String>(telephone.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ClientContactsCompanion(')
+          ..write('id: $id, ')
+          ..write('clientId: $clientId, ')
+          ..write('nom: $nom, ')
+          ..write('fonction: $fonction, ')
+          ..write('telephone: $telephone, ')
+          ..write('email: $email, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -11332,6 +11913,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $ClientsTable clients = $ClientsTable(this);
+  late final $ClientContactsTable clientContacts = $ClientContactsTable(this);
   late final $DossiersTable dossiers = $DossiersTable(this);
   late final $DevisTable devis = $DevisTable(this);
   late final $DevisLignesTable devisLignes = $DevisLignesTable(this);
@@ -11348,6 +11930,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PiecesJointesTable piecesJointes = $PiecesJointesTable(this);
   late final $SyncQueueTable syncQueue = $SyncQueueTable(this);
   late final ClientsDao clientsDao = ClientsDao(this as AppDatabase);
+  late final ClientContactsDao clientContactsDao =
+      ClientContactsDao(this as AppDatabase);
   late final DossiersDao dossiersDao = DossiersDao(this as AppDatabase);
   late final DevisDao devisDao = DevisDao(this as AppDatabase);
   late final FacturesDao facturesDao = FacturesDao(this as AppDatabase);
@@ -11367,6 +11951,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         clients,
+        clientContacts,
         dossiers,
         devis,
         devisLignes,
@@ -11395,6 +11980,9 @@ typedef $$ClientsTableCreateCompanionBuilder = ClientsCompanion Function({
   Value<String?> adresse,
   Value<String?> ville,
   Value<String> pays,
+  Value<String?> numeroTva,
+  Value<String?> rccm,
+  Value<String?> nif,
   Value<String?> notes,
   Value<double> totalFacture,
   Value<double> totalPaye,
@@ -11414,6 +12002,9 @@ typedef $$ClientsTableUpdateCompanionBuilder = ClientsCompanion Function({
   Value<String?> adresse,
   Value<String?> ville,
   Value<String> pays,
+  Value<String?> numeroTva,
+  Value<String?> rccm,
+  Value<String?> nif,
   Value<String?> notes,
   Value<double> totalFacture,
   Value<double> totalPaye,
@@ -11461,6 +12052,15 @@ class $$ClientsTableFilterComposer
 
   ColumnFilters<String> get pays => $composableBuilder(
       column: $table.pays, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get numeroTva => $composableBuilder(
+      column: $table.numeroTva, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get rccm => $composableBuilder(
+      column: $table.rccm, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nif => $composableBuilder(
+      column: $table.nif, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnFilters(column));
@@ -11521,6 +12121,15 @@ class $$ClientsTableOrderingComposer
   ColumnOrderings<String> get pays => $composableBuilder(
       column: $table.pays, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get numeroTva => $composableBuilder(
+      column: $table.numeroTva, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get rccm => $composableBuilder(
+      column: $table.rccm, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nif => $composableBuilder(
+      column: $table.nif, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnOrderings(column));
 
@@ -11580,6 +12189,15 @@ class $$ClientsTableAnnotationComposer
   GeneratedColumn<String> get pays =>
       $composableBuilder(column: $table.pays, builder: (column) => column);
 
+  GeneratedColumn<String> get numeroTva =>
+      $composableBuilder(column: $table.numeroTva, builder: (column) => column);
+
+  GeneratedColumn<String> get rccm =>
+      $composableBuilder(column: $table.rccm, builder: (column) => column);
+
+  GeneratedColumn<String> get nif =>
+      $composableBuilder(column: $table.nif, builder: (column) => column);
+
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
@@ -11632,6 +12250,9 @@ class $$ClientsTableTableManager extends RootTableManager<
             Value<String?> adresse = const Value.absent(),
             Value<String?> ville = const Value.absent(),
             Value<String> pays = const Value.absent(),
+            Value<String?> numeroTva = const Value.absent(),
+            Value<String?> rccm = const Value.absent(),
+            Value<String?> nif = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<double> totalFacture = const Value.absent(),
             Value<double> totalPaye = const Value.absent(),
@@ -11651,6 +12272,9 @@ class $$ClientsTableTableManager extends RootTableManager<
             adresse: adresse,
             ville: ville,
             pays: pays,
+            numeroTva: numeroTva,
+            rccm: rccm,
+            nif: nif,
             notes: notes,
             totalFacture: totalFacture,
             totalPaye: totalPaye,
@@ -11670,6 +12294,9 @@ class $$ClientsTableTableManager extends RootTableManager<
             Value<String?> adresse = const Value.absent(),
             Value<String?> ville = const Value.absent(),
             Value<String> pays = const Value.absent(),
+            Value<String?> numeroTva = const Value.absent(),
+            Value<String?> rccm = const Value.absent(),
+            Value<String?> nif = const Value.absent(),
             Value<String?> notes = const Value.absent(),
             Value<double> totalFacture = const Value.absent(),
             Value<double> totalPaye = const Value.absent(),
@@ -11689,6 +12316,9 @@ class $$ClientsTableTableManager extends RootTableManager<
             adresse: adresse,
             ville: ville,
             pays: pays,
+            numeroTva: numeroTva,
+            rccm: rccm,
+            nif: nif,
             notes: notes,
             totalFacture: totalFacture,
             totalPaye: totalPaye,
@@ -11715,6 +12345,240 @@ typedef $$ClientsTableProcessedTableManager = ProcessedTableManager<
     $$ClientsTableUpdateCompanionBuilder,
     (Client, BaseReferences<_$AppDatabase, $ClientsTable, Client>),
     Client,
+    PrefetchHooks Function()>;
+typedef $$ClientContactsTableCreateCompanionBuilder = ClientContactsCompanion
+    Function({
+  required String id,
+  required String clientId,
+  required String nom,
+  Value<String?> fonction,
+  Value<String?> telephone,
+  Value<String?> email,
+  Value<String> syncStatus,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+typedef $$ClientContactsTableUpdateCompanionBuilder = ClientContactsCompanion
+    Function({
+  Value<String> id,
+  Value<String> clientId,
+  Value<String> nom,
+  Value<String?> fonction,
+  Value<String?> telephone,
+  Value<String?> email,
+  Value<String> syncStatus,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$ClientContactsTableFilterComposer
+    extends Composer<_$AppDatabase, $ClientContactsTable> {
+  $$ClientContactsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get clientId => $composableBuilder(
+      column: $table.clientId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nom => $composableBuilder(
+      column: $table.nom, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get fonction => $composableBuilder(
+      column: $table.fonction, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get telephone => $composableBuilder(
+      column: $table.telephone, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$ClientContactsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ClientContactsTable> {
+  $$ClientContactsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get clientId => $composableBuilder(
+      column: $table.clientId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nom => $composableBuilder(
+      column: $table.nom, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get fonction => $composableBuilder(
+      column: $table.fonction, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get telephone => $composableBuilder(
+      column: $table.telephone, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get email => $composableBuilder(
+      column: $table.email, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ClientContactsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ClientContactsTable> {
+  $$ClientContactsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get clientId =>
+      $composableBuilder(column: $table.clientId, builder: (column) => column);
+
+  GeneratedColumn<String> get nom =>
+      $composableBuilder(column: $table.nom, builder: (column) => column);
+
+  GeneratedColumn<String> get fonction =>
+      $composableBuilder(column: $table.fonction, builder: (column) => column);
+
+  GeneratedColumn<String> get telephone =>
+      $composableBuilder(column: $table.telephone, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ClientContactsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ClientContactsTable,
+    ClientContact,
+    $$ClientContactsTableFilterComposer,
+    $$ClientContactsTableOrderingComposer,
+    $$ClientContactsTableAnnotationComposer,
+    $$ClientContactsTableCreateCompanionBuilder,
+    $$ClientContactsTableUpdateCompanionBuilder,
+    (
+      ClientContact,
+      BaseReferences<_$AppDatabase, $ClientContactsTable, ClientContact>
+    ),
+    ClientContact,
+    PrefetchHooks Function()> {
+  $$ClientContactsTableTableManager(
+      _$AppDatabase db, $ClientContactsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ClientContactsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ClientContactsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ClientContactsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> clientId = const Value.absent(),
+            Value<String> nom = const Value.absent(),
+            Value<String?> fonction = const Value.absent(),
+            Value<String?> telephone = const Value.absent(),
+            Value<String?> email = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ClientContactsCompanion(
+            id: id,
+            clientId: clientId,
+            nom: nom,
+            fonction: fonction,
+            telephone: telephone,
+            email: email,
+            syncStatus: syncStatus,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String clientId,
+            required String nom,
+            Value<String?> fonction = const Value.absent(),
+            Value<String?> telephone = const Value.absent(),
+            Value<String?> email = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ClientContactsCompanion.insert(
+            id: id,
+            clientId: clientId,
+            nom: nom,
+            fonction: fonction,
+            telephone: telephone,
+            email: email,
+            syncStatus: syncStatus,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ClientContactsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ClientContactsTable,
+    ClientContact,
+    $$ClientContactsTableFilterComposer,
+    $$ClientContactsTableOrderingComposer,
+    $$ClientContactsTableAnnotationComposer,
+    $$ClientContactsTableCreateCompanionBuilder,
+    $$ClientContactsTableUpdateCompanionBuilder,
+    (
+      ClientContact,
+      BaseReferences<_$AppDatabase, $ClientContactsTable, ClientContact>
+    ),
+    ClientContact,
     PrefetchHooks Function()>;
 typedef $$DossiersTableCreateCompanionBuilder = DossiersCompanion Function({
   required String id,
@@ -16395,6 +17259,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$ClientsTableTableManager get clients =>
       $$ClientsTableTableManager(_db, _db.clients);
+  $$ClientContactsTableTableManager get clientContacts =>
+      $$ClientContactsTableTableManager(_db, _db.clientContacts);
   $$DossiersTableTableManager get dossiers =>
       $$DossiersTableTableManager(_db, _db.dossiers);
   $$DevisTableTableManager get devis =>

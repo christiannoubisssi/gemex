@@ -11,6 +11,9 @@ class Clients extends Table {
   TextColumn get adresse => text().nullable()();
   TextColumn get ville => text().nullable()();
   TextColumn get pays => text().withDefault(const Constant('Gabon'))();
+  TextColumn get numeroTva => text().nullable()();
+  TextColumn get rccm => text().nullable()();
+  TextColumn get nif => text().nullable()();
   TextColumn get notes => text().nullable()();
   RealColumn get totalFacture => real().withDefault(const Constant(0.0))();
   RealColumn get totalPaye => real().withDefault(const Constant(0.0))();

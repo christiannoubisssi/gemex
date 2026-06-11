@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/services/app_logger.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../parametres/data/parametres_provider.dart';
 import '../../data/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -92,18 +93,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 32),
-                  // Logo placeholder
-                  Container(
-                    width: 80,
-                    height: 80,
-                    margin: const EdgeInsets.only(bottom: 24),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child:
-                        const Icon(Icons.anchor, size: 48, color: Colors.white),
+                  // Logo de l'entreprise (ou icône par défaut si non configuré)
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final logoAsync = ref.watch(logoBytesProvider);
+                      final logoBytes = logoAsync.valueOrNull;
+                      return Container(
+                        width: 80,
+                        height: 80,
+                        margin: const EdgeInsets.only(bottom: 24),
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: logoBytes != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.memory(logoBytes, fit: BoxFit.contain),
+                              )
+                            : const Icon(Icons.anchor, size: 48, color: Colors.white),
+                      );
+                    },
                   ),
                   const Text(
                     'Gamis',

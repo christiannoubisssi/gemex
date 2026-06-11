@@ -8,6 +8,7 @@ import '../../../../core/utils/format_utils.dart';
 import '../../../../database/app_database.dart';
 import '../providers/charges_modeles_provider.dart';
 import '../../../../shared/services/charges_modele_pdf_service.dart';
+import '../../../parametres/data/parametres_provider.dart';
 
 const _moisLabels = [
   '', 'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
@@ -91,8 +92,9 @@ class _DetailView extends ConsumerWidget {
             tooltip: 'Imprimer / PDF',
             onPressed: () async {
               final lignes = await AppDatabase.instance.chargesModelesDao.getLignes(modele.id);
+              final logoBytes = await ref.read(logoBytesProvider.future);
               await Printing.layoutPdf(
-                onLayout: (_) => ChargesModelePdfService.generate(modele, lignes),
+                onLayout: (_) => ChargesModelePdfService.generate(modele, lignes, logoBytes: logoBytes),
               );
             },
           ),

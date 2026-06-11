@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ParametresService {
@@ -69,6 +70,33 @@ class ParametresService {
     for (final entry in data.entries) {
       await setString('$_prefixEntreprise${entry.key}', entry.value);
     }
+  }
+
+  // Logo entreprise (encodé en base64, utilisé pour l'app et les PDF générés)
+  static const _keyLogoBase64 = '${_prefixEntreprise}logo_base64';
+
+  static Future<String?> getLogoBase64() async {
+    final value = await getString(_keyLogoBase64);
+    return value.isEmpty ? null : value;
+  }
+
+  static Future<Uint8List?> getLogoBytes() async {
+    final b64 = await getLogoBase64();
+    if (b64 == null) return null;
+    try {
+      return base64Decode(b64);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> saveLogoBase64(String base64) async {
+    await setString(_keyLogoBase64, base64);
+  }
+
+  static Future<void> removeLogo() async {
+    final prefs = await _prefs;
+    await prefs.remove(_keyLogoBase64);
   }
 
   // Fiscal

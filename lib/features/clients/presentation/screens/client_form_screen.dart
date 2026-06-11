@@ -112,6 +112,27 @@ class _ClientFormScreenState extends ConsumerState<ClientFormScreen> {
               initialValue: _existing?.ville,
               decoration: const InputDecoration(labelText: 'Ville'),
             ),
+            const SizedBox(height: 20),
+            const Text('Informations fiscales',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 12),
+            FormBuilderTextField(
+              name: 'numero_tva',
+              initialValue: _existing?.numeroTva,
+              decoration: const InputDecoration(labelText: 'N° TVA'),
+            ),
+            const SizedBox(height: 12),
+            FormBuilderTextField(
+              name: 'rccm',
+              initialValue: _existing?.rccm,
+              decoration: const InputDecoration(labelText: 'N° RCCM'),
+            ),
+            const SizedBox(height: 12),
+            FormBuilderTextField(
+              name: 'nif',
+              initialValue: _existing?.nif,
+              decoration: const InputDecoration(labelText: 'N° NIF'),
+            ),
             const SizedBox(height: 12),
             FormBuilderTextField(
               name: 'notes',

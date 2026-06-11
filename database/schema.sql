@@ -152,12 +152,20 @@ create table if not exists public.clients (
   adresse       text,
   ville         text,
   pays          text not null default 'Gabon',
+  numero_tva    text,
+  rccm          text,
+  nif           text,
   notes         text,
   total_facture double precision not null default 0,
   total_paye    double precision not null default 0,
   created_at    timestamptz not null default now(),
   updated_at    timestamptz not null default now()
 );
+
+-- Ajout colonnes facturation (si table déjà existante)
+alter table public.clients add column if not exists numero_tva text;
+alter table public.clients add column if not exists rccm text;
+alter table public.clients add column if not exists nif text;
 
 alter table public.clients enable row level security;
 drop policy if exists "Authentifié - accès complet" on public.clients;
@@ -166,6 +174,27 @@ create policy "Authentifié - accès complet" on public.clients
 
 drop trigger if exists trg_clients_updated_at on public.clients;
 create trigger trg_clients_updated_at before update on public.clients
+  for each row execute procedure public.set_updated_at();
+
+-- ─── Contacts clients (multi-contacts par client) ──────────────────────────
+create table if not exists public.client_contacts (
+  id          text primary key,
+  client_id   text not null references public.clients(id) on delete cascade,
+  nom         text not null,
+  fonction    text,
+  telephone   text,
+  email       text,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.client_contacts enable row level security;
+drop policy if exists "Authentifié - accès complet" on public.client_contacts;
+create policy "Authentifié - accès complet" on public.client_contacts
+  for all using (auth.uid() is not null) with check (auth.uid() is not null);
+
+drop trigger if exists trg_client_contacts_updated_at on public.client_contacts;
+create trigger trg_client_contacts_updated_at before update on public.client_contacts
   for each row execute procedure public.set_updated_at();
 
 -- ─── Dossiers ───────────────────────────────────────────────────────────────
