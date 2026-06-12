@@ -6,6 +6,9 @@ on:
     paths-ignore:
       - 'build/web/**'   # évite la boucle infinie quand CI commit les artefacts
 
+permissions:
+  contents: write   # requis pour le commit & push de build/web
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
