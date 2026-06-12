@@ -25,6 +25,7 @@ jobs:
 
       - name: Générer supabase_config.dart
         run: |
+          mkdir -p lib/core/config
           cat > lib/core/config/supabase_config.dart <<EOF
           class SupabaseConfig {
             static const String url = '${{ secrets.SUPABASE_URL }}';
