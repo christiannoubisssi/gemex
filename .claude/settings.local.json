@@ -13,7 +13,9 @@
       "Bash(xargs grep *)",
       "Bash(rtk curl *)",
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://ykbpigrbpclxottcnhcc.supabase.co/rest/v1/\" -Headers @{apikey=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrYnBpZ3JicGNseG90dGNuaGNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczOTAxMjksImV4cCI6MjA5Mjk2NjEyOX0.WIdW9OhKCIcOxYt2Xsg2oPJKGIXj5G2NL3nI2FZWo60\"} -UseBasicParsing; \"STATUS: $\\($r.StatusCode\\)\"; $r.Content } catch { \"ERROR: $\\($_.Exception.Message\\)\"; if \\($_.Exception.Response\\) { $stream = $_.Exception.Response.GetResponseStream\\(\\); $reader = New-Object System.IO.StreamReader\\($stream\\); $reader.ReadToEnd\\(\\) } })",
-      "Bash(rtk wc *)"
+      "Bash(rtk wc *)",
+      "Bash(tasklist)",
+      "Bash(findstr /i \"dart flutter\")"
     ]
   }
 }
