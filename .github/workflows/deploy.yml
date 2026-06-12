@@ -52,4 +52,10 @@ jobs:
           git add -f build/web
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "ci: update build/web [skip ci]"
-          git push
+          git push || {
+            # Push rejeté : une autre run concurrente a peut-être déjà poussé le même build.
+            echo "Push rejeté, vérification si build/web est déjà à jour sur origin..."
+            git fetch origin main
+            git diff --quiet HEAD origin/main -- build/web && echo "build/web déjà synchronisé par une autre run, rien à faire" && exit 0
+            echo "Conflit réel sur build/web — intervention manuelle requise" && exit 1
+          }
