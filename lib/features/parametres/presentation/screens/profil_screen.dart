@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/text_formatters.dart';
 import '../../../auth/data/auth_provider.dart';
+import '../../data/user_management_service.dart';
 
 class ProfilScreen extends ConsumerStatefulWidget {
   const ProfilScreen({super.key});
@@ -14,9 +17,12 @@ class _ProfilScreenState extends ConsumerState<ProfilScreen> {
   final _nomCtrl = TextEditingController();
   final _telCtrl = TextEditingController();
   final _pwdCtrl = TextEditingController();
+  final _initialesCtrl = TextEditingController();
   bool _saving = false;
+  bool _savingInitiales = false;
   bool _changingPwd = false;
   bool _obscurePwd = true;
+  bool _initialesLoaded = false;
 
   @override
   void initState() {
@@ -48,6 +54,26 @@ class _ProfilScreenState extends ConsumerState<ProfilScreen> {
     setState(() => _saving = false);
   }
 
+  Future<void> _saveInitiales() async {
+    setState(() => _savingInitiales = true);
+    try {
+      await ref
+          .read(userManagementServiceProvider)
+          .updateMyInitiales(_initialesCtrl.text.trim().toUpperCase());
+      ref.invalidate(currentProfileProvider);
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Initiales mises à jour')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Erreur : $e')));
+      }
+    }
+    setState(() => _savingInitiales = false);
+  }
+
   Future<void> _changePassword() async {
     if (_pwdCtrl.text.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,12 +103,18 @@ class _ProfilScreenState extends ConsumerState<ProfilScreen> {
     _nomCtrl.dispose();
     _telCtrl.dispose();
     _pwdCtrl.dispose();
+    _initialesCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
+    final profile = ref.watch(currentProfileProvider).valueOrNull;
+    if (profile != null && !_initialesLoaded) {
+      _initialesCtrl.text = profile.initiales ?? '';
+      _initialesLoaded = true;
+    }
     return Scaffold(
       appBar: AppBar(title: const Text('Mon profil')),
       body: SingleChildScrollView(
@@ -145,6 +177,52 @@ class _ProfilScreenState extends ConsumerState<ProfilScreen> {
                 label: const Text('Enregistrer le profil'),
                 onPressed: _saving ? null : _saveProfil,
               ),
+            ),
+            const SizedBox(height: 32),
+            const Text('Initiales',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: AppColors.navy)),
+            const SizedBox(height: 4),
+            const Text(
+              'Utilisées dans la numérotation des devis et factures.',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 100,
+                  child: TextFormField(
+                    controller: _initialesCtrl,
+                    maxLength: 2,
+                    textCapitalization: TextCapitalization.characters,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp('[a-zA-Z]')),
+                      UpperCaseTextFormatter(),
+                    ],
+                    decoration: const InputDecoration(
+                      labelText: 'Initiales',
+                      counterText: '',
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: ElevatedButton.icon(
+                    icon: _savingInitiales
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white))
+                        : const Icon(Icons.save_outlined),
+                    label: const Text('Enregistrer'),
+                    onPressed: _savingInitiales ? null : _saveInitiales,
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 32),
             const Text('Sécurité',

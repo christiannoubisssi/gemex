@@ -36,6 +36,7 @@ import '../../features/parametres/presentation/screens/entreprise_screen.dart';
 import '../../features/parametres/presentation/screens/document_layout_screen.dart';
 import '../../features/parametres/presentation/screens/fiscalite_screen.dart';
 import '../../features/parametres/presentation/screens/types_mission_screen.dart';
+import '../../features/parametres/presentation/screens/numerotation_screen.dart';
 import '../../features/parametres/presentation/screens/utilisateurs_screen.dart';
 import '../../features/parametres/presentation/screens/profil_screen.dart';
 import '../../features/parametres/presentation/screens/securite_screen.dart';
@@ -209,6 +210,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(path: 'documents', builder: (_, __) => const DocumentLayoutScreen()),
               GoRoute(path: 'fiscalite', builder: (_, __) => const FiscaliteScreen()),
               GoRoute(path: 'types-mission', builder: (_, __) => const TypesMissionScreen()),
+              GoRoute(path: 'numerotation', builder: (_, __) => const NumerotationScreen()),
               GoRoute(path: 'utilisateurs', builder: (_, __) => const UtilisateursScreen()),
               GoRoute(path: 'securite', builder: (_, __) => const SecuriteScreen()),
             ],

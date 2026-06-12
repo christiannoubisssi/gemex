@@ -55,12 +55,13 @@ class DossiersDao extends DatabaseAccessor<AppDatabase> with _$DossiersDaoMixin 
   }
 
   Future<void> updateStatut(String id, String statut,
-      {DateTime? dateExpertise, DateTime? dateRapport, DateTime? dateCloture}) {
+      {DateTime? dateExpertise, DateTime? dateRapport, DateTime? dateCloture, String? motifAnnulation}) {
     return (update(dossiers)..where((d) => d.id.equals(id))).write(DossiersCompanion(
       statut: Value(statut),
       dateExpertise: dateExpertise != null ? Value(dateExpertise) : const Value.absent(),
       dateRapport: dateRapport != null ? Value(dateRapport) : const Value.absent(),
       dateCloture: dateCloture != null ? Value(dateCloture) : const Value.absent(),
+      motifAnnulation: motifAnnulation != null ? Value(motifAnnulation) : const Value.absent(),
       syncStatus: const Value('pending'),
       updatedAt: Value(DateTime.now()),
     ));

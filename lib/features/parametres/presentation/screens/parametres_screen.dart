@@ -62,6 +62,12 @@ class ParametresScreen extends ConsumerWidget {
                   subtitle: 'Configurer les catégories de dossiers',
                   onTap: () => context.push('/parametres/types-mission'),
                 ),
+                _SettingsTile(
+                  icon: Icons.tag_outlined,
+                  title: 'Numérotation',
+                  subtitle: 'Format des numéros de devis et factures',
+                  onTap: () => context.push('/parametres/numerotation'),
+                ),
               ],
             ),
             const SizedBox(height: 24),

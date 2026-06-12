@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
+import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/permissions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../database/app_database.dart';
 import '../../../../shared/services/email_service.dart';
 import '../../../../shared/services/pdf_service.dart';
 import '../../../parametres/data/parametres_provider.dart';
+import '../../../parametres/data/user_management_service.dart';
 import '../providers/facture_provider.dart';
 
 class FactureDetailScreen extends ConsumerWidget {
@@ -28,6 +31,8 @@ class FactureDetailScreen extends ConsumerWidget {
         final enRetard = facture.statut != 'payee' &&
             facture.statut != 'annulee' &&
             facture.dateEcheance.isBefore(DateTime.now());
+        final peutValider = ref.watch(permissionProvider(AppPermissions.facturesValider));
+        final peutEncaisser = ref.watch(permissionProvider(AppPermissions.facturesEncaisser));
         return Scaffold(
           appBar: AppBar(title: Text(facture.numero ?? 'Facture')),
           body: Row(
@@ -97,7 +102,7 @@ class FactureDetailScreen extends ConsumerWidget {
                       ]))),
                     if (MediaQuery.of(context).size.width < 800) ...[
                       const SizedBox(height: 24),
-                      _buildQuickActions(context, ref, facture, lignesAsync.value, enRetard, true),
+                      _buildQuickActions(context, ref, facture, lignesAsync.value, enRetard, peutValider, peutEncaisser, true),
                     ],
                   ]),
                 ),
@@ -111,7 +116,7 @@ class FactureDetailScreen extends ConsumerWidget {
                   ),
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: _buildQuickActions(context, ref, facture, lignesAsync.value, enRetard, false),
+                    child: _buildQuickActions(context, ref, facture, lignesAsync.value, enRetard, peutValider, peutEncaisser, false),
                   ),
                 ),
             ],
@@ -121,13 +126,37 @@ class FactureDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, WidgetRef ref, dynamic facture, List<FacturesLigne>? lignes, bool enRetard, bool isMobile) {
+  Widget _buildQuickActions(BuildContext context, WidgetRef ref, dynamic facture, List<FacturesLigne>? lignes, bool enRetard, bool peutValider, bool peutEncaisser, bool isMobile) {
+    final estBrouillon = facture.statut == AppConstants.factureBrouillon;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (!isMobile) ...[
           const Text('Actions Rapides', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 16),
+        ],
+        if (estBrouillon) ...[
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withAlpha(20),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.warning.withAlpha(60)),
+            ),
+            child: const Text(
+              'Facture en brouillon : à valider avant envoi ou encaissement.',
+              style: TextStyle(color: AppColors.warning, fontSize: 12),
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (peutValider)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('Valider la facture'),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.teal),
+              onPressed: () => _confirmerValidation(context, ref),
+            ),
+          const SizedBox(height: 8),
         ],
         OutlinedButton.icon(
           icon: const Icon(Icons.picture_as_pdf_outlined),
@@ -151,7 +180,7 @@ class FactureDetailScreen extends ConsumerWidget {
         OutlinedButton.icon(
           icon: const Icon(Icons.email_outlined),
           label: const Text('Envoyer par email'),
-          onPressed: lignes == null
+          onPressed: lignes == null || estBrouillon
               ? null
               : () => _showEmailDialog(context, ref, facture, lignes),
         ),
@@ -165,7 +194,7 @@ class FactureDetailScreen extends ConsumerWidget {
           ),
         ],
         const SizedBox(height: 8),
-        if (facture.statut != 'payee' && facture.statut != 'annulee')
+        if (!estBrouillon && facture.statut != 'payee' && facture.statut != 'annulee' && peutEncaisser)
           ElevatedButton.icon(
             icon: const Icon(Icons.payment),
             label: const Text('Enregistrer un paiement'),
@@ -174,6 +203,27 @@ class FactureDetailScreen extends ConsumerWidget {
           ),
       ],
     );
+  }
+
+  Future<void> _confirmerValidation(BuildContext context, WidgetRef ref) async {
+    final confirme = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Valider la facture'),
+        content: const Text(
+            'Une fois validée, la facture ne pourra plus être modifiée. Confirmer ?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
+          ElevatedButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Valider')),
+        ],
+      ),
+    );
+    if (confirme != true) return;
+    await ref.read(factureNotifierProvider.notifier).validerFacture(id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Facture validée')));
+    }
   }
 
   Future<void> _showEmailDialog(

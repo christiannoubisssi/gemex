@@ -2,24 +2,31 @@ import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 class ParametresService {
   static const _prefixEntreprise = 'entreprise_';
   static const _prefixDocument = 'document_';
   static const _prefixFiscal = 'fiscal_';
   static const _prefixSecurite = 'securite_';
+  static const _prefixNumerotation = 'numerotation_';
   static const _keyTypesMission = 'types_mission';
 
   static const defaultsTva = 18.0;
   static const defaultsTps = 0.0;
   static const defaultsDevise = 'XAF';
+  static const defaultFormatDevis = 'PREFIXE-AAAA-NNNN';
+  static const defaultFormatFacture = 'PREFIXE-AAAA-NNNN';
 
-  static final List<String> defaultTypesMission = [
-    'Expertise maritime',
-    'Expertise terrestre',
-    'Expertise incendie',
-    'Expertise dégâts des eaux',
-    'Contre-expertise',
+  static SupabaseClient get _client => Supabase.instance.client;
+
+  static final List<Map<String, String>> defaultTypesMission = [
+    {'nom': 'Expertise maritime', 'abreviation': 'MAR'},
+    {'nom': 'Expertise terrestre', 'abreviation': 'TER'},
+    {'nom': 'Expertise incendie', 'abreviation': 'INC'},
+    {'nom': 'Expertise dégâts des eaux', 'abreviation': 'DDE'},
+    {'nom': 'Contre-expertise', 'abreviation': 'CEX'},
   ];
 
   static Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
@@ -129,17 +136,119 @@ class ParametresService {
     }
   }
 
-  // Types de mission
-  static Future<List<String>> getTypesMission() async {
+  // Types de mission — chaque type = {nom, abreviation (3 car. max, majuscules)}
+  // Source de vérité : Supabase (table `types_mission`), nécessaire au trigger
+  // de numérotation (jeton ABREV). Le cache local sert de secours hors-ligne.
+  static Future<List<Map<String, String>>> getTypesMission() async {
+    try {
+      final rows = await _client
+          .from('types_mission')
+          .select('nom, abreviation')
+          .eq('entreprise_id', 'default')
+          .order('ordre');
+      if (rows.isNotEmpty) {
+        final types = rows
+            .map<Map<String, String>>((r) => {
+                  'nom': r['nom'] as String,
+                  'abreviation': (r['abreviation'] as String?) ?? '',
+                })
+            .toList();
+        await _cacheTypesMission(types);
+        return types;
+      }
+    } catch (_) {
+      // Hors-ligne ou erreur réseau : on retombe sur le cache local
+    }
+    return _getCachedTypesMission();
+  }
+
+  static Future<List<Map<String, String>>> _getCachedTypesMission() async {
     final prefs = await _prefs;
     final json = prefs.getString(_keyTypesMission);
     if (json == null) return List.from(defaultTypesMission);
-    return List<String>.from(jsonDecode(json) as List);
+    final raw = jsonDecode(json) as List;
+    // Compatibilité avec l'ancien format (List<String>)
+    return raw.map((e) {
+      if (e is String) return {'nom': e, 'abreviation': ''};
+      return Map<String, String>.from(e as Map);
+    }).toList();
   }
 
-  static Future<void> saveTypesMission(List<String> types) async {
+  static Future<void> _cacheTypesMission(List<Map<String, String>> types) async {
     final prefs = await _prefs;
     await prefs.setString(_keyTypesMission, jsonEncode(types));
+  }
+
+  static Future<void> saveTypesMission(List<Map<String, String>> types) async {
+    await _cacheTypesMission(types);
+    // Push best-effort vers Supabase (remplace la liste complète)
+    try {
+      await _client.from('types_mission').delete().eq('entreprise_id', 'default');
+      if (types.isNotEmpty) {
+        await _client.from('types_mission').insert([
+          for (var i = 0; i < types.length; i++)
+            {
+              'id': const Uuid().v4(),
+              'entreprise_id': 'default',
+              'nom': types[i]['nom'],
+              'abreviation': types[i]['abreviation'],
+              'ordre': i,
+            },
+        ]);
+      }
+    } catch (_) {
+      // Hors-ligne : le cache local reste à jour, la sync se refera plus tard
+    }
+  }
+
+  // Numérotation des devis/factures — gabarits configurables (ex: PREFIXE-AAAA-NNNN)
+  // Source de vérité : Supabase (table `parametres_numerotation`), lue par le
+  // trigger de numérotation. Le cache local sert de secours hors-ligne.
+  static Future<Map<String, String>> getNumerotation() async {
+    try {
+      final row = await _client
+          .from('parametres_numerotation')
+          .select('format_devis, format_facture')
+          .eq('entreprise_id', 'default')
+          .maybeSingle();
+      if (row != null) {
+        final data = {
+          'format_devis': row['format_devis'] as String? ?? defaultFormatDevis,
+          'format_facture': row['format_facture'] as String? ?? defaultFormatFacture,
+        };
+        await _cacheNumerotation(data);
+        return data;
+      }
+    } catch (_) {
+      // Hors-ligne ou erreur réseau : on retombe sur le cache local
+    }
+    return _getCachedNumerotation();
+  }
+
+  static Future<Map<String, String>> _getCachedNumerotation() async {
+    return {
+      'format_devis': await getString('${_prefixNumerotation}format_devis', defaultValue: defaultFormatDevis),
+      'format_facture': await getString('${_prefixNumerotation}format_facture', defaultValue: defaultFormatFacture),
+    };
+  }
+
+  static Future<void> _cacheNumerotation(Map<String, String> data) async {
+    await setString('${_prefixNumerotation}format_devis', data['format_devis']!);
+    await setString('${_prefixNumerotation}format_facture', data['format_facture']!);
+  }
+
+  static Future<void> saveNumerotation(String formatDevis, String formatFacture) async {
+    final data = {'format_devis': formatDevis, 'format_facture': formatFacture};
+    await _cacheNumerotation(data);
+    try {
+      await _client.from('parametres_numerotation').upsert({
+        'entreprise_id': 'default',
+        'format_devis': formatDevis,
+        'format_facture': formatFacture,
+      });
+    } catch (_) {
+      // Hors-ligne : le cache local reste à jour, la sync se refera plus tard
+    }
   }
 
   // Sécurité documents

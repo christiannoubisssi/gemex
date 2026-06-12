@@ -13,6 +13,7 @@ create table if not exists public.profiles (
   id          uuid primary key references auth.users(id) on delete cascade,
   email       text not null,
   nom         text,
+  initiales   text check (initiales is null or length(initiales) <= 2),
   role        text not null default 'agent'
                 check (role in ('admin','expert','agent','comptable','rh')),
   actif       boolean not null default true,
@@ -20,6 +21,17 @@ create table if not exists public.profiles (
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
 );
+
+-- Migration : ajouter la colonne initiales si la table existait déjà sans elle
+alter table public.profiles add column if not exists initiales text;
+alter table public.profiles drop constraint if exists profiles_initiales_check;
+alter table public.profiles add constraint profiles_initiales_check
+  check (initiales is null or length(initiales) <= 2);
+
+-- Migration : permissions granulaires par utilisateur (surcharges du rôle)
+-- Clés possibles : dossiers.annuler, factures.valider, factures.encaisser (cf. lib/core/constants/permissions.dart)
+-- ⚠️ Filtre UI uniquement — la sécurité réelle reste assurée par les politiques RLS ci-dessous.
+alter table public.profiles add column if not exists permissions jsonb not null default '{}'::jsonb;
 
 -- Trigger : créer automatiquement un profil à l'inscription
 create or replace function public.handle_new_user()
@@ -58,6 +70,20 @@ drop policy if exists "Admin voit tout" on public.profiles;
 create policy "Admin voit tout" on public.profiles
   for all using (public.is_admin());
 
+-- Auto-édition des initiales : un utilisateur ne peut modifier QUE la colonne
+-- `initiales` de son propre profil (le reste de la table reste protégé par RLS).
+create or replace function public.update_my_initiales(p_initiales text)
+returns void language plpgsql security definer as $$
+begin
+  if p_initiales is not null and length(p_initiales) > 2 then
+    raise exception 'Les initiales sont limitées à 2 caractères';
+  end if;
+  update public.profiles set initiales = p_initiales, updated_at = now()
+  where id = auth.uid();
+end;
+$$;
+grant execute on function public.update_my_initiales(text) to authenticated;
+
 -- ─── Numérotation automatique ──────────────────────────────────────────────
 -- Séquences annuelles par type de document
 
@@ -68,13 +94,68 @@ create table if not exists public.document_sequences (
   primary key (type, annee)
 );
 
+-- Formate un numéro de document à partir d'un gabarit configurable.
+-- Jetons reconnus : PREFIXE, AAAA, MMAA, ABREV, INITIALES, N+ (séquence, le nombre
+-- de N définit le nombre de chiffres). Tout autre segment est repris tel quel.
+-- Les segments dont la valeur résolue est vide (ABREV/INITIALES absents) sont supprimés.
+create or replace function public.formater_numero(
+  p_format text,
+  p_prefixe text,
+  p_annee int,
+  p_sequence int,
+  p_abrev text,
+  p_initiales text
+)
+returns text language plpgsql stable as $$
+declare
+  v_segments text[];
+  v_result text[] := array[]::text[];
+  v_segment text;
+  v_value text;
+begin
+  v_segments := string_to_array(p_format, '-');
+  foreach v_segment in array v_segments loop
+    if v_segment = 'PREFIXE' then
+      v_value := p_prefixe;
+    elsif v_segment = 'AAAA' then
+      v_value := p_annee::text;
+    elsif v_segment = 'MMAA' then
+      v_value := lpad(extract(month from now())::text, 2, '0') || right(p_annee::text, 2);
+    elsif v_segment = 'ABREV' then
+      v_value := p_abrev;
+    elsif v_segment = 'INITIALES' then
+      v_value := p_initiales;
+    elsif v_segment ~ '^N+$' then
+      v_value := lpad(p_sequence::text, length(v_segment), '0');
+    else
+      v_value := v_segment;
+    end if;
+
+    if v_value is not null and v_value <> '' then
+      v_result := array_append(v_result, v_value);
+    end if;
+  end loop;
+
+  return array_to_string(v_result, '-');
+end;
+$$;
+
 -- security definer : permet d'écrire dans document_sequences (RLS) même
 -- quand la fonction est appelée par le trigger lors d'un insert authentifié
-create or replace function public.next_numero(p_type text, p_annee int)
+create or replace function public.next_numero(
+  p_type text,
+  p_annee int,
+  p_entreprise_id text default 'default',
+  p_dossier_id text default null,
+  p_cree_par uuid default null
+)
 returns text language plpgsql security definer set search_path = public as $$
 declare
   v_next int;
   v_prefix text;
+  v_format text;
+  v_abrev text := '';
+  v_initiales text := '';
 begin
   insert into public.document_sequences (type, annee, last)
   values (p_type, p_annee, 1)
@@ -89,7 +170,40 @@ begin
     else upper(p_type)
   end;
 
-  return v_prefix || '-' || p_annee::text || '-' || lpad(v_next::text, 4, '0');
+  -- Dossiers : format fixe AV-AAAA-NNNN (non configurable)
+  if p_type = 'dossier' then
+    return v_prefix || '-' || p_annee::text || '-' || lpad(v_next::text, 4, '0');
+  end if;
+
+  -- Devis/factures : format configurable par entreprise
+  select case p_type when 'devis' then format_devis else format_facture end
+  into v_format
+  from public.parametres_numerotation
+  where entreprise_id = p_entreprise_id;
+
+  if v_format is null then
+    v_format := 'PREFIXE-AAAA-NNNN';
+  end if;
+
+  -- Abréviation du type de mission, via le dossier lié au document
+  if p_dossier_id is not null then
+    select coalesce(tm.abreviation, '') into v_abrev
+    from public.dossiers d
+    left join public.types_mission tm
+      on tm.entreprise_id = d.entreprise_id and tm.nom = d.type_mission_id
+    where d.id = p_dossier_id
+    limit 1;
+  end if;
+  v_abrev := coalesce(v_abrev, '');
+
+  -- Initiales du créateur du document
+  if p_cree_par is not null then
+    select coalesce(initiales, '') into v_initiales
+    from public.profiles where id = p_cree_par;
+  end if;
+  v_initiales := coalesce(v_initiales, '');
+
+  return public.formater_numero(v_format, v_prefix, p_annee, v_next, v_abrev, v_initiales);
 end;
 $$;
 
@@ -98,7 +212,13 @@ create or replace function public.set_facture_numero()
 returns trigger language plpgsql as $$
 begin
   if new.numero is null or new.numero like '%-LOCAL-%' then
-    new.numero := public.next_numero('facture', extract(year from now())::int);
+    new.numero := public.next_numero(
+      'facture',
+      extract(year from now())::int,
+      coalesce(new.entreprise_id, 'default'),
+      new.dossier_id,
+      case when new.cree_par is null or new.cree_par = '' then null else new.cree_par::uuid end
+    );
   end if;
   return new;
 end;
@@ -118,7 +238,13 @@ create or replace function public.set_devis_numero()
 returns trigger language plpgsql as $$
 begin
   if new.numero is null or new.numero like '%-LOCAL-%' then
-    new.numero := public.next_numero('devis', coalesce(new.annee, extract(year from now())::int));
+    new.numero := public.next_numero(
+      'devis',
+      coalesce(new.annee, extract(year from now())::int),
+      coalesce(new.entreprise_id, 'default'),
+      new.dossier_id,
+      case when new.cree_par is null or new.cree_par = '' then null else new.cree_par::uuid end
+    );
   end if;
   return new;
 end;
@@ -389,6 +515,43 @@ create policy "Authentifié - accès complet" on public.taxes
 
 drop trigger if exists trg_taxes_updated_at on public.taxes;
 create trigger trg_taxes_updated_at before update on public.taxes
+  for each row execute procedure public.set_updated_at();
+
+-- ─── Types de mission (catégories de dossiers, avec abréviation pour la numérotation) ──
+create table if not exists public.types_mission (
+  id            text primary key,
+  entreprise_id text not null default 'default',
+  nom           text not null,
+  abreviation   text,
+  ordre         int not null default 0,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+alter table public.types_mission enable row level security;
+drop policy if exists "Authentifié - accès complet" on public.types_mission;
+create policy "Authentifié - accès complet" on public.types_mission
+  for all using (auth.uid() is not null) with check (auth.uid() is not null);
+
+drop trigger if exists trg_types_mission_updated_at on public.types_mission;
+create trigger trg_types_mission_updated_at before update on public.types_mission
+  for each row execute procedure public.set_updated_at();
+
+-- ─── Paramètres de numérotation des devis/factures (par entreprise) ────────
+create table if not exists public.parametres_numerotation (
+  entreprise_id  text primary key default 'default',
+  format_devis   text not null default 'PREFIXE-AAAA-NNNN',
+  format_facture text not null default 'PREFIXE-AAAA-NNNN',
+  updated_at     timestamptz not null default now()
+);
+
+alter table public.parametres_numerotation enable row level security;
+drop policy if exists "Authentifié - accès complet" on public.parametres_numerotation;
+create policy "Authentifié - accès complet" on public.parametres_numerotation
+  for all using (auth.uid() is not null) with check (auth.uid() is not null);
+
+drop trigger if exists trg_parametres_numerotation_updated_at on public.parametres_numerotation;
+create trigger trg_parametres_numerotation_updated_at before update on public.parametres_numerotation
   for each row execute procedure public.set_updated_at();
 
 -- ─── Lignes de devis ────────────────────────────────────────────────────────

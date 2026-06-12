@@ -43,6 +43,8 @@ class FactureRepository {
 
     // IDs générés à l'avance pour pouvoir synchroniser les lignes avec Supabase
     final ligneIds = List.generate(lignes.length, (_) => const Uuid().v4());
+    // Utilisateur créateur (utilisé côté serveur pour résoudre le jeton INITIALES)
+    final creePar = _supabase.auth.currentUser?.id;
 
     await _db.transaction(() async {
       await _db.facturesDao.upsertFacture(FacturesCompanion.insert(
@@ -51,6 +53,7 @@ class FactureRepository {
         clientId: devis.clientId,
         devisId: drift.Value(devisId),
         dossierId: drift.Value(devis.dossierId),
+        creePar: drift.Value(creePar),
         annee: now.year,
         numero: drift.Value(numero),
         dateEmission: now,
@@ -87,6 +90,7 @@ class FactureRepository {
       'client_id': devis.clientId,
       'devis_id': devisId,
       'dossier_id': devis.dossierId,
+      'cree_par': creePar,
       'annee': now.year,
       'date_emission': now.toIso8601String(),
       'date_echeance': now.add(const Duration(days: 30)).toIso8601String(),
@@ -158,6 +162,8 @@ class FactureRepository {
 
     // IDs générés à l'avance pour pouvoir synchroniser les lignes avec Supabase
     final ligneIds = List.generate(lignes.length, (_) => const Uuid().v4());
+    // Utilisateur créateur (utilisé côté serveur pour résoudre le jeton INITIALES)
+    final creePar = _supabase.auth.currentUser?.id;
 
     await _db.transaction(() async {
       await _db.facturesDao.upsertFacture(FacturesCompanion.insert(
@@ -166,6 +172,7 @@ class FactureRepository {
         clientId: data['client_id'] as String,
         devisId: drift.Value(data['devis_id'] as String?),
         dossierId: drift.Value(data['dossier_id'] as String?),
+        creePar: drift.Value(creePar),
         annee: now.year,
         numero: drift.Value(numero),
         dateEmission: data['date_emission'] as DateTime? ?? now,
@@ -203,6 +210,7 @@ class FactureRepository {
       ...data,
       'id': id,
       'annee': now.year,
+      'cree_par': creePar,
       'montant_ht': montantHt,
       'taux_tva': tauxTva,
       'montant_tva': montantTva,
@@ -259,6 +267,33 @@ class FactureRepository {
     } catch (e, s) {
       AppLogger.e('FactureRepository', 'Échec sync lignes facture $factureId', error: e, stack: s);
       await _db.syncQueueDao.enqueue(entityType: 'factures_lignes', entityId: factureId, operation: 'create', payload: jsonEncode(toJsonSafe({'lignes': lignes})));
+    }
+  }
+
+  /// Valide une facture en brouillon : passage au statut 'emise' (Validée).
+  /// Une fois validée, la facture ne doit plus être modifiée.
+  Future<void> validerFacture(String id) async {
+    await _db.facturesDao.updateStatut(id, AppConstants.factureEmise);
+    if (_ref.read(isOnlineProvider)) {
+      try {
+        await _supabase.from('factures').update({'statut': AppConstants.factureEmise}).eq('id', id);
+        await _db.facturesDao.markSynced(id);
+      } catch (e, s) {
+        AppLogger.e('FactureRepository', 'Échec sync Supabase facture $id (validation)', error: e, stack: s);
+        await _db.syncQueueDao.enqueue(
+          entityType: 'facture',
+          entityId: id,
+          operation: 'update',
+          payload: jsonEncode({'id': id, 'statut': AppConstants.factureEmise}),
+        );
+      }
+    } else {
+      await _db.syncQueueDao.enqueue(
+        entityType: 'facture',
+        entityId: id,
+        operation: 'update',
+        payload: jsonEncode({'id': id, 'statut': AppConstants.factureEmise}),
+      );
     }
   }
 

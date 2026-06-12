@@ -12,6 +12,8 @@ import '../../../../database/app_database.dart';
 import '../../../clients/data/repositories/client_repository.dart';
 import '../../../clients/presentation/providers/client_provider.dart';
 import '../../../clients/presentation/widgets/quick_client_dialog.dart';
+import '../../../parametres/data/parametres_provider.dart';
+import '../../../parametres/data/user_management_service.dart';
 import '../../data/repositories/dossier_repository.dart';
 import '../providers/dossier_provider.dart';
 
@@ -257,6 +259,89 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
                                 Text(AppConstants.prioriteLabels[p] ?? p),
                           ))
                       .toList(),
+                ),
+              ]),
+              const SizedBox(height: 12),
+
+              // ── Mission ──────────────────────────────────────────────────
+              _SectionCard(title: 'Mission', children: [
+                Consumer(
+                  builder: (context, ref, _) {
+                    final typesAsync = ref.watch(typesMissionProvider);
+                    return typesAsync.when(
+                      loading: () => const LinearProgressIndicator(),
+                      error: (e, _) => Text('Erreur : $e',
+                          style: const TextStyle(color: AppColors.danger)),
+                      data: (types) {
+                        final current = _existing?.typeMissionId;
+                        final connu = types.any((t) => t['nom'] == current);
+                        return FormBuilderDropdown<String?>(
+                          name: 'type_mission_id',
+                          initialValue: current,
+                          decoration:
+                              const InputDecoration(labelText: 'Type de mission'),
+                          items: [
+                            const DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text('Non défini'),
+                            ),
+                            ...types.map((t) => DropdownMenuItem<String?>(
+                                  value: t['nom'],
+                                  child: Text(t['nom'] ?? ''),
+                                )),
+                            // Conserve l'ancienne valeur si le type a été renommé/supprimé
+                            if (current != null && !connu)
+                              DropdownMenuItem<String?>(
+                                value: current,
+                                child: Text('$current (ancien)'),
+                              ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                Consumer(
+                  builder: (context, ref, _) {
+                    final usersAsync = ref.watch(usersProvider);
+                    return usersAsync.when(
+                      loading: () => const LinearProgressIndicator(),
+                      error: (e, _) => Text('Erreur : $e',
+                          style: const TextStyle(color: AppColors.danger)),
+                      data: (users) {
+                        final current = _existing?.expertId;
+                        final actifs = users.where((u) => u.actif).toList();
+                        final connu = actifs.any((u) => u.id == current);
+                        final inactif = current != null && !connu
+                            ? users.where((u) => u.id == current).firstOrNull
+                            : null;
+                        return FormBuilderDropdown<String?>(
+                          name: 'expert_id',
+                          initialValue: current,
+                          decoration:
+                              const InputDecoration(labelText: 'Agent en charge'),
+                          items: [
+                            const DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text('Non assigné'),
+                            ),
+                            ...actifs.map((u) => DropdownMenuItem<String?>(
+                                  value: u.id,
+                                  child: Text(u.nom ?? u.email),
+                                )),
+                            // Conserve l'agent actuel s'il est devenu inactif/introuvable
+                            if (current != null && !connu)
+                              DropdownMenuItem<String?>(
+                                value: current,
+                                child: Text(
+                                    '${inactif?.nom ?? inactif?.email ?? current} (inactif)'),
+                              ),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 ),
               ]),
               const SizedBox(height: 12),

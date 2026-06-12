@@ -90,7 +90,7 @@ class AppConstants {
 
   static const Map<String, String> factureStatutLabels = {
     factureBrouillon: 'Brouillon',
-    factureEmise: 'Émise',
+    factureEmise: 'Validée',
     facturePartielle: 'Part. payée',
     facturePayee: 'Payée',
     factureAnnulee: 'Annulée',

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/text_formatters.dart';
 import '../../data/parametres_service.dart';
 import '../../data/parametres_provider.dart';
 
@@ -11,7 +13,7 @@ class TypesMissionScreen extends ConsumerStatefulWidget {
 }
 
 class _TypesMissionScreenState extends ConsumerState<TypesMissionScreen> {
-  List<String> _types = [];
+  List<Map<String, String>> _types = [];
   bool _loading = true;
 
   @override
@@ -30,29 +32,53 @@ class _TypesMissionScreenState extends ConsumerState<TypesMissionScreen> {
     ref.invalidate(typesMissionProvider);
   }
 
-  Future<void> _addOrEdit({String? existing, int? index}) async {
-    final ctrl = TextEditingController(text: existing);
-    final result = await showDialog<String>(
+  Future<void> _addOrEdit({Map<String, String>? existing, int? index}) async {
+    final nomCtrl = TextEditingController(text: existing?['nom']);
+    final abrevCtrl = TextEditingController(text: existing?['abreviation']);
+    final result = await showDialog<Map<String, String>>(
       context: context,
       builder: (_) => AlertDialog(
         title: Text(existing == null ? 'Nouveau type' : 'Modifier'),
-        content: TextField(
-          controller: ctrl,
-          autofocus: true,
-          decoration: const InputDecoration(labelText: 'Libellé'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nomCtrl,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Libellé'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: abrevCtrl,
+              maxLength: 3,
+              textCapitalization: TextCapitalization.characters,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp('[a-zA-Z]')),
+                UpperCaseTextFormatter(),
+              ],
+              decoration: const InputDecoration(
+                labelText: 'Abréviation',
+                hintText: 'Ex : MAR',
+                counterText: '',
+              ),
+            ),
+          ],
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Annuler')),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, ctrl.text.trim()),
+            onPressed: () => Navigator.pop(context, {
+              'nom': nomCtrl.text.trim(),
+              'abreviation': abrevCtrl.text.trim().toUpperCase(),
+            }),
             child: const Text('Valider'),
           ),
         ],
       ),
     );
-    if (result == null || result.isEmpty) return;
+    if (result == null || result['nom']!.isEmpty) return;
     setState(() {
       if (index != null) {
         _types[index] = result;
@@ -92,25 +118,30 @@ class _TypesMissionScreenState extends ConsumerState<TypesMissionScreen> {
                 });
                 await _save();
               },
-              itemBuilder: (_, i) => ListTile(
-                key: ValueKey(_types[i]),
-                leading: const Icon(Icons.drag_handle, color: Colors.grey),
-                title: Text(_types[i]),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, color: AppColors.teal),
-                      onPressed: () =>
-                          _addOrEdit(existing: _types[i], index: i),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-                      onPressed: () => _delete(i),
-                    ),
-                  ],
-                ),
-              ),
+              itemBuilder: (_, i) {
+                final type = _types[i];
+                final abrev = type['abreviation'] ?? '';
+                return ListTile(
+                  key: ValueKey('${type['nom']}-$i'),
+                  leading: const Icon(Icons.drag_handle, color: Colors.grey),
+                  title: Text(type['nom'] ?? ''),
+                  subtitle: abrev.isNotEmpty ? Text('Abréviation : $abrev') : null,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, color: AppColors.teal),
+                        onPressed: () =>
+                            _addOrEdit(existing: type, index: i),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                        onPressed: () => _delete(i),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
     );
   }

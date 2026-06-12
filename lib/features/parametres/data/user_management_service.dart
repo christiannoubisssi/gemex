@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/constants/permissions.dart';
 import '../../auth/data/auth_provider.dart';
 
 final userManagementServiceProvider =
@@ -13,23 +14,33 @@ class UserProfile {
   final String id;
   final String email;
   final String? nom;
+  final String? initiales;
   final String role;
   final bool actif;
+  /// Surcharges des permissions par défaut du rôle (cf. [AppPermissions]).
+  final Map<String, bool> permissions;
 
   const UserProfile({
     required this.id,
     required this.email,
     this.nom,
+    this.initiales,
     required this.role,
     required this.actif,
+    this.permissions = const {},
   });
 
   factory UserProfile.fromMap(Map<String, dynamic> m) => UserProfile(
         id: m['id'] as String,
         email: m['email'] as String,
         nom: m['nom'] as String?,
+        initiales: m['initiales'] as String?,
         role: m['role'] as String? ?? 'agent',
         actif: m['actif'] as bool? ?? true,
+        permissions: (m['permissions'] as Map?)?.map(
+              (k, v) => MapEntry(k as String, v as bool),
+            ) ??
+            const {},
       );
 }
 
@@ -75,6 +86,8 @@ class UserManagementService {
     required String userId,
     String? nom,
     String? role,
+    String? initiales,
+    Map<String, bool>? permissions,
   }) async {
     await _client.functions.invoke(
       'update-user',
@@ -82,8 +95,15 @@ class UserManagementService {
         'userId': userId,
         if (nom != null) 'nom': nom,
         if (role != null) 'role': role,
+        if (initiales != null) 'initiales': initiales,
+        if (permissions != null) 'permissions': permissions,
       },
     );
+  }
+
+  /// Met à jour les initiales de l'utilisateur connecté (auto-édition).
+  Future<void> updateMyInitiales(String initiales) async {
+    await _client.rpc('update_my_initiales', params: {'p_initiales': initiales});
   }
 
   Future<void> setPassword({
@@ -130,8 +150,10 @@ final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
         'id': profile.id,
         'email': profile.email,
         'nom': profile.nom,
+        'initiales': profile.initiales,
         'role': profile.role,
         'actif': profile.actif,
+        'permissions': profile.permissions,
       }),
     );
     return profile;
@@ -150,4 +172,18 @@ final currentProfileProvider = FutureProvider<UserProfile?>((ref) async {
 // Rôle courant — défaut 'agent' pendant le chargement
 final currentRoleProvider = Provider<String>((ref) {
   return ref.watch(currentProfileProvider).valueOrNull?.role ?? 'agent';
+});
+
+/// Permissions effectives de l'utilisateur connecté : permissions par défaut
+/// du rôle ([kRolePermissionDefaults]) fusionnées avec les surcharges du profil.
+final currentPermissionsProvider = Provider<Map<String, bool>>((ref) {
+  final role = ref.watch(currentRoleProvider);
+  final overrides = ref.watch(currentProfileProvider).valueOrNull?.permissions ?? const {};
+  return {...(kRolePermissionDefaults[role] ?? const {}), ...overrides};
+});
+
+/// Vérifie si l'utilisateur connecté dispose de la permission [action]
+/// (cf. [AppPermissions]). Retourne `false` si l'action est inconnue.
+final permissionProvider = Provider.family<bool, String>((ref, action) {
+  return ref.watch(currentPermissionsProvider)[action] ?? false;
 });

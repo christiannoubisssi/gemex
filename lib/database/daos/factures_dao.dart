@@ -44,6 +44,14 @@ class FacturesDao extends DatabaseAccessor<AppDatabase> with _$FacturesDaoMixin 
     return (delete(facturesLignes)..where((l) => l.factureId.equals(factureId))).go();
   }
 
+  Future<void> updateStatut(String id, String statut) {
+    return (update(factures)..where((f) => f.id.equals(id))).write(FacturesCompanion(
+      statut: Value(statut),
+      syncStatus: const Value('pending'),
+      updatedAt: Value(DateTime.now()),
+    ));
+  }
+
   Future<void> enregistrerPaiement(
       String id, double montantPaye, String? modePaiement, String? reference) async {
     final facture = await getById(id);

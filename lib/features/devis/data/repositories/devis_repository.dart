@@ -49,6 +49,8 @@ class DevisRepository {
 
     // IDs générés à l'avance pour pouvoir synchroniser les lignes avec Supabase
     final ligneIds = List.generate(lignes.length, (_) => const Uuid().v4());
+    // Utilisateur créateur (utilisé côté serveur pour résoudre le jeton INITIALES)
+    final creePar = _supabase.auth.currentUser?.id;
 
     await _db.transaction(() async {
       await _db.devisDao.upsertDevis(DevisCompanion.insert(
@@ -56,6 +58,7 @@ class DevisRepository {
         entrepriseId: data['entreprise_id'] as String? ?? 'default',
         clientId: data['client_id'] as String,
         dossierId: drift.Value(data['dossier_id'] as String?),
+        creePar: drift.Value(creePar),
         annee: now.year,
         numero: drift.Value(numero),
         dateEmission: data['date_emission'] as DateTime? ?? now,
@@ -93,6 +96,7 @@ class DevisRepository {
       ...data,
       'id': id,
       'annee': now.year,
+      'cree_par': creePar,
       'montant_ht': montantHt,
       'taux_tva': tauxTva,
       'montant_tva': montantTva,

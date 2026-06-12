@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/permissions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../database/app_database.dart';
@@ -10,6 +11,7 @@ import '../../../../shared/services/dossier_documents_service.dart';
 import '../../../clients/presentation/providers/client_provider.dart';
 import '../../../devis/presentation/providers/devis_provider.dart';
 import '../../../factures/presentation/providers/facture_provider.dart';
+import '../../../parametres/data/user_management_service.dart';
 import '../providers/dossier_provider.dart';
 import '../widgets/status_badge.dart';
 
@@ -139,7 +141,8 @@ class _ResumeTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final nextStatut = AppConstants.nextStatut[dossier.statut];
     final peutAnnuler = dossier.statut != AppConstants.statutClos &&
-        dossier.statut != AppConstants.statutAnnule;
+        dossier.statut != AppConstants.statutAnnule &&
+        ref.watch(permissionProvider(AppPermissions.dossiersAnnuler));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -195,6 +198,16 @@ class _ResumeTab extends ConsumerWidget {
           ),
         ],
         const SizedBox(height: 16),
+
+        // Motif d'annulation
+        if (dossier.statut == AppConstants.statutAnnule && dossier.motifAnnulation != null)
+          _Section(title: 'Motif d\'annulation', icon: Icons.cancel_outlined, children: [
+            Text(dossier.motifAnnulation!, style: const TextStyle(color: Colors.grey)),
+          ]),
+
+        // Mission
+        if (dossier.typeMissionId != null || dossier.expertId != null)
+          _MissionSection(typeMission: dossier.typeMissionId, expertId: dossier.expertId),
 
         // Client lié
         if (dossier.clientId != null)
@@ -802,6 +815,28 @@ class _ClientSection extends ConsumerWidget {
       case 'armateur': return 'Armateur';
       default: return t;
     }
+  }
+}
+
+class _MissionSection extends ConsumerWidget {
+  final String? typeMission;
+  final String? expertId;
+  const _MissionSection({this.typeMission, this.expertId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final usersAsync = ref.watch(usersProvider);
+    final agentNom = usersAsync.whenOrNull(
+      data: (users) {
+        final agent = users.where((u) => u.id == expertId).firstOrNull;
+        return agent?.nom ?? agent?.email;
+      },
+    );
+
+    return _Section(title: 'Mission', icon: Icons.work_outline, children: [
+      _InfoRow('Type de mission', typeMission),
+      _InfoRow('Agent en charge', agentNom),
+    ]);
   }
 }
 

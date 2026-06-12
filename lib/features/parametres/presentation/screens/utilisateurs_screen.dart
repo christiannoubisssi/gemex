@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/constants/permissions.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/text_formatters.dart';
 import '../../../auth/data/auth_provider.dart';
 import '../../data/user_management_service.dart';
 
@@ -249,6 +252,10 @@ class UtilisateursScreen extends ConsumerWidget {
   Future<void> _showEditDialog(
       BuildContext context, WidgetRef ref, UserProfile user) async {
     final nomCtrl = TextEditingController(text: user.nom ?? '');
+    final initialesCtrl = TextEditingController(text: user.initiales ?? '');
+    final permissionsState = <String, bool?>{
+      for (final action in AppPermissions.all) action: user.permissions[action],
+    };
     bool saving = false;
 
     await showDialog(
@@ -256,7 +263,8 @@ class UtilisateursScreen extends ConsumerWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
           title: Text('Modifier ${user.nom ?? user.email}'),
-          content: Column(
+          content: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -274,7 +282,44 @@ class UtilisateursScreen extends ConsumerWidget {
                 ),
                 autofocus: true,
               ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: initialesCtrl,
+                maxLength: 2,
+                textCapitalization: TextCapitalization.characters,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp('[a-zA-Z]')),
+                  UpperCaseTextFormatter(),
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'Initiales',
+                  prefixIcon: Icon(Icons.badge_outlined),
+                  helperText: 'Utilisées dans la numérotation des documents',
+                  counterText: '',
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Divider(),
+              const SizedBox(height: 8),
+              const Text('Permissions',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
+              const SizedBox(height: 4),
+              Text(
+                'Surcharge les permissions par défaut du rôle "${kRoleLabels[user.role] ?? user.role}".',
+                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 8),
+              ...AppPermissions.all.map((action) {
+                final roleDefault = kRolePermissionDefaults[user.role]?[action] ?? false;
+                return _PermissionTile(
+                  label: AppPermissions.labels[action] ?? action,
+                  roleDefault: roleDefault,
+                  value: permissionsState[action],
+                  onChanged: (v) => setS(() => permissionsState[action] = v),
+                );
+              }),
             ],
+            ),
           ),
           actions: [
             TextButton(
@@ -296,11 +341,20 @@ class UtilisateursScreen extends ConsumerWidget {
                   : () async {
                       final nom = nomCtrl.text.trim();
                       if (nom.isEmpty) return;
+                      final initiales = initialesCtrl.text.trim().toUpperCase();
+                      final permissions = {
+                        for (final e in permissionsState.entries)
+                          if (e.value != null) e.key: e.value!
+                      };
                       setS(() => saving = true);
                       try {
                         await ref
                             .read(userManagementServiceProvider)
-                            .updateUserProfile(userId: user.id, nom: nom);
+                            .updateUserProfile(
+                                userId: user.id,
+                                nom: nom,
+                                initiales: initiales,
+                                permissions: permissions);
                         ref.invalidate(usersProvider);
                         if (ctx.mounted) {
                           Navigator.pop(ctx);
@@ -733,6 +787,56 @@ class _RoleBadge extends StatelessWidget {
             fontSize: 11,
             color: color,
             fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+// ─── Ligne de permission (tri-state : défaut / autorisé / refusé) ─────────
+
+class _PermissionTile extends StatelessWidget {
+  final String label;
+  final bool roleDefault;
+  final bool? value;
+  final ValueChanged<bool?> onChanged;
+
+  const _PermissionTile({
+    required this.label,
+    required this.roleDefault,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: const TextStyle(fontSize: 13)),
+                Text(
+                  'Rôle : ${roleDefault ? "autorisé" : "refusé"} par défaut',
+                  style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ),
+          SegmentedButton<bool?>(
+            segments: const [
+              ButtonSegment(value: null, label: Text('Défaut'), icon: Icon(Icons.remove, size: 14)),
+              ButtonSegment(value: true, label: Text('Oui'), icon: Icon(Icons.check, size: 14)),
+              ButtonSegment(value: false, label: Text('Non'), icon: Icon(Icons.close, size: 14)),
+            ],
+            selected: {value},
+            showSelectedIcon: false,
+            style: const ButtonStyle(visualDensity: VisualDensity.compact),
+            onSelectionChanged: (selection) => onChanged(selection.first),
+          ),
+        ],
       ),
     );
   }

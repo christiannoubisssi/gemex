@@ -15,7 +15,17 @@
       "PowerShell(try { $r = Invoke-WebRequest -Uri \"https://ykbpigrbpclxottcnhcc.supabase.co/rest/v1/\" -Headers @{apikey=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlrYnBpZ3JicGNseG90dGNuaGNjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczOTAxMjksImV4cCI6MjA5Mjk2NjEyOX0.WIdW9OhKCIcOxYt2Xsg2oPJKGIXj5G2NL3nI2FZWo60\"} -UseBasicParsing; \"STATUS: $\\($r.StatusCode\\)\"; $r.Content } catch { \"ERROR: $\\($_.Exception.Message\\)\"; if \\($_.Exception.Response\\) { $stream = $_.Exception.Response.GetResponseStream\\(\\); $reader = New-Object System.IO.StreamReader\\($stream\\); $reader.ReadToEnd\\(\\) } })",
       "Bash(rtk wc *)",
       "Bash(tasklist)",
-      "Bash(findstr /i \"dart flutter\")"
+      "Bash(findstr /i \"dart flutter\")",
+      "Bash(rtk gh *)",
+      "PowerShell(cd d:\\\\Dev_pro\\\\dev\\\\gemex; flutter analyze --no-fatal-infos; Write-Host \"EXIT CODE: $LASTEXITCODE\")",
+      "PowerShell(cd d:\\\\Dev_pro\\\\dev\\\\gemex; flutter analyze --no-fatal-infos --no-fatal-warnings; Write-Host \"EXIT CODE: $LASTEXITCODE\")",
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(cd \"C:\\\\Users\\\\Christian\\\\.claude\\\\projects\\\\d--Dev-pro-dev-gemex\" && rtk grep -o \"Lot 5[^\\\\\"]*\" 8d74843a-80b5-48a4-b45b-a3a4de6e43f7.jsonl | head -20)",
+      "Read(//c/Users/Christian/.claude/projects/d--Dev-pro-dev-gemex/**)",
+      "Bash(grep -o \"[^\\\\\\\\\\\\\\\\]\\\\{0,300\\\\}[Pp]oint 8[^\\\\\\\\\\\\\\\\]\\\\{0,300\\\\}\" 8d74843a-80b5-48a4-b45b-a3a4de6e43f7.jsonl)",
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)",
+      "Bash(flutter test *)"
     ]
   }
 }

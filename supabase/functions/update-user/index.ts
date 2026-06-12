@@ -48,7 +48,7 @@ serve(async (req) => {
       });
     }
 
-    const { userId, nom, role, password } = await req.json();
+    const { userId, nom, role, initiales, permissions, password } = await req.json();
     if (!userId) {
       return new Response(JSON.stringify({ error: 'userId requis' }), {
         status: 400,
@@ -71,6 +71,8 @@ serve(async (req) => {
     const profileUpdates: Record<string, unknown> = {};
     if (nom !== undefined) profileUpdates.nom = nom;
     if (role !== undefined) profileUpdates.role = role;
+    if (initiales !== undefined) profileUpdates.initiales = initiales;
+    if (permissions !== undefined) profileUpdates.permissions = permissions;
 
     if (Object.keys(profileUpdates).length > 0) {
       const { error } = await supabaseAdmin

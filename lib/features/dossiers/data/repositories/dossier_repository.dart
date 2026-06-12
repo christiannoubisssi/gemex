@@ -76,6 +76,7 @@ class DossierRepository {
       numero: drift.Value(numero),
       clientId: drift.Value(data['client_id'] as String?),
       expertId: drift.Value(data['expert_id'] as String?),
+      typeMissionId: drift.Value(data['type_mission_id'] as String?),
       statut: const drift.Value('nouveau'),
       priorite: drift.Value(data['priorite'] as String? ?? 'normale'),
       description: drift.Value(data['description'] as String?),
@@ -130,6 +131,12 @@ class DossierRepository {
       clientId: data.containsKey('client_id')
           ? drift.Value(data['client_id'] as String?)
           : const drift.Value.absent(),
+      expertId: data.containsKey('expert_id')
+          ? drift.Value(data['expert_id'] as String?)
+          : const drift.Value.absent(),
+      typeMissionId: data.containsKey('type_mission_id')
+          ? drift.Value(data['type_mission_id'] as String?)
+          : const drift.Value.absent(),
       lieuSinistre: data.containsKey('lieu_sinistre')
           ? drift.Value(data['lieu_sinistre'] as String?)
           : const drift.Value.absent(),
@@ -178,6 +185,7 @@ class DossierRepository {
       dateExpertise: dateExpertise,
       dateRapport: dateRapport,
       dateCloture: dateCloture,
+      motifAnnulation: motif,
     );
 
     final payload = {

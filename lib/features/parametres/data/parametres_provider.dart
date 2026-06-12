@@ -18,6 +18,10 @@ final documentLayoutProvider = FutureProvider.autoDispose<Map<String, String>>(
   (_) => ParametresService.getDocumentLayout(),
 );
 
-final typesMissionProvider = FutureProvider.autoDispose<List<String>>(
+final typesMissionProvider = FutureProvider.autoDispose<List<Map<String, String>>>(
   (_) => ParametresService.getTypesMission(),
+);
+
+final numerotationProvider = FutureProvider.autoDispose<Map<String, String>>(
+  (_) => ParametresService.getNumerotation(),
 );
