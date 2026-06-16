@@ -14,17 +14,31 @@ class AppPermissions {
   static const facturesValider = 'factures.valider';
   static const facturesEncaisser = 'factures.encaisser';
 
+  // ── Documents professionnels ────────────────────────────────────────────────
+  /// Saisir/modifier les ordres de mission et lettres de mission
+  static const docsMissionEcrire = 'docs.mission.ecrire';
+  /// Saisir/modifier les fiches de constatation et PV de constatation
+  static const docsConstatEcrire = 'docs.constat.ecrire';
+  /// Saisir/modifier les rapports (préliminaire et expertise)
+  static const docsRapportEcrire = 'docs.rapport.ecrire';
+
   /// Toutes les clés modifiables depuis l'écran admin "Utilisateurs".
   static const all = [
     dossiersAnnuler,
     facturesValider,
     facturesEncaisser,
+    docsMissionEcrire,
+    docsConstatEcrire,
+    docsRapportEcrire,
   ];
 
   static const labels = {
     dossiersAnnuler: 'Annuler un dossier',
     facturesValider: 'Valider une facture',
     facturesEncaisser: 'Enregistrer un paiement sur facture',
+    docsMissionEcrire: 'Saisir les ordres/lettres de mission',
+    docsConstatEcrire: 'Saisir les fiches/PV de constatation',
+    docsRapportEcrire: 'Rédiger les rapports d\'expertise',
   };
 }
 
@@ -34,25 +48,40 @@ const Map<String, Map<String, bool>> kRolePermissionDefaults = {
     AppPermissions.dossiersAnnuler: true,
     AppPermissions.facturesValider: true,
     AppPermissions.facturesEncaisser: true,
+    AppPermissions.docsMissionEcrire: true,
+    AppPermissions.docsConstatEcrire: true,
+    AppPermissions.docsRapportEcrire: true,
   },
   'expert': {
     AppPermissions.dossiersAnnuler: true,
     AppPermissions.facturesValider: false,
     AppPermissions.facturesEncaisser: false,
+    AppPermissions.docsMissionEcrire: true,
+    AppPermissions.docsConstatEcrire: true,
+    AppPermissions.docsRapportEcrire: true,
   },
   'agent': {
     AppPermissions.dossiersAnnuler: false,
     AppPermissions.facturesValider: false,
     AppPermissions.facturesEncaisser: false,
+    AppPermissions.docsMissionEcrire: false,
+    AppPermissions.docsConstatEcrire: true,  // agent peut saisir les constats terrain
+    AppPermissions.docsRapportEcrire: false,
   },
   'comptable': {
     AppPermissions.dossiersAnnuler: false,
     AppPermissions.facturesValider: true,
     AppPermissions.facturesEncaisser: true,
+    AppPermissions.docsMissionEcrire: false,
+    AppPermissions.docsConstatEcrire: false,
+    AppPermissions.docsRapportEcrire: false,
   },
   'rh': {
     AppPermissions.dossiersAnnuler: false,
     AppPermissions.facturesValider: false,
     AppPermissions.facturesEncaisser: false,
+    AppPermissions.docsMissionEcrire: false,
+    AppPermissions.docsConstatEcrire: false,
+    AppPermissions.docsRapportEcrire: false,
   },
 };

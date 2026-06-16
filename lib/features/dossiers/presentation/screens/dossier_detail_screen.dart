@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +14,8 @@ import '../../../clients/presentation/providers/client_provider.dart';
 import '../../../devis/presentation/providers/devis_provider.dart';
 import '../../../factures/presentation/providers/facture_provider.dart';
 import '../../../parametres/data/user_management_service.dart';
+import '../../data/repositories/document_rapport_repository.dart';
+import '../providers/document_rapport_provider.dart';
 import '../providers/dossier_provider.dart';
 import '../widgets/status_badge.dart';
 
@@ -385,7 +389,7 @@ class _DocumentsTab extends StatelessWidget {
   }
 }
 
-class _DocumentCard extends StatefulWidget {
+class _DocumentCard extends ConsumerWidget {
   final TypeDocumentMetier type;
   final IconData icon;
   final Color color;
@@ -398,24 +402,116 @@ class _DocumentCard extends StatefulWidget {
   });
 
   @override
-  State<_DocumentCard> createState() => _DocumentCardState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Écoute le statut du document pour cet onglet
+    final docAsync = ref.watch(
+        documentRapportStatutProvider((dossier.id, type)));
+
+    final doc = docAsync.maybeWhen(data: (d) => d, orElse: () => null);
+    final bool aContenu = doc != null;
+    final bool finalise = doc?.statut == 'finalise';
+
+    return Card(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ListTile(
+            leading: CircleAvatar(
+              backgroundColor: color.withAlpha(25),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            title: Row(children: [
+              Expanded(
+                child: Text(type.label,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 14)),
+              ),
+              if (aContenu)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: (finalise ? AppColors.success : AppColors.warning)
+                        .withAlpha(30),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    finalise ? 'Finalisé' : 'Brouillon',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: finalise ? AppColors.success : AppColors.warning,
+                    ),
+                  ),
+                ),
+            ]),
+            subtitle: Text(
+              type.description,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+            child: Row(children: [
+              // Bouton Remplir / Modifier
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: Icon(
+                      aContenu ? Icons.edit_outlined : Icons.edit_note_outlined,
+                      size: 16),
+                  label: Text(aContenu ? 'Modifier' : 'Remplir'),
+                  onPressed: () => context.push(
+                      '/dossiers/${dossier.id}/documents/${type.name}'),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Bouton PDF
+              Expanded(
+                child: _PdfButton(type: type, dossier: dossier),
+              ),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
-class _DocumentCardState extends State<_DocumentCard> {
+class _PdfButton extends ConsumerStatefulWidget {
+  final TypeDocumentMetier type;
+  final Dossier dossier;
+  const _PdfButton({required this.type, required this.dossier});
+
+  @override
+  ConsumerState<_PdfButton> createState() => _PdfButtonState();
+}
+
+class _PdfButtonState extends ConsumerState<_PdfButton> {
   bool _generating = false;
 
   Future<void> _generer() async {
     setState(() => _generating = true);
     try {
+      final doc = await ref
+          .read(documentRapportRepositoryProvider)
+          .get(widget.dossier.id, widget.type);
+      Map<String, String> contenu = {};
+      if (doc != null) {
+        contenu = Map<String, String>.from(
+            (jsonDecode(doc.contenuJson) as Map).cast<String, String>());
+      }
       await DossierDocumentsService.previsualiser(
         type: widget.type,
         dossier: widget.dossier,
+        contenu: contenu,
       );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Erreur génération PDF : $e'),
+              content: Text('Erreur PDF : $e'),
               backgroundColor: AppColors.danger),
         );
       }
@@ -426,35 +522,18 @@ class _DocumentCardState extends State<_DocumentCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: widget.color.withAlpha(25),
-          child: Icon(widget.icon, color: widget.color, size: 22),
-        ),
-        title: Text(
-          widget.type.label,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-        ),
-        subtitle: Text(
-          widget.type.description,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
-        trailing: _generating
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : TextButton.icon(
-                onPressed: _generer,
-                icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
-                label: const Text('Générer'),
-                style: TextButton.styleFrom(foregroundColor: AppColors.navy),
-              ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      ),
+    return ElevatedButton.icon(
+      icon: _generating
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: Colors.white))
+          : const Icon(Icons.picture_as_pdf_outlined, size: 16),
+      label: const Text('PDF'),
+      style:
+          ElevatedButton.styleFrom(backgroundColor: AppColors.navy),
+      onPressed: _generating ? null : _generer,
     );
   }
 }

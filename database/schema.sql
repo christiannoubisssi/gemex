@@ -808,3 +808,34 @@ update public.dossiers set statut = 'en_cours'  where statut = 'expertise_en_cou
 update public.dossiers set statut = 'termine'   where statut in ('rapport_redige', 'clos');
 -- Mise à jour du DEFAULT de la colonne statut
 alter table public.dossiers alter column statut set default 'brouillon';
+
+-- ============================================================
+-- Migration Lot 3 : documents professionnels des dossiers
+-- ============================================================
+-- Table : documents_rapport (contenus des 6 types de documents PDF)
+create table if not exists public.documents_rapport (
+  id              text primary key,
+  dossier_id      text not null references public.dossiers(id) on delete cascade,
+  type            text not null,           -- TypeDocumentMetier.name
+  contenu_json    jsonb not null default '{}'::jsonb,
+  statut          text not null default 'brouillon', -- 'brouillon' | 'finalise'
+  entreprise_id   text not null default 'default',
+  sync_status     text not null default 'pending',
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  constraint documents_rapport_type_check
+    check (type in ('ordreMission','lettreMission','ficheConstatation',
+                    'rapportPrelim','rapportExpertise','pvConstatation')),
+  constraint documents_rapport_statut_check
+    check (statut in ('brouillon','finalise')),
+  unique (dossier_id, type)
+);
+
+alter table public.documents_rapport enable row level security;
+drop policy if exists "Authentifié - accès complet" on public.documents_rapport;
+create policy "Authentifié - accès complet" on public.documents_rapport
+  for all using (auth.uid() is not null) with check (auth.uid() is not null);
+
+drop trigger if exists trg_documents_rapport_updated_at on public.documents_rapport;
+create trigger trg_documents_rapport_updated_at before update on public.documents_rapport
+  for each row execute procedure public.set_updated_at();

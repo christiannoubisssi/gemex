@@ -10,6 +10,8 @@ import '../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../features/dossiers/presentation/screens/dossiers_list_screen.dart';
 import '../../features/dossiers/presentation/screens/dossier_detail_screen.dart';
 import '../../features/dossiers/presentation/screens/dossier_form_screen.dart';
+import '../../features/dossiers/presentation/screens/document_rapport_form_screen.dart';
+import '../../shared/services/dossier_documents_service.dart';
 import '../../features/clients/presentation/screens/clients_list_screen.dart';
 import '../../features/clients/presentation/screens/client_detail_screen.dart';
 import '../../features/clients/presentation/screens/client_form_screen.dart';
@@ -91,6 +93,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: 'edit',
                     builder: (_, state) => DossierFormScreen(id: state.pathParameters['id']),
+                  ),
+                  GoRoute(
+                    path: 'documents/:type',
+                    builder: (_, state) => DocumentRapportFormScreen(
+                      dossierId: state.pathParameters['id']!,
+                      type: TypeDocumentMetier.values.firstWhere(
+                        (t) => t.name == state.pathParameters['type'],
+                        orElse: () => TypeDocumentMetier.ordreMission,
+                      ),
+                    ),
                   ),
                 ],
               ),

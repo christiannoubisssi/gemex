@@ -11909,6 +11909,477 @@ class SyncQueueCompanion extends UpdateCompanion<SyncQueueData> {
   }
 }
 
+class $DocumentsRapportTable extends DocumentsRapport
+    with TableInfo<$DocumentsRapportTable, DocumentsRapportData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DocumentsRapportTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _dossierIdMeta =
+      const VerificationMeta('dossierId');
+  @override
+  late final GeneratedColumn<String> dossierId = GeneratedColumn<String>(
+      'dossier_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+      'type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _contenuJsonMeta =
+      const VerificationMeta('contenuJson');
+  @override
+  late final GeneratedColumn<String> contenuJson = GeneratedColumn<String>(
+      'contenu_json', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('{}'));
+  static const VerificationMeta _statutMeta = const VerificationMeta('statut');
+  @override
+  late final GeneratedColumn<String> statut = GeneratedColumn<String>(
+      'statut', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('brouillon'));
+  static const VerificationMeta _entrepriseIdMeta =
+      const VerificationMeta('entrepriseId');
+  @override
+  late final GeneratedColumn<String> entrepriseId = GeneratedColumn<String>(
+      'entreprise_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('default'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+      'sync_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        dossierId,
+        type,
+        contenuJson,
+        statut,
+        entrepriseId,
+        createdAt,
+        updatedAt,
+        syncStatus
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'documents_rapport';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<DocumentsRapportData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('dossier_id')) {
+      context.handle(_dossierIdMeta,
+          dossierId.isAcceptableOrUnknown(data['dossier_id']!, _dossierIdMeta));
+    } else if (isInserting) {
+      context.missing(_dossierIdMeta);
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+          _typeMeta, type.isAcceptableOrUnknown(data['type']!, _typeMeta));
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('contenu_json')) {
+      context.handle(
+          _contenuJsonMeta,
+          contenuJson.isAcceptableOrUnknown(
+              data['contenu_json']!, _contenuJsonMeta));
+    }
+    if (data.containsKey('statut')) {
+      context.handle(_statutMeta,
+          statut.isAcceptableOrUnknown(data['statut']!, _statutMeta));
+    }
+    if (data.containsKey('entreprise_id')) {
+      context.handle(
+          _entrepriseIdMeta,
+          entrepriseId.isAcceptableOrUnknown(
+              data['entreprise_id']!, _entrepriseIdMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+          _syncStatusMeta,
+          syncStatus.isAcceptableOrUnknown(
+              data['sync_status']!, _syncStatusMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  DocumentsRapportData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return DocumentsRapportData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      dossierId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}dossier_id'])!,
+      type: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
+      contenuJson: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}contenu_json'])!,
+      statut: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}statut'])!,
+      entrepriseId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}entreprise_id'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+      syncStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
+    );
+  }
+
+  @override
+  $DocumentsRapportTable createAlias(String alias) {
+    return $DocumentsRapportTable(attachedDatabase, alias);
+  }
+}
+
+class DocumentsRapportData extends DataClass
+    implements Insertable<DocumentsRapportData> {
+  final String id;
+  final String dossierId;
+  final String type;
+  final String contenuJson;
+  final String statut;
+  final String entrepriseId;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String syncStatus;
+  const DocumentsRapportData(
+      {required this.id,
+      required this.dossierId,
+      required this.type,
+      required this.contenuJson,
+      required this.statut,
+      required this.entrepriseId,
+      required this.createdAt,
+      required this.updatedAt,
+      required this.syncStatus});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['dossier_id'] = Variable<String>(dossierId);
+    map['type'] = Variable<String>(type);
+    map['contenu_json'] = Variable<String>(contenuJson);
+    map['statut'] = Variable<String>(statut);
+    map['entreprise_id'] = Variable<String>(entrepriseId);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['sync_status'] = Variable<String>(syncStatus);
+    return map;
+  }
+
+  DocumentsRapportCompanion toCompanion(bool nullToAbsent) {
+    return DocumentsRapportCompanion(
+      id: Value(id),
+      dossierId: Value(dossierId),
+      type: Value(type),
+      contenuJson: Value(contenuJson),
+      statut: Value(statut),
+      entrepriseId: Value(entrepriseId),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      syncStatus: Value(syncStatus),
+    );
+  }
+
+  factory DocumentsRapportData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return DocumentsRapportData(
+      id: serializer.fromJson<String>(json['id']),
+      dossierId: serializer.fromJson<String>(json['dossierId']),
+      type: serializer.fromJson<String>(json['type']),
+      contenuJson: serializer.fromJson<String>(json['contenuJson']),
+      statut: serializer.fromJson<String>(json['statut']),
+      entrepriseId: serializer.fromJson<String>(json['entrepriseId']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'dossierId': serializer.toJson<String>(dossierId),
+      'type': serializer.toJson<String>(type),
+      'contenuJson': serializer.toJson<String>(contenuJson),
+      'statut': serializer.toJson<String>(statut),
+      'entrepriseId': serializer.toJson<String>(entrepriseId),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'syncStatus': serializer.toJson<String>(syncStatus),
+    };
+  }
+
+  DocumentsRapportData copyWith(
+          {String? id,
+          String? dossierId,
+          String? type,
+          String? contenuJson,
+          String? statut,
+          String? entrepriseId,
+          DateTime? createdAt,
+          DateTime? updatedAt,
+          String? syncStatus}) =>
+      DocumentsRapportData(
+        id: id ?? this.id,
+        dossierId: dossierId ?? this.dossierId,
+        type: type ?? this.type,
+        contenuJson: contenuJson ?? this.contenuJson,
+        statut: statut ?? this.statut,
+        entrepriseId: entrepriseId ?? this.entrepriseId,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+        syncStatus: syncStatus ?? this.syncStatus,
+      );
+  DocumentsRapportData copyWithCompanion(DocumentsRapportCompanion data) {
+    return DocumentsRapportData(
+      id: data.id.present ? data.id.value : this.id,
+      dossierId: data.dossierId.present ? data.dossierId.value : this.dossierId,
+      type: data.type.present ? data.type.value : this.type,
+      contenuJson:
+          data.contenuJson.present ? data.contenuJson.value : this.contenuJson,
+      statut: data.statut.present ? data.statut.value : this.statut,
+      entrepriseId: data.entrepriseId.present
+          ? data.entrepriseId.value
+          : this.entrepriseId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      syncStatus:
+          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DocumentsRapportData(')
+          ..write('id: $id, ')
+          ..write('dossierId: $dossierId, ')
+          ..write('type: $type, ')
+          ..write('contenuJson: $contenuJson, ')
+          ..write('statut: $statut, ')
+          ..write('entrepriseId: $entrepriseId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('syncStatus: $syncStatus')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, dossierId, type, contenuJson, statut,
+      entrepriseId, createdAt, updatedAt, syncStatus);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is DocumentsRapportData &&
+          other.id == this.id &&
+          other.dossierId == this.dossierId &&
+          other.type == this.type &&
+          other.contenuJson == this.contenuJson &&
+          other.statut == this.statut &&
+          other.entrepriseId == this.entrepriseId &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.syncStatus == this.syncStatus);
+}
+
+class DocumentsRapportCompanion extends UpdateCompanion<DocumentsRapportData> {
+  final Value<String> id;
+  final Value<String> dossierId;
+  final Value<String> type;
+  final Value<String> contenuJson;
+  final Value<String> statut;
+  final Value<String> entrepriseId;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<String> syncStatus;
+  final Value<int> rowid;
+  const DocumentsRapportCompanion({
+    this.id = const Value.absent(),
+    this.dossierId = const Value.absent(),
+    this.type = const Value.absent(),
+    this.contenuJson = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.entrepriseId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DocumentsRapportCompanion.insert({
+    required String id,
+    required String dossierId,
+    required String type,
+    this.contenuJson = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.entrepriseId = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        dossierId = Value(dossierId),
+        type = Value(type);
+  static Insertable<DocumentsRapportData> custom({
+    Expression<String>? id,
+    Expression<String>? dossierId,
+    Expression<String>? type,
+    Expression<String>? contenuJson,
+    Expression<String>? statut,
+    Expression<String>? entrepriseId,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? syncStatus,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (dossierId != null) 'dossier_id': dossierId,
+      if (type != null) 'type': type,
+      if (contenuJson != null) 'contenu_json': contenuJson,
+      if (statut != null) 'statut': statut,
+      if (entrepriseId != null) 'entreprise_id': entrepriseId,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DocumentsRapportCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? dossierId,
+      Value<String>? type,
+      Value<String>? contenuJson,
+      Value<String>? statut,
+      Value<String>? entrepriseId,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<String>? syncStatus,
+      Value<int>? rowid}) {
+    return DocumentsRapportCompanion(
+      id: id ?? this.id,
+      dossierId: dossierId ?? this.dossierId,
+      type: type ?? this.type,
+      contenuJson: contenuJson ?? this.contenuJson,
+      statut: statut ?? this.statut,
+      entrepriseId: entrepriseId ?? this.entrepriseId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      syncStatus: syncStatus ?? this.syncStatus,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (dossierId.present) {
+      map['dossier_id'] = Variable<String>(dossierId.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (contenuJson.present) {
+      map['contenu_json'] = Variable<String>(contenuJson.value);
+    }
+    if (statut.present) {
+      map['statut'] = Variable<String>(statut.value);
+    }
+    if (entrepriseId.present) {
+      map['entreprise_id'] = Variable<String>(entrepriseId.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DocumentsRapportCompanion(')
+          ..write('id: $id, ')
+          ..write('dossierId: $dossierId, ')
+          ..write('type: $type, ')
+          ..write('contenuJson: $contenuJson, ')
+          ..write('statut: $statut, ')
+          ..write('entrepriseId: $entrepriseId, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -11929,6 +12400,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CongesTable conges = $CongesTable(this);
   late final $PiecesJointesTable piecesJointes = $PiecesJointesTable(this);
   late final $SyncQueueTable syncQueue = $SyncQueueTable(this);
+  late final $DocumentsRapportTable documentsRapport =
+      $DocumentsRapportTable(this);
   late final ClientsDao clientsDao = ClientsDao(this as AppDatabase);
   late final ClientContactsDao clientContactsDao =
       ClientContactsDao(this as AppDatabase);
@@ -11945,6 +12418,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final PiecesJointesDao piecesJointesDao =
       PiecesJointesDao(this as AppDatabase);
   late final SyncQueueDao syncQueueDao = SyncQueueDao(this as AppDatabase);
+  late final DocumentsRapportDao documentsRapportDao =
+      DocumentsRapportDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -11965,7 +12440,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         salaires,
         conges,
         piecesJointes,
-        syncQueue
+        syncQueue,
+        documentsRapport
       ];
 }
 
@@ -17253,6 +17729,243 @@ typedef $$SyncQueueTableProcessedTableManager = ProcessedTableManager<
     ),
     SyncQueueData,
     PrefetchHooks Function()>;
+typedef $$DocumentsRapportTableCreateCompanionBuilder
+    = DocumentsRapportCompanion Function({
+  required String id,
+  required String dossierId,
+  required String type,
+  Value<String> contenuJson,
+  Value<String> statut,
+  Value<String> entrepriseId,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<String> syncStatus,
+  Value<int> rowid,
+});
+typedef $$DocumentsRapportTableUpdateCompanionBuilder
+    = DocumentsRapportCompanion Function({
+  Value<String> id,
+  Value<String> dossierId,
+  Value<String> type,
+  Value<String> contenuJson,
+  Value<String> statut,
+  Value<String> entrepriseId,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<String> syncStatus,
+  Value<int> rowid,
+});
+
+class $$DocumentsRapportTableFilterComposer
+    extends Composer<_$AppDatabase, $DocumentsRapportTable> {
+  $$DocumentsRapportTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get dossierId => $composableBuilder(
+      column: $table.dossierId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get contenuJson => $composableBuilder(
+      column: $table.contenuJson, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get entrepriseId => $composableBuilder(
+      column: $table.entrepriseId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
+}
+
+class $$DocumentsRapportTableOrderingComposer
+    extends Composer<_$AppDatabase, $DocumentsRapportTable> {
+  $$DocumentsRapportTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get dossierId => $composableBuilder(
+      column: $table.dossierId, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get contenuJson => $composableBuilder(
+      column: $table.contenuJson, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get entrepriseId => $composableBuilder(
+      column: $table.entrepriseId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
+}
+
+class $$DocumentsRapportTableAnnotationComposer
+    extends Composer<_$AppDatabase, $DocumentsRapportTable> {
+  $$DocumentsRapportTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get dossierId =>
+      $composableBuilder(column: $table.dossierId, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get contenuJson => $composableBuilder(
+      column: $table.contenuJson, builder: (column) => column);
+
+  GeneratedColumn<String> get statut =>
+      $composableBuilder(column: $table.statut, builder: (column) => column);
+
+  GeneratedColumn<String> get entrepriseId => $composableBuilder(
+      column: $table.entrepriseId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => column);
+}
+
+class $$DocumentsRapportTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $DocumentsRapportTable,
+    DocumentsRapportData,
+    $$DocumentsRapportTableFilterComposer,
+    $$DocumentsRapportTableOrderingComposer,
+    $$DocumentsRapportTableAnnotationComposer,
+    $$DocumentsRapportTableCreateCompanionBuilder,
+    $$DocumentsRapportTableUpdateCompanionBuilder,
+    (
+      DocumentsRapportData,
+      BaseReferences<_$AppDatabase, $DocumentsRapportTable,
+          DocumentsRapportData>
+    ),
+    DocumentsRapportData,
+    PrefetchHooks Function()> {
+  $$DocumentsRapportTableTableManager(
+      _$AppDatabase db, $DocumentsRapportTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DocumentsRapportTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$DocumentsRapportTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$DocumentsRapportTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> dossierId = const Value.absent(),
+            Value<String> type = const Value.absent(),
+            Value<String> contenuJson = const Value.absent(),
+            Value<String> statut = const Value.absent(),
+            Value<String> entrepriseId = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DocumentsRapportCompanion(
+            id: id,
+            dossierId: dossierId,
+            type: type,
+            contenuJson: contenuJson,
+            statut: statut,
+            entrepriseId: entrepriseId,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            syncStatus: syncStatus,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            required String dossierId,
+            required String type,
+            Value<String> contenuJson = const Value.absent(),
+            Value<String> statut = const Value.absent(),
+            Value<String> entrepriseId = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              DocumentsRapportCompanion.insert(
+            id: id,
+            dossierId: dossierId,
+            type: type,
+            contenuJson: contenuJson,
+            statut: statut,
+            entrepriseId: entrepriseId,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            syncStatus: syncStatus,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$DocumentsRapportTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $DocumentsRapportTable,
+    DocumentsRapportData,
+    $$DocumentsRapportTableFilterComposer,
+    $$DocumentsRapportTableOrderingComposer,
+    $$DocumentsRapportTableAnnotationComposer,
+    $$DocumentsRapportTableCreateCompanionBuilder,
+    $$DocumentsRapportTableUpdateCompanionBuilder,
+    (
+      DocumentsRapportData,
+      BaseReferences<_$AppDatabase, $DocumentsRapportTable,
+          DocumentsRapportData>
+    ),
+    DocumentsRapportData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -17289,4 +18002,6 @@ class $AppDatabaseManager {
       $$PiecesJointesTableTableManager(_db, _db.piecesJointes);
   $$SyncQueueTableTableManager get syncQueue =>
       $$SyncQueueTableTableManager(_db, _db.syncQueue);
+  $$DocumentsRapportTableTableManager get documentsRapport =>
+      $$DocumentsRapportTableTableManager(_db, _db.documentsRapport);
 }

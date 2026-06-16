@@ -14,6 +14,7 @@ import 'tables/personnel_table.dart';
 import 'tables/conges_table.dart';
 import 'tables/pieces_jointes_table.dart';
 import 'tables/sync_queue_table.dart';
+import 'tables/documents_rapport_table.dart';
 import 'daos/clients_dao.dart';
 import 'daos/client_contacts_dao.dart';
 import 'daos/dossiers_dao.dart';
@@ -27,6 +28,7 @@ import 'daos/salaires_dao.dart';
 import 'daos/conges_dao.dart';
 import 'daos/pieces_jointes_dao.dart';
 import 'daos/sync_queue_dao.dart';
+import 'daos/documents_rapport_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -48,6 +50,7 @@ part 'app_database.g.dart';
     Conges,
     PiecesJointes,
     SyncQueue,
+    DocumentsRapport,
   ],
   daos: [
     ClientsDao,
@@ -63,13 +66,14 @@ part 'app_database.g.dart';
     CongesDao,
     PiecesJointesDao,
     SyncQueueDao,
+    DocumentsRapportDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -90,6 +94,8 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(clients, clients.nif);
         await m.createTable(clientContacts);
       }
+      // v6 : documents professionnels des dossiers (saisie de contenu)
+      if (from < 6) await m.createTable(documentsRapport);
     },
   );
 
