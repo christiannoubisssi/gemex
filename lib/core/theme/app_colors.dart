@@ -30,13 +30,12 @@ class AppColors {
   static const Color teal = emerald;
   static const Color gold = Color(0xFFF59E0B);
   
-  // Statuts dossiers
-  static const Color statutNouveau = primary;
-  static const Color statutEnInstruction = Color(0xFF6366F1); // Indigo
-  static const Color statutExpertise = Color(0xFFF59E0B);
-  static const Color statutRapport = Color(0xFF0EA5E9); // Sky
-  static const Color statutClos = emerald;
-  static const Color statutAnnule = danger;
+  // Statuts dossiers — synchronisés avec AppConstants.statut*
+  static const Color statutBrouillon = Color(0xFF94A3B8);     // Slate — brouillon/draft
+  static const Color statutEnInstruction = Color(0xFF6366F1); // Indigo — en attente
+  static const Color statutEnCours = Color(0xFFF59E0B);       // Amber  — travail en cours
+  static const Color statutTermine = emerald;                  // Vert   — terminé
+  static const Color statutAnnule = danger;                    // Rouge  — annulé
 
   // Priorités
   static const Color prioriteBasse = Color(0xFF94A3B8);

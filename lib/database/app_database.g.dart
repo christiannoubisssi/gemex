@@ -1425,7 +1425,7 @@ class $DossiersTable extends Dossiers with TableInfo<$DossiersTable, Dossier> {
       'statut', aliasedName, false,
       type: DriftSqlType.string,
       requiredDuringInsert: false,
-      defaultValue: const Constant('nouveau'));
+      defaultValue: const Constant('brouillon'));
   static const VerificationMeta _prioriteMeta =
       const VerificationMeta('priorite');
   @override

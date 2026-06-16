@@ -34,12 +34,11 @@ class DashboardStats {
 
   int get totalDossiers => dossierCounts.values.fold(0, (a, b) => a + b);
   int get dossiersEnCours =>
-      (dossierCounts['nouveau'] ?? 0) +
+      (dossierCounts['brouillon'] ?? 0) +
       (dossierCounts['en_instruction'] ?? 0) +
-      (dossierCounts['expertise_en_cours'] ?? 0) +
-      (dossierCounts['rapport_redige'] ?? 0);
-  int get dossiersNouveaux => dossierCounts['nouveau'] ?? 0;
-  int get dossiersClos => dossierCounts['clos'] ?? 0;
+      (dossierCounts['en_cours'] ?? 0);
+  int get dossiersNouveaux => dossierCounts['brouillon'] ?? 0;
+  int get dossiersClos => dossierCounts['termine'] ?? 0;
   double get resultatMois => caMois - chargesMois;
 }
 

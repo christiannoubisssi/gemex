@@ -433,7 +433,7 @@ class _DossiersTabState extends ConsumerState<_DossiersTab> {
       data: (tous) {
         final enCours = tous
             .where((d) =>
-                d.statut != AppConstants.statutClos &&
+                d.statut != AppConstants.statutTermine &&
                 d.statut != AppConstants.statutAnnule)
             .toList();
         final affiches = _enCoursOnly ? enCours : tous;

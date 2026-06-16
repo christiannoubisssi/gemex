@@ -370,17 +370,17 @@ class _KPISection extends ConsumerWidget {
       child: statsAsync.when(
         data: (stats) {
           final total = stats.values.fold(0, (sum, count) => sum + count);
-          final enCours = (stats[AppConstants.statutEnInstruction] ?? 0) +
-                          (stats[AppConstants.statutExpertise] ?? 0) +
-                          (stats[AppConstants.statutRapport] ?? 0);
-          final clos = stats[AppConstants.statutClos] ?? 0;
+          final enCours = (stats[AppConstants.statutBrouillon] ?? 0) +
+                          (stats[AppConstants.statutEnInstruction] ?? 0) +
+                          (stats[AppConstants.statutEnCours] ?? 0);
+          final clos = stats[AppConstants.statutTermine] ?? 0;
           return Row(
             children: [
               Expanded(child: _KPICard(title: 'Total', count: total, color: AppColors.navy)),
               const SizedBox(width: 8),
               Expanded(child: _KPICard(title: 'En cours', count: enCours, color: AppColors.primary)),
               const SizedBox(width: 8),
-              Expanded(child: _KPICard(title: 'Clos', count: clos, color: AppColors.success)),
+              Expanded(child: _KPICard(title: 'Terminés', count: clos, color: AppColors.success)),
             ],
           );
         },

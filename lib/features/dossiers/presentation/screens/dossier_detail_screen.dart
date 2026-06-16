@@ -140,7 +140,7 @@ class _ResumeTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final nextStatut = AppConstants.nextStatut[dossier.statut];
-    final peutAnnuler = dossier.statut != AppConstants.statutClos &&
+    final peutAnnuler = dossier.statut != AppConstants.statutTermine &&
         dossier.statut != AppConstants.statutAnnule &&
         ref.watch(permissionProvider(AppPermissions.dossiersAnnuler));
 

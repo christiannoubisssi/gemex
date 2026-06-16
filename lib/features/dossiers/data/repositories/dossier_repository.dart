@@ -77,7 +77,7 @@ class DossierRepository {
       clientId: drift.Value(data['client_id'] as String?),
       expertId: drift.Value(data['expert_id'] as String?),
       typeMissionId: drift.Value(data['type_mission_id'] as String?),
-      statut: const drift.Value('nouveau'),
+      statut: const drift.Value(AppConstants.statutBrouillon),
       priorite: drift.Value(data['priorite'] as String? ?? 'normale'),
       description: drift.Value(data['description'] as String?),
       dateSinistre: drift.Value(_parseDateTime(data['date_sinistre'])),
@@ -115,8 +115,8 @@ class DossierRepository {
   Future<void> update(String id, Map<String, dynamic> data) async {
     final now = DateTime.now();
 
-    await _db.dossiersDao.upsert(DossiersCompanion(
-      id: drift.Value(id),
+    // updateFields = UPDATE partiel (ne nécessite pas entrepriseId/annee)
+    await _db.dossiersDao.updateFields(id, DossiersCompanion(
       titre: data.containsKey('nature_sinistre')
           ? drift.Value((data['nature_sinistre'] as String?)?.isNotEmpty == true
               ? data['nature_sinistre'] as String
@@ -137,6 +137,9 @@ class DossierRepository {
       typeMissionId: data.containsKey('type_mission_id')
           ? drift.Value(data['type_mission_id'] as String?)
           : const drift.Value.absent(),
+      dateSinistre: data.containsKey('date_sinistre')
+          ? drift.Value(_parseDateTime(data['date_sinistre']))
+          : const drift.Value.absent(),
       lieuSinistre: data.containsKey('lieu_sinistre')
           ? drift.Value(data['lieu_sinistre'] as String?)
           : const drift.Value.absent(),
@@ -149,8 +152,17 @@ class DossierRepository {
       compagnieAssurance: data.containsKey('compagnie_assurance')
           ? drift.Value(data['compagnie_assurance'] as String?)
           : const drift.Value.absent(),
+      numeroPolice: data.containsKey('numero_police')
+          ? drift.Value(data['numero_police'] as String?)
+          : const drift.Value.absent(),
+      courtier: data.containsKey('courtier')
+          ? drift.Value(data['courtier'] as String?)
+          : const drift.Value.absent(),
       notesInternes: data.containsKey('notes_internes')
           ? drift.Value(data['notes_internes'] as String?)
+          : const drift.Value.absent(),
+      deadline: data.containsKey('deadline')
+          ? drift.Value(_parseDateTime(data['deadline']))
           : const drift.Value.absent(),
       syncStatus: const drift.Value(AppConstants.syncPending),
       updatedAt: drift.Value(now),
@@ -172,18 +184,15 @@ class DossierRepository {
       {String? motif}) async {
     final now = DateTime.now();
     DateTime? dateExpertise;
-    DateTime? dateRapport;
     DateTime? dateCloture;
 
-    if (nouveauStatut == AppConstants.statutExpertise) dateExpertise = now;
-    if (nouveauStatut == AppConstants.statutRapport) dateRapport = now;
-    if (nouveauStatut == AppConstants.statutClos) dateCloture = now;
+    if (nouveauStatut == AppConstants.statutEnCours) dateExpertise = now;
+    if (nouveauStatut == AppConstants.statutTermine) dateCloture = now;
 
     await _db.dossiersDao.updateStatut(
       id,
       nouveauStatut,
       dateExpertise: dateExpertise,
-      dateRapport: dateRapport,
       dateCloture: dateCloture,
       motifAnnulation: motif,
     );
@@ -194,12 +203,27 @@ class DossierRepository {
       if (motif != null) 'motif_annulation': motif,
       if (dateExpertise != null)
         'date_expertise': dateExpertise.toIso8601String(),
-      if (dateRapport != null) 'date_rapport': dateRapport.toIso8601String(),
       if (dateCloture != null) 'date_cloture': dateCloture.toIso8601String(),
     };
 
     if (_ref.read(isOnlineProvider)) {
       await _syncToSupabase(id, payload, 'update');
+      // Récupérer le numéro permanent assigné par le trigger Supabase lors du passage à en_cours
+      if (nouveauStatut == AppConstants.statutEnCours) {
+        try {
+          final row = await _supabase
+              .from('dossiers')
+              .select('numero')
+              .eq('id', id)
+              .single();
+          final numero = row['numero'] as String?;
+          if (numero != null && !numero.contains('LOCAL')) {
+            await _db.dossiersDao.updateNumero(id, numero);
+          }
+        } catch (e) {
+          AppLogger.w('DossierRepository', 'Impossible de récupérer le numéro après en_cours: $e');
+        }
+      }
     } else {
       await _db.syncQueueDao.enqueue(
         entityType: 'dossier',

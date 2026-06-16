@@ -17,7 +17,7 @@ class Dossiers extends Table {
   TextColumn get natureSinistre => text().nullable()();
   RealColumn get montantSinistre => real().nullable()();
 
-  TextColumn get statut => text().withDefault(const Constant('nouveau'))();
+  TextColumn get statut => text().withDefault(const Constant('brouillon'))();
   TextColumn get priorite => text().withDefault(const Constant('normale'))();
 
   DateTimeColumn get dateOuverture => dateTime().withDefault(currentDateAndTime)();

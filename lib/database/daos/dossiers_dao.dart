@@ -44,22 +44,27 @@ class DossiersDao extends DatabaseAccessor<AppDatabase> with _$DossiersDaoMixin 
     return (select(dossiers)
           ..where((d) =>
               d.priorite.isIn(['haute', 'urgente']) &
-              d.statut.isNotIn(['clos', 'annule']))
+              d.statut.isNotIn(['termine', 'annule']))
           ..orderBy([(d) => OrderingTerm.desc(d.createdAt)])
           ..limit(5))
         .get();
   }
 
+  /// INSERT complet (création) — toutes les colonnes non-nullables requises.
   Future<void> upsert(DossiersCompanion companion) {
     return into(dossiers).insertOnConflictUpdate(companion);
   }
 
+  /// UPDATE partiel (modification) — seules les colonnes présentes dans [companion] sont écrites.
+  Future<void> updateFields(String id, DossiersCompanion companion) {
+    return (update(dossiers)..where((d) => d.id.equals(id))).write(companion);
+  }
+
   Future<void> updateStatut(String id, String statut,
-      {DateTime? dateExpertise, DateTime? dateRapport, DateTime? dateCloture, String? motifAnnulation}) {
+      {DateTime? dateExpertise, DateTime? dateCloture, String? motifAnnulation}) {
     return (update(dossiers)..where((d) => d.id.equals(id))).write(DossiersCompanion(
       statut: Value(statut),
       dateExpertise: dateExpertise != null ? Value(dateExpertise) : const Value.absent(),
-      dateRapport: dateRapport != null ? Value(dateRapport) : const Value.absent(),
       dateCloture: dateCloture != null ? Value(dateCloture) : const Value.absent(),
       motifAnnulation: motifAnnulation != null ? Value(motifAnnulation) : const Value.absent(),
       syncStatus: const Value('pending'),

@@ -170,13 +170,12 @@ begin
     else upper(p_type)
   end;
 
-  -- Dossiers : format fixe AV-AAAA-NNNN (non configurable)
-  if p_type = 'dossier' then
-    return v_prefix || '-' || p_annee::text || '-' || lpad(v_next::text, 4, '0');
-  end if;
-
-  -- Devis/factures : format configurable par entreprise
-  select case p_type when 'devis' then format_devis else format_facture end
+  -- Dossiers, devis, factures : format configurable par entreprise
+  select case p_type
+    when 'dossier'  then format_dossier
+    when 'devis'    then format_devis
+    else format_facture
+  end
   into v_format
   from public.parametres_numerotation
   where entreprise_id = p_entreprise_id;
@@ -227,8 +226,17 @@ $$;
 create or replace function public.set_dossier_numero()
 returns trigger language plpgsql as $$
 begin
-  if new.numero is null or new.numero like '%-LOCAL-%' then
-    new.numero := public.next_numero('dossier', coalesce(new.annee, extract(year from now())::int));
+  -- Numéro permanent assigné uniquement lors du premier passage à 'en_cours'
+  if new.statut = 'en_cours'
+     and (old.statut is null or old.statut <> 'en_cours')
+     and (new.numero is null or new.numero like '%-LOCAL-%') then
+    new.numero := public.next_numero(
+      'dossier',
+      coalesce(new.annee, extract(year from now())::int),
+      coalesce(new.entreprise_id, 'default'),
+      null,
+      null
+    );
   end if;
   return new;
 end;
@@ -341,7 +349,7 @@ create table if not exists public.dossiers (
   nature_sinistre     text,
   montant_sinistre    double precision,
 
-  statut              text not null default 'nouveau',
+  statut              text not null default 'brouillon',
   priorite            text not null default 'normale',
 
   date_ouverture      timestamptz not null default now(),
@@ -368,7 +376,7 @@ create policy "Authentifié - accès complet" on public.dossiers
   for all using (auth.uid() is not null) with check (auth.uid() is not null);
 
 drop trigger if exists trg_dossiers_numero on public.dossiers;
-create trigger trg_dossiers_numero before insert on public.dossiers
+create trigger trg_dossiers_numero before update on public.dossiers
   for each row execute procedure public.set_dossier_numero();
 
 drop trigger if exists trg_dossiers_updated_at on public.dossiers;
@@ -542,8 +550,12 @@ create table if not exists public.parametres_numerotation (
   entreprise_id  text primary key default 'default',
   format_devis   text not null default 'PREFIXE-AAAA-NNNN',
   format_facture text not null default 'PREFIXE-AAAA-NNNN',
+  format_dossier text not null default 'AV-AAAA-NNNN',
   updated_at     timestamptz not null default now()
 );
+-- Migration : ajouter la colonne si elle n'existe pas encore (idempotent)
+alter table public.parametres_numerotation
+  add column if not exists format_dossier text not null default 'AV-AAAA-NNNN';
 
 alter table public.parametres_numerotation enable row level security;
 drop policy if exists "Authentifié - accès complet" on public.parametres_numerotation;
@@ -786,3 +798,13 @@ create policy "Pieces jointes - suppression authentifiée" on storage.objects
 --   CABINET_NOM      : nom du cabinet (ex: Cabinet Maritime Gabon)
 --   APP_URL          : URL de l'app déployée (ex: https://gemex.vercel.app)
 --   SUPABASE_SERVICE_ROLE_KEY : clé service_role (auto-injectée dans Edge Functions)
+
+-- ============================================================
+-- Migration Lot 2 : nouveaux statuts dossiers (idempotent)
+-- ============================================================
+-- Mapping : nouveau→brouillon, expertise_en_cours→en_cours, rapport_redige/clos→termine
+update public.dossiers set statut = 'brouillon' where statut = 'nouveau';
+update public.dossiers set statut = 'en_cours'  where statut = 'expertise_en_cours';
+update public.dossiers set statut = 'termine'   where statut in ('rapport_redige', 'clos');
+-- Mise à jour du DEFAULT de la colonne statut
+alter table public.dossiers alter column statut set default 'brouillon';

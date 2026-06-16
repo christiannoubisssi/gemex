@@ -586,20 +586,18 @@ class _Legend extends StatelessWidget {
 // ─── Donut dossiers par statut ─────────────────────────────────────────────
 
 const _statutColors = {
-  'nouveau': AppColors.statutNouveau,
+  'brouillon': AppColors.statutBrouillon,
   'en_instruction': AppColors.statutEnInstruction,
-  'expertise_en_cours': AppColors.statutExpertise,
-  'rapport_redige': AppColors.statutRapport,
-  'clos': AppColors.statutClos,
+  'en_cours': AppColors.statutEnCours,
+  'termine': AppColors.statutTermine,
   'annule': AppColors.statutAnnule,
 };
 
 const _statutLabels = {
-  'nouveau': 'Nouveau',
+  'brouillon': 'Brouillon',
   'en_instruction': 'En instruction',
-  'expertise_en_cours': 'Expertise',
-  'rapport_redige': 'Rapport rédigé',
-  'clos': 'Clos',
+  'en_cours': 'En cours',
+  'termine': 'Terminé',
   'annule': 'Annulé',
 };
 

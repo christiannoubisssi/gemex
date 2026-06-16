@@ -10,39 +10,35 @@ class AppConstants {
   static const double tvaTauxDefaut = 18.0;
   static const double tpsTauxDefaut = 0.0;
 
-  // Statuts dossiers
-  static const String statutNouveau = 'nouveau';
+  // Statuts dossiers — workflow : brouillon → en_instruction → en_cours → termine
+  static const String statutBrouillon = 'brouillon';
   static const String statutEnInstruction = 'en_instruction';
-  static const String statutExpertise = 'expertise_en_cours';
-  static const String statutRapport = 'rapport_redige';
-  static const String statutClos = 'clos';
+  static const String statutEnCours = 'en_cours';
+  static const String statutTermine = 'termine';
   static const String statutAnnule = 'annule';
 
   static const List<String> statutsDossier = [
-    statutNouveau,
+    statutBrouillon,
     statutEnInstruction,
-    statutExpertise,
-    statutRapport,
-    statutClos,
+    statutEnCours,
+    statutTermine,
     statutAnnule,
   ];
 
   static const Map<String, String> statutLabels = {
-    statutNouveau: 'Nouveau',
+    statutBrouillon: 'Brouillon',
     statutEnInstruction: 'En instruction',
-    statutExpertise: 'Expertise en cours',
-    statutRapport: 'Rapport rédigé',
-    statutClos: 'Clos',
+    statutEnCours: 'En cours',
+    statutTermine: 'Terminé',
     statutAnnule: 'Annulé',
   };
 
-  // Transitions autorisées (workflow à sens unique)
+  // Transitions autorisées (workflow à sens unique — pas de retour arrière)
   static const Map<String, String?> nextStatut = {
-    statutNouveau: statutEnInstruction,
-    statutEnInstruction: statutExpertise,
-    statutExpertise: statutRapport,
-    statutRapport: statutClos,
-    statutClos: null,
+    statutBrouillon: statutEnInstruction,
+    statutEnInstruction: statutEnCours,
+    statutEnCours: statutTermine,
+    statutTermine: null,
     statutAnnule: null,
   };
 

@@ -18,6 +18,7 @@ class ParametresService {
   static const defaultsDevise = 'XAF';
   static const defaultFormatDevis = 'PREFIXE-AAAA-NNNN';
   static const defaultFormatFacture = 'PREFIXE-AAAA-NNNN';
+  static const defaultFormatDossier = 'AV-AAAA-NNNN';
 
   static SupabaseClient get _client => Supabase.instance.client;
 
@@ -208,13 +209,14 @@ class ParametresService {
     try {
       final row = await _client
           .from('parametres_numerotation')
-          .select('format_devis, format_facture')
+          .select('format_devis, format_facture, format_dossier')
           .eq('entreprise_id', 'default')
           .maybeSingle();
       if (row != null) {
         final data = {
           'format_devis': row['format_devis'] as String? ?? defaultFormatDevis,
           'format_facture': row['format_facture'] as String? ?? defaultFormatFacture,
+          'format_dossier': row['format_dossier'] as String? ?? defaultFormatDossier,
         };
         await _cacheNumerotation(data);
         return data;
@@ -229,22 +231,30 @@ class ParametresService {
     return {
       'format_devis': await getString('${_prefixNumerotation}format_devis', defaultValue: defaultFormatDevis),
       'format_facture': await getString('${_prefixNumerotation}format_facture', defaultValue: defaultFormatFacture),
+      'format_dossier': await getString('${_prefixNumerotation}format_dossier', defaultValue: defaultFormatDossier),
     };
   }
 
   static Future<void> _cacheNumerotation(Map<String, String> data) async {
     await setString('${_prefixNumerotation}format_devis', data['format_devis']!);
     await setString('${_prefixNumerotation}format_facture', data['format_facture']!);
+    await setString('${_prefixNumerotation}format_dossier', data['format_dossier']!);
   }
 
-  static Future<void> saveNumerotation(String formatDevis, String formatFacture) async {
-    final data = {'format_devis': formatDevis, 'format_facture': formatFacture};
+  static Future<void> saveNumerotation(
+      String formatDevis, String formatFacture, String formatDossier) async {
+    final data = {
+      'format_devis': formatDevis,
+      'format_facture': formatFacture,
+      'format_dossier': formatDossier,
+    };
     await _cacheNumerotation(data);
     try {
       await _client.from('parametres_numerotation').upsert({
         'entreprise_id': 'default',
         'format_devis': formatDevis,
         'format_facture': formatFacture,
+        'format_dossier': formatDossier,
       });
     } catch (_) {
       // Hors-ligne : le cache local reste à jour, la sync se refera plus tard

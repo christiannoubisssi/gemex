@@ -12,6 +12,7 @@ class NumerotationScreen extends ConsumerStatefulWidget {
 }
 
 class _NumerotationScreenState extends ConsumerState<NumerotationScreen> {
+  final _dossierCtrl = TextEditingController();
   final _devisCtrl = TextEditingController();
   final _factureCtrl = TextEditingController();
   bool _loading = true;
@@ -25,6 +26,7 @@ class _NumerotationScreenState extends ConsumerState<NumerotationScreen> {
 
   Future<void> _load() async {
     final data = await ParametresService.getNumerotation();
+    _dossierCtrl.text = data['format_dossier']!;
     _devisCtrl.text = data['format_devis']!;
     _factureCtrl.text = data['format_facture']!;
     setState(() => _loading = false);
@@ -33,7 +35,7 @@ class _NumerotationScreenState extends ConsumerState<NumerotationScreen> {
   Future<void> _save() async {
     setState(() => _saving = true);
     await ParametresService.saveNumerotation(
-        _devisCtrl.text.trim(), _factureCtrl.text.trim());
+        _devisCtrl.text.trim(), _factureCtrl.text.trim(), _dossierCtrl.text.trim());
     ref.invalidate(numerotationProvider);
     setState(() => _saving = false);
     if (mounted) {
@@ -44,6 +46,7 @@ class _NumerotationScreenState extends ConsumerState<NumerotationScreen> {
 
   @override
   void dispose() {
+    _dossierCtrl.dispose();
     _devisCtrl.dispose();
     _factureCtrl.dispose();
     super.dispose();
@@ -72,13 +75,14 @@ class _NumerotationScreenState extends ConsumerState<NumerotationScreen> {
                     Expanded(
                       child: Text(
                         'Jetons disponibles, séparés par "-" :\n'
-                        '• PREFIXE — DEV ou FAC selon le document\n'
+                        '• PREFIXE — AV, DEV ou FAC selon le document\n'
                         '• AAAA — année\n'
                         '• MMAA — mois + année (ex : 0626)\n'
                         '• ABREV — abréviation du type de mission du dossier lié (vide si absent)\n'
                         '• INITIALES — initiales de l\'auteur du document (vide si non renseignées)\n'
                         '• NNNN — numéro séquentiel annuel (le nombre de N définit le nombre de chiffres)\n\n'
-                        'Les segments ABREV/INITIALES vides sont automatiquement retirés du numéro.',
+                        'Les segments ABREV/INITIALES vides sont automatiquement retirés du numéro.\n'
+                        'Le numéro de dossier est attribué au passage en statut "En cours".',
                         style: TextStyle(fontSize: 12),
                       ),
                     ),
@@ -86,6 +90,20 @@ class _NumerotationScreenState extends ConsumerState<NumerotationScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 24),
+            const Text('Dossiers', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _dossierCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Format dossier',
+                hintText: 'AV-AAAA-NNNN',
+                prefixIcon: Icon(Icons.folder_outlined),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 4),
+            _Apercu(format: _dossierCtrl.text, prefixe: 'AV', annee: annee),
             const SizedBox(height: 24),
             const Text('Devis', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
             const SizedBox(height: 8),

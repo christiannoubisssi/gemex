@@ -24,11 +24,10 @@ class StatusBadge extends StatelessWidget {
 
   Color get _color {
     switch (statut) {
-      case AppConstants.statutNouveau: return AppColors.statutNouveau;
+      case AppConstants.statutBrouillon: return AppColors.statutBrouillon;
       case AppConstants.statutEnInstruction: return AppColors.statutEnInstruction;
-      case AppConstants.statutExpertise: return AppColors.statutExpertise;
-      case AppConstants.statutRapport: return AppColors.statutRapport;
-      case AppConstants.statutClos: return AppColors.statutClos;
+      case AppConstants.statutEnCours: return AppColors.statutEnCours;
+      case AppConstants.statutTermine: return AppColors.statutTermine;
       case AppConstants.statutAnnule: return AppColors.statutAnnule;
       default: return Colors.grey;
     }
