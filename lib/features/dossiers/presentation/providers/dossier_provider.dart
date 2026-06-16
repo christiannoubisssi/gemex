@@ -17,10 +17,10 @@ final dossierSearchProvider = FutureProvider.autoDispose.family<List<Dossier>, S
   },
 );
 
-final dossierDetailProvider = FutureProvider.autoDispose.family<Dossier?, String>(
-  (ref, id) async {
-    return ref.read(dossierRepositoryProvider).getById(id);
-  },
+// StreamProvider réactif — se met à jour automatiquement quand Drift modifie le dossier
+// (changement de statut, mise à jour du numéro après sync en_cours, etc.)
+final dossierDetailProvider = StreamProvider.autoDispose.family<Dossier?, String>(
+  (ref, id) => ref.read(dossierRepositoryProvider).watchById(id),
 );
 
 final dossiersUrgentsProvider = FutureProvider.autoDispose<List<Dossier>>(
@@ -67,7 +67,7 @@ class DossierNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await ref.read(dossierRepositoryProvider).update(id, toJsonSafe(data));
-      ref.invalidate(dossierDetailProvider(id));
+      // dossierDetailProvider (StreamProvider) se met à jour automatiquement via Drift
       ref.invalidate(dossiersProvider);
     });
   }
@@ -76,7 +76,7 @@ class DossierNotifier extends AsyncNotifier<void> {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
       await ref.read(dossierRepositoryProvider).changerStatut(id, statut, motif: motif);
-      ref.invalidate(dossierDetailProvider(id));
+      // dossierDetailProvider (StreamProvider) se met à jour automatiquement via Drift
       ref.invalidate(dossiersProvider);
       ref.invalidate(dossierStatsProvider);
     });

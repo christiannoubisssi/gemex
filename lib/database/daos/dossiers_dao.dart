@@ -40,6 +40,11 @@ class DossiersDao extends DatabaseAccessor<AppDatabase> with _$DossiersDaoMixin 
     return (select(dossiers)..where((d) => d.id.equals(id))).getSingleOrNull();
   }
 
+  /// Stream réactif sur un dossier — se met à jour automatiquement (statut, numéro…)
+  Stream<Dossier?> watchById(String id) {
+    return (select(dossiers)..where((d) => d.id.equals(id))).watchSingleOrNull();
+  }
+
   Future<List<Dossier>> getUrgents() {
     return (select(dossiers)
           ..where((d) =>

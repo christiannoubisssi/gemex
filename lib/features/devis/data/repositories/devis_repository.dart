@@ -25,6 +25,9 @@ class DevisRepository {
   Future<List<Devi>> getAll({String? statut, String? clientId, String? dossierId}) =>
       _db.devisDao.getAll(statut: statut, clientId: clientId, dossierId: dossierId);
 
+  /// Stream réactif pour la liste complète — utilisé par devisAllProvider (évite reload à chaque navigation)
+  Stream<List<Devi>> watchAll() => _db.devisDao.watchAll();
+
   Future<Devi?> getById(String id) => _db.devisDao.getById(id);
 
   Future<List<DevisLigne>> getLignes(String devisId) => _db.devisDao.getLignes(devisId);
@@ -87,6 +90,8 @@ class DevisRepository {
           unite: drift.Value(l['unite'] as String? ?? 'forfait'),
           prixUnit: drift.Value(pu),
           montantHt: drift.Value(qte * pu),
+          // taxes sélectionnées sur le formulaire (JSON encodé)
+          taxesJson: drift.Value(l['taxes_json'] as String?),
         ));
       }
     });

@@ -44,6 +44,11 @@ class DossierRepository {
     return _db.dossiersDao.getById(id);
   }
 
+  /// Stream réactif sur un dossier — utilisé par dossierDetailProvider
+  Stream<Dossier?> watchById(String id) {
+    return _db.dossiersDao.watchById(id);
+  }
+
   Future<List<Dossier>> getUrgents() {
     return _db.dossiersDao.getUrgents();
   }

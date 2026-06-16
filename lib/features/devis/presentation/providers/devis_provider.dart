@@ -2,9 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../database/app_database.dart';
 import '../../data/repositories/devis_repository.dart';
 
-// Provider simple pour la liste complète (sans filtre) — évite le problème d'identité Map dans family
-final devisAllProvider = FutureProvider.autoDispose<List<Devi>>(
-  (ref) async => ref.read(devisRepositoryProvider).getAll(),
+// StreamProvider réactif — liste complète sans rechargement à chaque navigation
+// Drift émet automatiquement une nouvelle valeur à chaque INSERT/UPDATE/DELETE
+final devisAllProvider = StreamProvider.autoDispose<List<Devi>>(
+  (ref) => ref.read(devisRepositoryProvider).watchAll(),
 );
 
 final devisListProvider = FutureProvider.autoDispose.family<List<Devi>, Map<String, String?>>(
