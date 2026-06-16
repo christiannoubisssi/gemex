@@ -112,6 +112,15 @@ class _ClientFormScreenState extends ConsumerState<ClientFormScreen> {
               initialValue: _existing?.ville,
               decoration: const InputDecoration(labelText: 'Ville'),
             ),
+            const SizedBox(height: 12),
+            FormBuilderTextField(
+              name: 'pays',
+              initialValue: _existing?.pays ?? 'Gabon',
+              decoration: const InputDecoration(
+                labelText: 'Pays',
+                prefixIcon: Icon(Icons.public_outlined),
+              ),
+            ),
             const SizedBox(height: 20),
             const Text('Informations fiscales',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
