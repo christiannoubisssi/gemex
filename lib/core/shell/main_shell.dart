@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../../features/auth/data/auth_provider.dart';
 import '../../features/parametres/data/parametres_provider.dart';
 import '../../features/parametres/data/user_management_service.dart';
+import '../../shared/services/sync_service.dart';
 import '../network/connectivity_service.dart';
 
 class _NavItemDef {
@@ -96,6 +97,26 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
+  SyncService? _syncService;
+
+  @override
+  void initState() {
+    super.initState();
+    // Démarrer le SyncService dès que l'utilisateur est connecté.
+    // start() écoute isOnlineProvider et gère lui-même la connectivité.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _syncService = ref.read(syncServiceProvider);
+      _syncService!.start();
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncService?.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isOnline = ref.watch(isOnlineProvider);
@@ -106,17 +127,16 @@ class _MainShellState extends ConsumerState<MainShell> {
     final path = GoRouterState.of(context).uri.path;
     final selIdx = _selectedIndex(items, path).clamp(0, items.isEmpty ? 0 : items.length - 1);
 
+    final syncStatus = ref.watch(syncStatusProvider);
+
     return Scaffold(
       appBar: isWide
           ? null
           : AppBar(
               title: const Text('AvarieApp'),
               actions: [
-                if (!isOnline)
-                  const Padding(
-                    padding: EdgeInsets.only(right: 8),
-                    child: Icon(Icons.cloud_off, color: Colors.orange),
-                  ),
+                // Indicateur de synchronisation
+                _SyncIndicator(status: syncStatus, isOnline: isOnline),
                 IconButton(
                   icon: const Icon(Icons.person_outline),
                   onPressed: () => context.push('/profil'),
@@ -131,7 +151,7 @@ class _MainShellState extends ConsumerState<MainShell> {
             child: isWide
                 ? Row(
                     children: [
-                      _buildNavigationRail(context, items, selIdx, profileAsync),
+                      _buildNavigationRail(context, items, selIdx, profileAsync, syncStatus, isOnline),
                       const VerticalDivider(width: 1),
                       Expanded(child: widget.child),
                     ],
@@ -167,6 +187,8 @@ class _MainShellState extends ConsumerState<MainShell> {
     List<_NavItemDef> items,
     int selIdx,
     AsyncValue<UserProfile?> profileAsync,
+    SyncStatus syncStatus,
+    bool isOnline,
   ) {
     return SizedBox(
       width: 200,
@@ -215,13 +237,20 @@ class _MainShellState extends ConsumerState<MainShell> {
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: ListTile(
-                leading: const Icon(Icons.logout, color: Colors.white54),
-                title: const Text(
-                  'Déconnexion',
-                  style: TextStyle(color: Colors.white54, fontSize: 13),
-                ),
-                onTap: _signOut,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Indicateur de sync dans la sidebar
+                  _SyncSidebarTile(status: syncStatus, isOnline: isOnline),
+                  ListTile(
+                    leading: const Icon(Icons.logout, color: Colors.white54),
+                    title: const Text(
+                      'Déconnexion',
+                      style: TextStyle(color: Colors.white54, fontSize: 13),
+                    ),
+                    onTap: _signOut,
+                  ),
+                ],
               ),
             ),
           ),
@@ -362,6 +391,94 @@ class _RoleBadge extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Indicateur de sync dans la sidebar (mode wide).
+class _SyncSidebarTile extends StatelessWidget {
+  final SyncStatus status;
+  final bool isOnline;
+  const _SyncSidebarTile({required this.status, required this.isOnline});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isOnline) {
+      return const ListTile(
+        leading: Icon(Icons.cloud_off, color: Colors.orange, size: 20),
+        title: Text('Hors ligne',
+            style: TextStyle(color: Colors.orange, fontSize: 12)),
+        dense: true,
+      );
+    }
+    if (status == SyncStatus.syncing) {
+      return const ListTile(
+        leading: SizedBox(
+          width: 20,
+          height: 20,
+          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white38),
+        ),
+        title: Text('Synchronisation…',
+            style: TextStyle(color: Colors.white38, fontSize: 12)),
+        dense: true,
+      );
+    }
+    if (status == SyncStatus.error) {
+      return const ListTile(
+        leading: Icon(Icons.sync_problem, color: Colors.redAccent, size: 20),
+        title: Text('Erreur de sync',
+            style: TextStyle(color: Colors.redAccent, fontSize: 12)),
+        dense: true,
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
+/// Icône dans l'AppBar indiquant l'état de la synchronisation.
+class _SyncIndicator extends StatelessWidget {
+  final SyncStatus status;
+  final bool isOnline;
+  const _SyncIndicator({required this.status, required this.isOnline});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isOnline) {
+      return const Padding(
+        padding: EdgeInsets.only(right: 4),
+        child: Tooltip(
+          message: 'Hors ligne',
+          child: Icon(Icons.cloud_off, color: Colors.orange),
+        ),
+      );
+    }
+    switch (status) {
+      case SyncStatus.syncing:
+        return const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12),
+          child: Tooltip(
+            message: 'Synchronisation en cours…',
+            child: SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        );
+      case SyncStatus.error:
+        return const Padding(
+          padding: EdgeInsets.only(right: 4),
+          child: Tooltip(
+            message: 'Erreur de synchronisation',
+            child: Icon(Icons.sync_problem, color: Colors.redAccent),
+          ),
+        );
+      case SyncStatus.idle:
+      case SyncStatus.offline:
+        return const SizedBox.shrink();
+    }
   }
 }
 
