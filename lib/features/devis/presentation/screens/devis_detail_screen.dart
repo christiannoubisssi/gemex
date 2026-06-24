@@ -220,6 +220,41 @@ class DevisDetailScreen extends ConsumerWidget {
               }
             },
           ),
+        // Annuler le devis (possible tant que pas déjà refusé/expiré)
+        if (devis.statut != AppConstants.devisRefuse &&
+            devis.statut != AppConstants.devisExpire) ...[
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.cancel_outlined, color: AppColors.danger),
+            label: const Text('Annuler ce devis', style: TextStyle(color: AppColors.danger)),
+            style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.danger)),
+            onPressed: () async {
+              final confirme = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Annuler le devis'),
+                  content: const Text('Cette action est irréversible. Le devis passera au statut "Refusé".'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Retour')),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('Annuler le devis'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirme == true) {
+                await ref.read(devisNotifierProvider.notifier).updateStatut(devis.id, AppConstants.devisRefuse);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Devis annulé')));
+                }
+              }
+            },
+          ),
+        ],
       ],
     );
   }

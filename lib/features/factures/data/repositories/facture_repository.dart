@@ -297,6 +297,32 @@ class FactureRepository {
     }
   }
 
+  /// Annule une facture (brouillon ou émise uniquement).
+  Future<void> annulerFacture(String id) async {
+    await _db.facturesDao.updateStatut(id, AppConstants.factureAnnulee);
+    if (_ref.read(isOnlineProvider)) {
+      try {
+        await _supabase.from('factures').update({'statut': AppConstants.factureAnnulee}).eq('id', id);
+        await _db.facturesDao.markSynced(id);
+      } catch (e, s) {
+        AppLogger.e('FactureRepository', 'Échec sync Supabase facture $id (annulation)', error: e, stack: s);
+        await _db.syncQueueDao.enqueue(
+          entityType: 'facture',
+          entityId: id,
+          operation: 'update',
+          payload: jsonEncode({'id': id, 'statut': AppConstants.factureAnnulee}),
+        );
+      }
+    } else {
+      await _db.syncQueueDao.enqueue(
+        entityType: 'facture',
+        entityId: id,
+        operation: 'update',
+        payload: jsonEncode({'id': id, 'statut': AppConstants.factureAnnulee}),
+      );
+    }
+  }
+
   Future<void> enregistrerPaiement(String id, double montant, String? mode, String? reference) async {
     await _db.facturesDao.enregistrerPaiement(id, montant, mode, reference);
     if (_ref.read(isOnlineProvider)) {

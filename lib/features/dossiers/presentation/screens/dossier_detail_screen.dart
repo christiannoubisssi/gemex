@@ -272,16 +272,16 @@ class _ResumeTab extends ConsumerWidget {
       BuildContext context, WidgetRef ref, String id, String nouveauStatut) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Confirmer le changement'),
         content: Text(
             'Passer le dossier au statut "${AppConstants.statutLabels[nouveauStatut]}" ?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Annuler')),
           ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
+              onPressed: () => Navigator.pop(ctx, true),
               child: const Text('Confirmer')),
         ],
       ),
@@ -297,7 +297,7 @@ class _ResumeTab extends ConsumerWidget {
     final motifController = TextEditingController();
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Annuler le dossier'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           const Text('Cette action est irréversible.'),
@@ -311,12 +311,15 @@ class _ResumeTab extends ConsumerWidget {
         ]),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context, false),
+              onPressed: () => Navigator.pop(ctx, false),
               child: const Text('Retour')),
           ElevatedButton(
             style:
                 ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () {
+              if (motifController.text.trim().isEmpty) return;
+              Navigator.pop(ctx, true);
+            },
             child: const Text('Annuler le dossier'),
           ),
         ],

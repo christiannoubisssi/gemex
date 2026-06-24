@@ -71,6 +71,15 @@ class FactureNotifier extends AsyncNotifier<void> {
     });
   }
 
+  Future<void> annulerFacture(String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      await ref.read(factureRepositoryProvider).annulerFacture(id);
+      ref.invalidate(factureDetailProvider(id));
+      ref.invalidate(facturesProvider);
+    });
+  }
+
   Future<void> enregistrerPaiement(String id, double montant, String? mode, String? reference) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {

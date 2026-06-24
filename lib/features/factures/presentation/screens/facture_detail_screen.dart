@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/permissions.dart';
@@ -33,8 +34,19 @@ class FactureDetailScreen extends ConsumerWidget {
             facture.dateEcheance.isBefore(DateTime.now());
         final peutValider = ref.watch(permissionProvider(AppPermissions.facturesValider));
         final peutEncaisser = ref.watch(permissionProvider(AppPermissions.facturesEncaisser));
+        final estBrouillon = facture.statut == AppConstants.factureBrouillon;
         return Scaffold(
-          appBar: AppBar(title: Text(facture.numero ?? 'Facture')),
+          appBar: AppBar(
+            title: Text(facture.numero ?? 'Facture'),
+            actions: [
+              if (estBrouillon)
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: 'Modifier',
+                  onPressed: () => context.push('/factures/${facture.id}/edit'),
+                ),
+            ],
+          ),
           body: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -128,6 +140,8 @@ class FactureDetailScreen extends ConsumerWidget {
 
   Widget _buildQuickActions(BuildContext context, WidgetRef ref, dynamic facture, List<FacturesLigne>? lignes, bool enRetard, bool peutValider, bool peutEncaisser, bool isMobile) {
     final estBrouillon = facture.statut == AppConstants.factureBrouillon;
+    final peutAnnuler = facture.statut != AppConstants.facturePayee &&
+        facture.statut != AppConstants.factureAnnulee;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -201,8 +215,44 @@ class FactureDetailScreen extends ConsumerWidget {
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.success),
             onPressed: () => _showPaiementDialog(context, ref),
           ),
+        if (peutAnnuler) ...[
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.cancel_outlined, color: AppColors.danger),
+            label: const Text('Annuler la facture', style: TextStyle(color: AppColors.danger)),
+            style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.danger)),
+            onPressed: () => _confirmerAnnulation(context, ref),
+          ),
+        ],
       ],
     );
+  }
+
+  Future<void> _confirmerAnnulation(BuildContext context, WidgetRef ref) async {
+    final confirme = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Annuler la facture'),
+        content: const Text(
+            'Cette action est irréversible. La facture passera au statut "Annulée".'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Retour')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Annuler la facture'),
+          ),
+        ],
+      ),
+    );
+    if (confirme != true) return;
+    await ref.read(factureNotifierProvider.notifier).annulerFacture(id);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Facture annulée')));
+    }
   }
 
   Future<void> _confirmerValidation(BuildContext context, WidgetRef ref) async {
