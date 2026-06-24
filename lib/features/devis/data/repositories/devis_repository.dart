@@ -37,18 +37,54 @@ class DevisRepository {
     final now = DateTime.now();
     final numero = FormatUtils.generateLocalNumero('DEV');
 
-    // Calculer totaux
+    // Calculer totaux HT et taxes depuis les lignes
     double montantHt = 0;
+    double totalTaxes = 0;
+    double aggregatedTva = 0;
+    double aggregatedTps = 0;
+    double tauxTvaDetecte = 0;
+    double tauxTpsDetecte = 0;
+
     for (final l in lignes) {
       final qte = (l['quantite'] as num?)?.toDouble() ?? 1;
       final pu = (l['prix_unit'] as num?)?.toDouble() ?? 0;
-      montantHt += qte * pu;
+      final ligneHt = qte * pu;
+      montantHt += ligneHt;
+
+      // Agréger les taxes depuis taxes_json de chaque ligne
+      final taxesStr = l['taxes_json'] as String?;
+      if (taxesStr != null && taxesStr.isNotEmpty) {
+        try {
+          final taxesList = jsonDecode(taxesStr) as List;
+          for (final t in taxesList) {
+            final taux = (t['taux'] as num?)?.toDouble() ?? 0;
+            final nom = (t['nom'] as String? ?? '').toLowerCase();
+            final montant = ligneHt * taux / 100;
+            totalTaxes += montant;
+            // Identifier TVA et TPS par nom pour les champs du document
+            if (nom.contains('tva')) {
+              aggregatedTva += montant;
+              if (tauxTvaDetecte == 0) tauxTvaDetecte = taux;
+            } else if (nom.contains('tps')) {
+              aggregatedTps += montant;
+              if (tauxTpsDetecte == 0) tauxTpsDetecte = taux;
+            }
+          }
+        } catch (_) {}
+      }
     }
-    final tauxTva = (data['taux_tva'] as num?)?.toDouble() ?? AppConstants.tvaTauxDefaut;
-    final tauxTps = (data['taux_tps'] as num?)?.toDouble() ?? AppConstants.tpsTauxDefaut;
-    final montantTva = montantHt * tauxTva / 100;
-    final montantTps = montantHt * tauxTps / 100;
-    final montantTtc = montantHt + montantTva + montantTps;
+
+    // Si aucune taxe par ligne, utiliser le taux document si fourni
+    final tauxTva = aggregatedTva > 0
+        ? tauxTvaDetecte
+        : (data['taux_tva'] as num?)?.toDouble() ?? 0;
+    final tauxTps = aggregatedTps > 0
+        ? tauxTpsDetecte
+        : (data['taux_tps'] as num?)?.toDouble() ?? 0;
+    final montantTva = aggregatedTva > 0 ? aggregatedTva : montantHt * tauxTva / 100;
+    final montantTps = aggregatedTps > 0 ? aggregatedTps : montantHt * tauxTps / 100;
+    final montantTtc = montantHt + montantTva + montantTps +
+        (totalTaxes - aggregatedTva - aggregatedTps); // taxes hors TVA/TPS
 
     // IDs générés à l'avance pour pouvoir synchroniser les lignes avec Supabase
     final ligneIds = List.generate(lignes.length, (_) => const Uuid().v4());

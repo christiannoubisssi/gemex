@@ -50,13 +50,13 @@ class TaxesScreen extends ConsumerWidget {
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref, Taxe taxe) async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Supprimer la taxe ?'),
         content: Text('La taxe "${taxe.nom}" sera supprimée définitivement.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Annuler')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('Supprimer'),
           ),

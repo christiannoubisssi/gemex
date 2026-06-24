@@ -1,3 +1,4 @@
+import 'dart:convert' show json;
 import 'dart:typed_data';
 
 import 'package:intl/intl.dart';
@@ -64,7 +65,7 @@ class PdfService {
                 style: pw.TextStyle(font: robotoBold, fontSize: 11)),
             pw.SizedBox(height: 16),
           ],
-          _buildLignesTable(
+          _buildLignesTableWithTaxes(
             lignes: lignes.map((l) => _LignePdf(
               designation: l.designation,
               description: l.description,
@@ -72,6 +73,7 @@ class PdfService {
               unite: l.unite,
               prixUnit: l.prixUnit,
               montantHt: l.montantHt,
+              taxesJson: l.taxesJson,
             )).toList(),
             roboto: roboto,
             robotoBold: robotoBold,
@@ -79,12 +81,18 @@ class PdfService {
           pw.SizedBox(height: 16),
           pw.Align(
             alignment: pw.Alignment.centerRight,
-            child: _buildTotaux(
-              montantHt: devis.montantHt,
+            child: _buildTotauxFromLignes(
+              lignes: lignes.map((l) => _LignePdf(
+                designation: l.designation,
+                quantite: l.quantite,
+                unite: l.unite,
+                prixUnit: l.prixUnit,
+                montantHt: l.montantHt,
+                taxesJson: l.taxesJson,
+              )).toList(),
+              montantHtDoc: devis.montantHt,
               tauxTva: devis.tauxTva,
               montantTva: devis.montantTva,
-              tauxTps: devis.tauxTps,
-              montantTps: devis.montantTps,
               montantTtc: devis.montantTtc,
               roboto: roboto,
               robotoBold: robotoBold,
@@ -162,7 +170,7 @@ class PdfService {
                 style: pw.TextStyle(font: robotoBold, fontSize: 11)),
             pw.SizedBox(height: 16),
           ],
-          _buildLignesTable(
+          _buildLignesTableWithTaxes(
             lignes: lignes.map((l) => _LignePdf(
               designation: l.designation,
               description: l.description,
@@ -170,6 +178,7 @@ class PdfService {
               unite: l.unite,
               prixUnit: l.prixUnit,
               montantHt: l.montantHt,
+              taxesJson: l.taxesJson,
             )).toList(),
             roboto: roboto,
             robotoBold: robotoBold,
@@ -177,12 +186,18 @@ class PdfService {
           pw.SizedBox(height: 16),
           pw.Align(
             alignment: pw.Alignment.centerRight,
-            child: _buildTotaux(
-              montantHt: facture.montantHt,
+            child: _buildTotauxFromLignes(
+              lignes: lignes.map((l) => _LignePdf(
+                designation: l.designation,
+                quantite: l.quantite,
+                unite: l.unite,
+                prixUnit: l.prixUnit,
+                montantHt: l.montantHt,
+                taxesJson: l.taxesJson,
+              )).toList(),
+              montantHtDoc: facture.montantHt,
               tauxTva: facture.tauxTva,
               montantTva: facture.montantTva,
-              tauxTps: facture.tauxTps,
-              montantTps: facture.montantTps,
               montantTtc: facture.montantTtc,
               roboto: roboto,
               robotoBold: robotoBold,
@@ -295,7 +310,8 @@ class PdfService {
     );
   }
 
-  static pw.Widget _buildLignesTable({
+  /// Tableau des lignes avec colonne Taxes par ligne
+  static pw.Widget _buildLignesTableWithTaxes({
     required List<_LignePdf> lignes,
     required pw.Font roboto,
     required pw.Font robotoBold,
@@ -303,15 +319,17 @@ class PdfService {
     final headerStyle = pw.TextStyle(font: robotoBold, fontSize: 9, color: PdfColors.white);
     final cellStyle = pw.TextStyle(font: roboto, fontSize: 9);
     const headerBg = PdfColor.fromInt(0xFF0D2137);
+    final hasTaxes = lignes.any((l) => l.totalTaxes > 0);
 
     return pw.Table(
       border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
       columnWidths: {
         0: const pw.FlexColumnWidth(4),
-        1: const pw.FixedColumnWidth(50),
-        2: const pw.FixedColumnWidth(45),
-        3: const pw.FixedColumnWidth(70),
-        4: const pw.FixedColumnWidth(70),
+        1: const pw.FixedColumnWidth(45),
+        2: const pw.FixedColumnWidth(40),
+        3: const pw.FixedColumnWidth(65),
+        4: const pw.FixedColumnWidth(65),
+        if (hasTaxes) 5: const pw.FixedColumnWidth(65),
       },
       children: [
         pw.TableRow(
@@ -322,6 +340,8 @@ class PdfService {
             _cell('Unité', headerStyle),
             _cell('P.U. HT', headerStyle, align: pw.Alignment.centerRight),
             _cell('Montant HT', headerStyle, align: pw.Alignment.centerRight),
+            if (hasTaxes)
+              _cell('Taxes', headerStyle, align: pw.Alignment.centerRight),
           ],
         ),
         for (final l in lignes)
@@ -335,6 +355,12 @@ class PdfService {
                     pw.Text(l.designation, style: pw.TextStyle(font: robotoBold, fontSize: 9)),
                     if (l.description != null)
                       pw.Text(l.description!, style: pw.TextStyle(font: roboto, fontSize: 8, color: PdfColors.grey600)),
+                    // Détail des taxes appliquées sur cette ligne
+                    if (l.taxesDetail.isNotEmpty)
+                      pw.Text(
+                        l.taxesDetail.map((t) => '${t['nom']} ${(t['taux'] as double).toStringAsFixed(0)}%').join(' + '),
+                        style: pw.TextStyle(font: roboto, fontSize: 7, color: PdfColors.grey500),
+                      ),
                   ],
                 ),
               ),
@@ -342,38 +368,72 @@ class PdfService {
               _cell(l.unite, cellStyle),
               _cell('${_fcfa.format(l.prixUnit)} XAF', cellStyle, align: pw.Alignment.centerRight),
               _cell('${_fcfa.format(l.montantHt)} XAF', cellStyle, align: pw.Alignment.centerRight),
+              if (hasTaxes)
+                _cell(l.totalTaxes > 0 ? '${_fcfa.format(l.totalTaxes)} XAF' : '-', cellStyle,
+                    align: pw.Alignment.centerRight),
             ],
           ),
       ],
     );
   }
 
-  static pw.Widget _buildTotaux({
-    required double montantHt,
+  /// Totaux calculés depuis les lignes (agrège taxes_json par nom de taxe)
+  static pw.Widget _buildTotauxFromLignes({
+    required List<_LignePdf> lignes,
+    required double montantHtDoc,
     required double tauxTva,
     required double montantTva,
-    required double tauxTps,
-    required double montantTps,
     required double montantTtc,
     required pw.Font roboto,
     required pw.Font robotoBold,
     double? montantPaye,
     double? montantRestant,
   }) {
+    // Agréger les taxes par nom depuis les lignes
+    final taxeMap = <String, _TaxeAgg>{};
+    for (final l in lignes) {
+      for (final t in l.taxesDetail) {
+        final nom = t['nom'] as String;
+        final taux = t['taux'] as double;
+        final montant = t['montant'] as double;
+        if (taxeMap.containsKey(nom)) {
+          taxeMap[nom] = _TaxeAgg(nom: nom, taux: taux, montant: taxeMap[nom]!.montant + montant);
+        } else {
+          taxeMap[nom] = _TaxeAgg(nom: nom, taux: taux, montant: montant);
+        }
+      }
+    }
+
+    // Montant HT réel (depuis les lignes si disponible)
+    final ht = lignes.isNotEmpty
+        ? lignes.fold<double>(0, (s, l) => s + l.montantHt)
+        : montantHtDoc;
+    final totalTaxes = taxeMap.values.fold<double>(0, (s, t) => s + t.montant);
+    final ttc = taxeMap.isNotEmpty ? ht + totalTaxes : montantTtc;
+
     return pw.Container(
-      width: 220,
+      width: 230,
       decoration: pw.BoxDecoration(
         border: pw.Border.all(color: PdfColors.grey300, width: 0.5),
         borderRadius: pw.BorderRadius.circular(4),
       ),
       child: pw.Column(
         children: [
-          _totalRow('Sous-total HT', '${_fcfa.format(montantHt)} XAF', roboto, robotoBold),
-          _totalRow('TVA (${tauxTva.toStringAsFixed(0)} %)', '${_fcfa.format(montantTva)} XAF', roboto, robotoBold),
-          if (tauxTps > 0)
-            _totalRow('TPS (${tauxTps.toStringAsFixed(1)} %)', '${_fcfa.format(montantTps)} XAF', roboto, robotoBold),
+          _totalRow('Sous-total HT', '${_fcfa.format(ht)} XAF', roboto, robotoBold),
+          // Afficher chaque taxe agrégée
+          if (taxeMap.isNotEmpty)
+            for (final taxe in taxeMap.values)
+              _totalRow(
+                '${taxe.nom} (${taxe.taux.toStringAsFixed(taxe.taux % 1 == 0 ? 0 : 1)} %)',
+                '${_fcfa.format(taxe.montant)} XAF',
+                roboto, robotoBold,
+              )
+          else ...[
+            if (tauxTva > 0)
+              _totalRow('TVA (${tauxTva.toStringAsFixed(0)} %)', '${_fcfa.format(montantTva)} XAF', roboto, robotoBold),
+          ],
           pw.Container(height: 0.5, color: PdfColors.grey300),
-          _totalRow('TOTAL TTC', '${_fcfa.format(montantTtc)} XAF', robotoBold, robotoBold,
+          _totalRow('TOTAL TTC', '${_fcfa.format(ttc)} XAF', robotoBold, robotoBold,
               highlight: true),
           if (montantPaye != null)
             _totalRow('Déjà payé', '- ${_fcfa.format(montantPaye)} XAF', roboto, roboto,
@@ -465,6 +525,7 @@ class _LignePdf {
   final String unite;
   final double prixUnit;
   final double montantHt;
+  final String? taxesJson;
 
   const _LignePdf({
     required this.designation,
@@ -473,5 +534,46 @@ class _LignePdf {
     required this.unite,
     required this.prixUnit,
     required this.montantHt,
+    this.taxesJson,
   });
+
+  /// Montant total des taxes sur cette ligne
+  double get totalTaxes {
+    if (taxesJson == null || taxesJson!.isEmpty) return 0;
+    try {
+      final list = json.decode(taxesJson!) as List;
+      return list.fold<double>(0, (sum, t) {
+        final taux = (t['taux'] as num?)?.toDouble() ?? 0;
+        return sum + montantHt * taux / 100;
+      });
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Détail des taxes [{nom, taux, montant}]
+  List<Map<String, dynamic>> get taxesDetail {
+    if (taxesJson == null || taxesJson!.isEmpty) return [];
+    try {
+      final list = json.decode(taxesJson!) as List;
+      return list.map((t) {
+        final taux = (t['taux'] as num?)?.toDouble() ?? 0;
+        return {
+          'nom': t['nom'] as String? ?? 'Taxe',
+          'taux': taux,
+          'montant': montantHt * taux / 100,
+        };
+      }).toList();
+    } catch (_) {
+      return [];
+    }
+  }
+}
+
+/// Agrégation des taxes par nom pour les totaux
+class _TaxeAgg {
+  final String nom;
+  final double taux;
+  final double montant;
+  const _TaxeAgg({required this.nom, required this.taux, required this.montant});
 }

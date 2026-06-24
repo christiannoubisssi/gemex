@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/network/connectivity_service.dart';
+import '../../../../core/services/app_logger.dart';
 import '../../../../database/app_database.dart';
 
 final taxeRepositoryProvider = Provider<TaxeRepository>((ref) {
@@ -45,6 +46,8 @@ class TaxeRepository {
       syncStatus: const drift.Value(AppConstants.syncPending),
     ));
 
+    AppLogger.i('TaxeRepository', 'Taxe créée localement : $id (${data['nom']})');
+
     if (_ref.read(isOnlineProvider)) {
       try {
         await _supabase.from('taxes').insert({...data, 'id': id});
@@ -52,7 +55,10 @@ class TaxeRepository {
           id: drift.Value(id),
           syncStatus: const drift.Value(AppConstants.syncSynced),
         ));
-      } catch (_) {}
+        AppLogger.i('TaxeRepository', 'Taxe synchronisée : $id');
+      } catch (e) {
+        AppLogger.w('TaxeRepository', 'Échec sync taxe $id', error: e);
+      }
     }
 
     return id;
@@ -82,7 +88,10 @@ class TaxeRepository {
           id: drift.Value(id),
           syncStatus: const drift.Value(AppConstants.syncSynced),
         ));
-      } catch (_) {}
+        AppLogger.i('TaxeRepository', 'Taxe mise à jour et synchronisée : $id');
+      } catch (e) {
+        AppLogger.w('TaxeRepository', 'Échec sync update taxe $id', error: e);
+      }
     }
   }
 

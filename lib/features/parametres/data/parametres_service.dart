@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../core/services/app_logger.dart';
+
 class ParametresService {
   static const _prefixEntreprise = 'entreprise_';
   static const _prefixDocument = 'document_';
@@ -256,8 +258,9 @@ class ParametresService {
         'format_facture': formatFacture,
         'format_dossier': formatDossier,
       });
-    } catch (_) {
-      // Hors-ligne : le cache local reste à jour, la sync se refera plus tard
+      AppLogger.i('ParametresService', 'Numérotation sauvegardée sur Supabase');
+    } catch (e) {
+      AppLogger.w('ParametresService', 'Échec sauvegarde numérotation Supabase', error: e);
     }
   }
 
