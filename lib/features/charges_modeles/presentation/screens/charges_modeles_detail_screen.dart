@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
 
@@ -87,6 +88,46 @@ class _DetailView extends ConsumerWidget {
       appBar: AppBar(
         title: Text(modele.titre, overflow: TextOverflow.ellipsis),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.copy_outlined),
+            tooltip: 'Dupliquer',
+            onPressed: () async {
+              final lignes = await AppDatabase.instance.chargesModelesDao.getLignes(modele.id);
+              // Mois suivant
+              int nextMois = modele.mois + 1;
+              int nextAnnee = modele.annee;
+              if (nextMois > 12) {
+                nextMois = 1;
+                nextAnnee++;
+              }
+              final data = {
+                'titre': '${modele.titre} (copie)',
+                'mois': nextMois,
+                'annee': nextAnnee,
+                'entreprise_id': modele.entrepriseId,
+              };
+              final lignesData = lignes
+                  .map((l) => {
+                        'designation': l.designation,
+                        'montant': l.montant,
+                        'date_echeance': l.dateEcheance,
+                        'priorite': l.priorite,
+                        'notes': l.notes,
+                      })
+                  .toList();
+              final newId = await ref
+                  .read(chargesModeleNotifierProvider.notifier)
+                  .create(data, lignesData);
+              if (newId != null && context.mounted) {
+                context.go('/comptabilite/charges-modeles/$newId');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                      content: Text('Modèle dupliqué'),
+                      backgroundColor: Colors.green),
+                );
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.picture_as_pdf_outlined),
             tooltip: 'Imprimer / PDF',

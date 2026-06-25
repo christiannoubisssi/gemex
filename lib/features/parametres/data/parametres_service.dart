@@ -264,6 +264,34 @@ class ParametresService {
     }
   }
 
+  // Catégories de charges — configurables par l'utilisateur
+  static const _keyChargeCategories = 'charge_categories';
+  static const List<String> defaultChargeCategories = [
+    'Loyer',
+    'Salaires',
+    'Fournitures',
+    'Transport',
+    'Téléphone',
+    'Internet',
+    'Sous-traitance',
+    'Assurance',
+    'Impôts et taxes',
+    'Autre',
+  ];
+
+  static Future<List<String>> getChargeCategories() async {
+    final prefs = await _prefs;
+    final json = prefs.getString(_keyChargeCategories);
+    if (json == null) return List.from(defaultChargeCategories);
+    final raw = jsonDecode(json) as List;
+    return raw.cast<String>();
+  }
+
+  static Future<void> saveChargeCategories(List<String> categories) async {
+    final prefs = await _prefs;
+    await prefs.setString(_keyChargeCategories, jsonEncode(categories));
+  }
+
   // Sécurité documents
   static Future<Map<String, dynamic>> getSecurite() async {
     return {

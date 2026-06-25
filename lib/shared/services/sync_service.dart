@@ -84,6 +84,7 @@ class SyncService {
       await _pullPersonnel();
       await _pullProduits();
       await _pullStockMouvements();
+      await _pullReferentiels();
 
       // ── Push Drift pending → Supabase ─────────────────────────────────
       final pending = await _db.syncQueueDao
@@ -372,6 +373,7 @@ class SyncService {
           saisiPar:        drift.Value(_s(m, 'saisi_par')),
           justificatifUrl: drift.Value(_s(m, 'justificatif_url')),
           notes:           drift.Value(_s(m, 'notes')),
+          recurrence:      drift.Value(_s(m, 'recurrence') ?? 'unique'),
           syncStatus:      const drift.Value('synced'),
           createdAt:       drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
           updatedAt:       drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
@@ -477,6 +479,28 @@ class SyncService {
     }
   }
 
+  Future<void> _pullReferentiels() async {
+    try {
+      final rows = await _supabase.from('referentiels').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        await _db.referentielsDao.upsert(ReferentielsCompanion(
+          id:           drift.Value(_s(m, 'id')!),
+          entrepriseId: drift.Value(_s(m, 'entreprise_id') ?? 'default'),
+          type:         drift.Value(_s(m, 'type')!),
+          nom:          drift.Value(_s(m, 'nom') ?? ''),
+          actif:        drift.Value(m['actif'] as bool? ?? true),
+          syncStatus:   const drift.Value('synced'),
+          createdAt:    drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
+          updatedAt:    drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
+        ));
+      }
+      AppLogger.d('SyncService', 'Pull referentiels : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull referentiels échoué', error: e);
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   // PUSH : Drift local → Supabase (SyncQueue)
   // ═══════════════════════════════════════════════════════════════════════
@@ -487,6 +511,7 @@ class SyncService {
     'personnel': 'personnel',
     'produit': 'produits',
     'stock_mouvement': 'stock_mouvements',
+    'referentiel': 'referentiels',
   };
 
   static const Set<String> _lignesTypes = {
@@ -595,6 +620,8 @@ class SyncService {
         await _db.produitsDao.markSynced(entityId);
       case 'stock_mouvement':
         await _db.stockMouvementsDao.markSynced(entityId);
+      case 'referentiel':
+        await _db.referentielsDao.markSynced(entityId);
     }
   }
 

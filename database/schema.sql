@@ -896,3 +896,26 @@ create policy "Authentifié - accès complet" on public.stock_mouvements
 drop trigger if exists trg_stock_mouvements_updated_at on public.stock_mouvements;
 create trigger trg_stock_mouvements_updated_at before update on public.stock_mouvements
   for each row execute procedure public.set_updated_at();
+
+-- ─── Migration Lot 2 : Référentiels (postes, départements) ──────────────
+create table if not exists public.referentiels (
+  id            text primary key,
+  entreprise_id text not null default 'default',
+  type          text not null check (type in ('poste','departement')),
+  nom           text not null,
+  actif         boolean not null default true,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+alter table public.referentiels enable row level security;
+drop policy if exists "Authentifié - accès complet" on public.referentiels;
+create policy "Authentifié - accès complet" on public.referentiels
+  for all using (auth.uid() is not null) with check (auth.uid() is not null);
+
+drop trigger if exists trg_referentiels_updated_at on public.referentiels;
+create trigger trg_referentiels_updated_at before update on public.referentiels
+  for each row execute procedure public.set_updated_at();
+
+-- ─── Migration Lot 6 : Récurrence sur les charges ──────────────────────
+alter table public.charges add column if not exists recurrence text not null default 'unique';

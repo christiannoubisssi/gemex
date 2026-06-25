@@ -8,6 +8,7 @@ import '../../../../core/widgets/save_overlay.dart';
 import '../../../../database/app_database.dart';
 import '../../data/repositories/personnel_repository.dart';
 import '../providers/personnel_provider.dart';
+import '../../../referentiels/presentation/providers/referentiel_provider.dart';
 
 const _typesContrat = ['CDI', 'CDD', 'Stage', 'Consultant', 'Autre'];
 
@@ -179,20 +180,18 @@ class _PersonnelFormScreenState extends ConsumerState<PersonnelFormScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              _RefDropdownOrText(
                 controller: _posteCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Poste',
-                  prefixIcon: Icon(Icons.work_outline),
-                ),
+                label: 'Poste',
+                icon: Icons.work_outline,
+                provider: postesProvider,
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              _RefDropdownOrText(
                 controller: _departementCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'Département',
-                  prefixIcon: Icon(Icons.business_outlined),
-                ),
+                label: 'Département',
+                icon: Icons.business_outlined,
+                provider: departementsProvider,
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
@@ -260,6 +259,88 @@ class _PersonnelFormScreenState extends ConsumerState<PersonnelFormScreen> {
         ),
       ),
     ), // SaveOverlay
+    );
+  }
+}
+
+/// Dropdown lié à un provider de référentiels avec fallback texte libre.
+class _RefDropdownOrText extends ConsumerWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final AutoDisposeStreamProvider<List<Referentiel>> provider;
+
+  const _RefDropdownOrText({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    required this.provider,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final asyncList = ref.watch(provider);
+    return asyncList.when(
+      loading: () => TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+        ),
+      ),
+      error: (_, __) => TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: Icon(icon),
+        ),
+      ),
+      data: (list) {
+        if (list.isEmpty) {
+          // Pas de référentiels : champ texte libre
+          return TextFormField(
+            controller: controller,
+            decoration: InputDecoration(
+              labelText: label,
+              prefixIcon: Icon(icon),
+            ),
+          );
+        }
+        // Dropdown avec option saisie libre
+        final items = list.map((r) => r.nom).toList();
+        final currentValue = controller.text.trim();
+        final hasMatch =
+            items.any((n) => n.toLowerCase() == currentValue.toLowerCase());
+
+        return Autocomplete<String>(
+          optionsBuilder: (textEditingValue) {
+            if (textEditingValue.text.isEmpty) return items;
+            return items.where((n) =>
+                n.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+          },
+          initialValue: TextEditingValue(text: currentValue),
+          onSelected: (value) => controller.text = value,
+          fieldViewBuilder: (ctx, textCtrl, focusNode, onSubmitted) {
+            // Synchronise le controller externe
+            textCtrl.addListener(() {
+              if (controller.text != textCtrl.text) {
+                controller.text = textCtrl.text;
+              }
+            });
+            return TextFormField(
+              controller: textCtrl,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                labelText: label,
+                prefixIcon: Icon(icon),
+                suffixIcon: hasMatch
+                    ? const Icon(Icons.check, color: Colors.green, size: 18)
+                    : null,
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

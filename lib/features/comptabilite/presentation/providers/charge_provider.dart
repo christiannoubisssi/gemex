@@ -37,6 +37,7 @@ class ChargeNotifier extends AsyncNotifier<void> {
     String? dossierId,
     String? saisiPar,
     String? notes,
+    String recurrence = 'unique',
   }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() => ref.read(chargeRepositoryProvider).add(
@@ -48,6 +49,7 @@ class ChargeNotifier extends AsyncNotifier<void> {
           dossierId: dossierId,
           saisiPar: saisiPar,
           notes: notes,
+          recurrence: recurrence,
         ));
     if (!state.hasError) _invalidateAll();
   }

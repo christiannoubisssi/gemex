@@ -17,6 +17,7 @@ import 'tables/sync_queue_table.dart';
 import 'tables/documents_rapport_table.dart';
 import 'tables/produits_table.dart';
 import 'tables/stock_mouvements_table.dart';
+import 'tables/referentiels_table.dart';
 import 'daos/clients_dao.dart';
 import 'daos/client_contacts_dao.dart';
 import 'daos/dossiers_dao.dart';
@@ -33,6 +34,7 @@ import 'daos/sync_queue_dao.dart';
 import 'daos/documents_rapport_dao.dart';
 import 'daos/produits_dao.dart';
 import 'daos/stock_mouvements_dao.dart';
+import 'daos/referentiels_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -57,6 +59,7 @@ part 'app_database.g.dart';
     DocumentsRapport,
     Produits,
     StockMouvements,
+    Referentiels,
   ],
   daos: [
     ClientsDao,
@@ -75,13 +78,14 @@ part 'app_database.g.dart';
     DocumentsRapportDao,
     ProduitsDao,
     StockMouvementsDao,
+    ReferentielsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -108,6 +112,14 @@ class AppDatabase extends _$AppDatabase {
       if (from < 7) {
         await m.createTable(produits);
         await m.createTable(stockMouvements);
+      }
+      // v8 : référentiels (postes, départements)
+      if (from < 8) {
+        await m.createTable(referentiels);
+      }
+      // v9 : récurrence sur les charges
+      if (from < 9) {
+        await m.addColumn(charges, charges.recurrence);
       }
     },
   );

@@ -38,6 +38,7 @@ class ChargeRepository {
     String? dossierId,
     String? saisiPar,
     String? notes,
+    String recurrence = 'unique',
   }) async {
     final id = const Uuid().v4();
     final now = DateTime.now();
@@ -53,6 +54,7 @@ class ChargeRepository {
       dossierId: Value(dossierId),
       saisiPar: Value(saisiPar),
       notes: Value(notes),
+      recurrence: Value(recurrence),
       createdAt: Value(now),
       updatedAt: Value(now),
     ));
@@ -69,6 +71,7 @@ class ChargeRepository {
       'mois': dateCharge.month,
       'annee': dateCharge.year,
       'notes': notes,
+      'recurrence': recurrence,
       'created_at': now.toIso8601String(),
       'updated_at': now.toIso8601String(),
     };
@@ -128,6 +131,64 @@ class ChargeRepository {
 
   Future<Map<String, double>> getTotalParCategorie(int mois, int annee) {
     return _db.chargesDao.getTotalParCategorie(mois, annee);
+  }
+
+  /// Génère les charges récurrentes depuis une période source vers une cible.
+  /// Retourne le nombre de charges générées.
+  Future<int> generateRecurrentes({
+    required int moisSource,
+    required int anneeSource,
+    required int moisCible,
+    required int anneeCible,
+  }) async {
+    final recurrentes =
+        await _db.chargesDao.getRecurrentes(moisSource, anneeSource);
+    int count = 0;
+
+    for (final charge in recurrentes) {
+      // Vérifie si la récurrence correspond à la période cible
+      if (!_shouldRecur(charge.recurrence, moisSource, anneeSource,
+          moisCible, anneeCible)) {
+        continue;
+      }
+      // Vérifie qu'il n'existe pas déjà une charge similaire
+      final existing = await _db.chargesDao
+          .getAll(mois: moisCible, annee: anneeCible, categorie: charge.categorie);
+      final alreadyExists = existing.any((c) =>
+          c.libelle == charge.libelle &&
+          c.montant == charge.montant);
+      if (alreadyExists) continue;
+
+      final newDate = DateTime(anneeCible, moisCible, charge.dateCharge.day.clamp(1, 28));
+      await add(
+        entrepriseId: charge.entrepriseId,
+        categorie: charge.categorie,
+        libelle: charge.libelle,
+        montant: charge.montant,
+        dateCharge: newDate,
+        dossierId: charge.dossierId,
+        notes: charge.notes,
+        recurrence: charge.recurrence,
+      );
+      count++;
+    }
+    return count;
+  }
+
+  /// Détermine si une charge récurrente doit être dupliquée pour la période cible
+  bool _shouldRecur(String recurrence, int moisSrc, int anneeSrc,
+      int moisDst, int anneeDst) {
+    switch (recurrence) {
+      case 'mensuel':
+        return true;
+      case 'trimestriel':
+        final diffMois = (anneeDst - anneeSrc) * 12 + (moisDst - moisSrc);
+        return diffMois % 3 == 0;
+      case 'annuel':
+        return moisDst == moisSrc && anneeDst != anneeSrc;
+      default:
+        return false;
+    }
   }
 
   Future<void> _trySync(String id, Map<String, dynamic> data, String op) async {

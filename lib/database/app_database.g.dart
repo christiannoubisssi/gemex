@@ -6141,6 +6141,14 @@ class $ChargesTable extends Charges with TableInfo<$ChargesTable, Charge> {
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
       'notes', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _recurrenceMeta =
+      const VerificationMeta('recurrence');
+  @override
+  late final GeneratedColumn<String> recurrence = GeneratedColumn<String>(
+      'recurrence', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('unique'));
   static const VerificationMeta _syncStatusMeta =
       const VerificationMeta('syncStatus');
   @override
@@ -6179,6 +6187,7 @@ class $ChargesTable extends Charges with TableInfo<$ChargesTable, Charge> {
         annee,
         justificatifUrl,
         notes,
+        recurrence,
         syncStatus,
         createdAt,
         updatedAt
@@ -6262,6 +6271,12 @@ class $ChargesTable extends Charges with TableInfo<$ChargesTable, Charge> {
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
     }
+    if (data.containsKey('recurrence')) {
+      context.handle(
+          _recurrenceMeta,
+          recurrence.isAcceptableOrUnknown(
+              data['recurrence']!, _recurrenceMeta));
+    }
     if (data.containsKey('sync_status')) {
       context.handle(
           _syncStatusMeta,
@@ -6309,6 +6324,8 @@ class $ChargesTable extends Charges with TableInfo<$ChargesTable, Charge> {
           DriftSqlType.string, data['${effectivePrefix}justificatif_url']),
       notes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
+      recurrence: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}recurrence'])!,
       syncStatus: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
       createdAt: attachedDatabase.typeMapping
@@ -6337,6 +6354,7 @@ class Charge extends DataClass implements Insertable<Charge> {
   final int annee;
   final String? justificatifUrl;
   final String? notes;
+  final String recurrence;
   final String syncStatus;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -6353,6 +6371,7 @@ class Charge extends DataClass implements Insertable<Charge> {
       required this.annee,
       this.justificatifUrl,
       this.notes,
+      required this.recurrence,
       required this.syncStatus,
       required this.createdAt,
       required this.updatedAt});
@@ -6379,6 +6398,7 @@ class Charge extends DataClass implements Insertable<Charge> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
+    map['recurrence'] = Variable<String>(recurrence);
     map['sync_status'] = Variable<String>(syncStatus);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -6406,6 +6426,7 @@ class Charge extends DataClass implements Insertable<Charge> {
           : Value(justificatifUrl),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      recurrence: Value(recurrence),
       syncStatus: Value(syncStatus),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -6428,6 +6449,7 @@ class Charge extends DataClass implements Insertable<Charge> {
       annee: serializer.fromJson<int>(json['annee']),
       justificatifUrl: serializer.fromJson<String?>(json['justificatifUrl']),
       notes: serializer.fromJson<String?>(json['notes']),
+      recurrence: serializer.fromJson<String>(json['recurrence']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -6449,6 +6471,7 @@ class Charge extends DataClass implements Insertable<Charge> {
       'annee': serializer.toJson<int>(annee),
       'justificatifUrl': serializer.toJson<String?>(justificatifUrl),
       'notes': serializer.toJson<String?>(notes),
+      'recurrence': serializer.toJson<String>(recurrence),
       'syncStatus': serializer.toJson<String>(syncStatus),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -6468,6 +6491,7 @@ class Charge extends DataClass implements Insertable<Charge> {
           int? annee,
           Value<String?> justificatifUrl = const Value.absent(),
           Value<String?> notes = const Value.absent(),
+          String? recurrence,
           String? syncStatus,
           DateTime? createdAt,
           DateTime? updatedAt}) =>
@@ -6486,6 +6510,7 @@ class Charge extends DataClass implements Insertable<Charge> {
             ? justificatifUrl.value
             : this.justificatifUrl,
         notes: notes.present ? notes.value : this.notes,
+        recurrence: recurrence ?? this.recurrence,
         syncStatus: syncStatus ?? this.syncStatus,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
@@ -6509,6 +6534,8 @@ class Charge extends DataClass implements Insertable<Charge> {
           ? data.justificatifUrl.value
           : this.justificatifUrl,
       notes: data.notes.present ? data.notes.value : this.notes,
+      recurrence:
+          data.recurrence.present ? data.recurrence.value : this.recurrence,
       syncStatus:
           data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
@@ -6531,6 +6558,7 @@ class Charge extends DataClass implements Insertable<Charge> {
           ..write('annee: $annee, ')
           ..write('justificatifUrl: $justificatifUrl, ')
           ..write('notes: $notes, ')
+          ..write('recurrence: $recurrence, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -6552,6 +6580,7 @@ class Charge extends DataClass implements Insertable<Charge> {
       annee,
       justificatifUrl,
       notes,
+      recurrence,
       syncStatus,
       createdAt,
       updatedAt);
@@ -6571,6 +6600,7 @@ class Charge extends DataClass implements Insertable<Charge> {
           other.annee == this.annee &&
           other.justificatifUrl == this.justificatifUrl &&
           other.notes == this.notes &&
+          other.recurrence == this.recurrence &&
           other.syncStatus == this.syncStatus &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -6589,6 +6619,7 @@ class ChargesCompanion extends UpdateCompanion<Charge> {
   final Value<int> annee;
   final Value<String?> justificatifUrl;
   final Value<String?> notes;
+  final Value<String> recurrence;
   final Value<String> syncStatus;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -6606,6 +6637,7 @@ class ChargesCompanion extends UpdateCompanion<Charge> {
     this.annee = const Value.absent(),
     this.justificatifUrl = const Value.absent(),
     this.notes = const Value.absent(),
+    this.recurrence = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -6624,6 +6656,7 @@ class ChargesCompanion extends UpdateCompanion<Charge> {
     required int annee,
     this.justificatifUrl = const Value.absent(),
     this.notes = const Value.absent(),
+    this.recurrence = const Value.absent(),
     this.syncStatus = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -6649,6 +6682,7 @@ class ChargesCompanion extends UpdateCompanion<Charge> {
     Expression<int>? annee,
     Expression<String>? justificatifUrl,
     Expression<String>? notes,
+    Expression<String>? recurrence,
     Expression<String>? syncStatus,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -6667,6 +6701,7 @@ class ChargesCompanion extends UpdateCompanion<Charge> {
       if (annee != null) 'annee': annee,
       if (justificatifUrl != null) 'justificatif_url': justificatifUrl,
       if (notes != null) 'notes': notes,
+      if (recurrence != null) 'recurrence': recurrence,
       if (syncStatus != null) 'sync_status': syncStatus,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -6687,6 +6722,7 @@ class ChargesCompanion extends UpdateCompanion<Charge> {
       Value<int>? annee,
       Value<String?>? justificatifUrl,
       Value<String?>? notes,
+      Value<String>? recurrence,
       Value<String>? syncStatus,
       Value<DateTime>? createdAt,
       Value<DateTime>? updatedAt,
@@ -6704,6 +6740,7 @@ class ChargesCompanion extends UpdateCompanion<Charge> {
       annee: annee ?? this.annee,
       justificatifUrl: justificatifUrl ?? this.justificatifUrl,
       notes: notes ?? this.notes,
+      recurrence: recurrence ?? this.recurrence,
       syncStatus: syncStatus ?? this.syncStatus,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -6750,6 +6787,9 @@ class ChargesCompanion extends UpdateCompanion<Charge> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (recurrence.present) {
+      map['recurrence'] = Variable<String>(recurrence.value);
+    }
     if (syncStatus.present) {
       map['sync_status'] = Variable<String>(syncStatus.value);
     }
@@ -6780,6 +6820,7 @@ class ChargesCompanion extends UpdateCompanion<Charge> {
           ..write('annee: $annee, ')
           ..write('justificatifUrl: $justificatifUrl, ')
           ..write('notes: $notes, ')
+          ..write('recurrence: $recurrence, ')
           ..write('syncStatus: $syncStatus, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
@@ -13816,6 +13857,428 @@ class StockMouvementsCompanion extends UpdateCompanion<StockMouvement> {
   }
 }
 
+class $ReferentielsTable extends Referentiels
+    with TableInfo<$ReferentielsTable, Referentiel> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReferentielsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+      'id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _entrepriseIdMeta =
+      const VerificationMeta('entrepriseId');
+  @override
+  late final GeneratedColumn<String> entrepriseId = GeneratedColumn<String>(
+      'entreprise_id', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('default'));
+  static const VerificationMeta _typeMeta = const VerificationMeta('type');
+  @override
+  late final GeneratedColumn<String> type = GeneratedColumn<String>(
+      'type', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nomMeta = const VerificationMeta('nom');
+  @override
+  late final GeneratedColumn<String> nom = GeneratedColumn<String>(
+      'nom', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _actifMeta = const VerificationMeta('actif');
+  @override
+  late final GeneratedColumn<bool> actif = GeneratedColumn<bool>(
+      'actif', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("actif" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _syncStatusMeta =
+      const VerificationMeta('syncStatus');
+  @override
+  late final GeneratedColumn<String> syncStatus = GeneratedColumn<String>(
+      'sync_status', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('pending'));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, entrepriseId, type, nom, actif, syncStatus, createdAt, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'referentiels';
+  @override
+  VerificationContext validateIntegrity(Insertable<Referentiel> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('entreprise_id')) {
+      context.handle(
+          _entrepriseIdMeta,
+          entrepriseId.isAcceptableOrUnknown(
+              data['entreprise_id']!, _entrepriseIdMeta));
+    }
+    if (data.containsKey('type')) {
+      context.handle(
+          _typeMeta, type.isAcceptableOrUnknown(data['type']!, _typeMeta));
+    } else if (isInserting) {
+      context.missing(_typeMeta);
+    }
+    if (data.containsKey('nom')) {
+      context.handle(
+          _nomMeta, nom.isAcceptableOrUnknown(data['nom']!, _nomMeta));
+    } else if (isInserting) {
+      context.missing(_nomMeta);
+    }
+    if (data.containsKey('actif')) {
+      context.handle(
+          _actifMeta, actif.isAcceptableOrUnknown(data['actif']!, _actifMeta));
+    }
+    if (data.containsKey('sync_status')) {
+      context.handle(
+          _syncStatusMeta,
+          syncStatus.isAcceptableOrUnknown(
+              data['sync_status']!, _syncStatusMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Referentiel map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Referentiel(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id'])!,
+      entrepriseId: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}entreprise_id'])!,
+      type: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}type'])!,
+      nom: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nom'])!,
+      actif: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}actif'])!,
+      syncStatus: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sync_status'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at'])!,
+    );
+  }
+
+  @override
+  $ReferentielsTable createAlias(String alias) {
+    return $ReferentielsTable(attachedDatabase, alias);
+  }
+}
+
+class Referentiel extends DataClass implements Insertable<Referentiel> {
+  final String id;
+  final String entrepriseId;
+  final String type;
+  final String nom;
+  final bool actif;
+  final String syncStatus;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const Referentiel(
+      {required this.id,
+      required this.entrepriseId,
+      required this.type,
+      required this.nom,
+      required this.actif,
+      required this.syncStatus,
+      required this.createdAt,
+      required this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['entreprise_id'] = Variable<String>(entrepriseId);
+    map['type'] = Variable<String>(type);
+    map['nom'] = Variable<String>(nom);
+    map['actif'] = Variable<bool>(actif);
+    map['sync_status'] = Variable<String>(syncStatus);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ReferentielsCompanion toCompanion(bool nullToAbsent) {
+    return ReferentielsCompanion(
+      id: Value(id),
+      entrepriseId: Value(entrepriseId),
+      type: Value(type),
+      nom: Value(nom),
+      actif: Value(actif),
+      syncStatus: Value(syncStatus),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Referentiel.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Referentiel(
+      id: serializer.fromJson<String>(json['id']),
+      entrepriseId: serializer.fromJson<String>(json['entrepriseId']),
+      type: serializer.fromJson<String>(json['type']),
+      nom: serializer.fromJson<String>(json['nom']),
+      actif: serializer.fromJson<bool>(json['actif']),
+      syncStatus: serializer.fromJson<String>(json['syncStatus']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'entrepriseId': serializer.toJson<String>(entrepriseId),
+      'type': serializer.toJson<String>(type),
+      'nom': serializer.toJson<String>(nom),
+      'actif': serializer.toJson<bool>(actif),
+      'syncStatus': serializer.toJson<String>(syncStatus),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  Referentiel copyWith(
+          {String? id,
+          String? entrepriseId,
+          String? type,
+          String? nom,
+          bool? actif,
+          String? syncStatus,
+          DateTime? createdAt,
+          DateTime? updatedAt}) =>
+      Referentiel(
+        id: id ?? this.id,
+        entrepriseId: entrepriseId ?? this.entrepriseId,
+        type: type ?? this.type,
+        nom: nom ?? this.nom,
+        actif: actif ?? this.actif,
+        syncStatus: syncStatus ?? this.syncStatus,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? this.updatedAt,
+      );
+  Referentiel copyWithCompanion(ReferentielsCompanion data) {
+    return Referentiel(
+      id: data.id.present ? data.id.value : this.id,
+      entrepriseId: data.entrepriseId.present
+          ? data.entrepriseId.value
+          : this.entrepriseId,
+      type: data.type.present ? data.type.value : this.type,
+      nom: data.nom.present ? data.nom.value : this.nom,
+      actif: data.actif.present ? data.actif.value : this.actif,
+      syncStatus:
+          data.syncStatus.present ? data.syncStatus.value : this.syncStatus,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Referentiel(')
+          ..write('id: $id, ')
+          ..write('entrepriseId: $entrepriseId, ')
+          ..write('type: $type, ')
+          ..write('nom: $nom, ')
+          ..write('actif: $actif, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id, entrepriseId, type, nom, actif, syncStatus, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Referentiel &&
+          other.id == this.id &&
+          other.entrepriseId == this.entrepriseId &&
+          other.type == this.type &&
+          other.nom == this.nom &&
+          other.actif == this.actif &&
+          other.syncStatus == this.syncStatus &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ReferentielsCompanion extends UpdateCompanion<Referentiel> {
+  final Value<String> id;
+  final Value<String> entrepriseId;
+  final Value<String> type;
+  final Value<String> nom;
+  final Value<bool> actif;
+  final Value<String> syncStatus;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const ReferentielsCompanion({
+    this.id = const Value.absent(),
+    this.entrepriseId = const Value.absent(),
+    this.type = const Value.absent(),
+    this.nom = const Value.absent(),
+    this.actif = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReferentielsCompanion.insert({
+    required String id,
+    this.entrepriseId = const Value.absent(),
+    required String type,
+    required String nom,
+    this.actif = const Value.absent(),
+    this.syncStatus = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : id = Value(id),
+        type = Value(type),
+        nom = Value(nom);
+  static Insertable<Referentiel> custom({
+    Expression<String>? id,
+    Expression<String>? entrepriseId,
+    Expression<String>? type,
+    Expression<String>? nom,
+    Expression<bool>? actif,
+    Expression<String>? syncStatus,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (entrepriseId != null) 'entreprise_id': entrepriseId,
+      if (type != null) 'type': type,
+      if (nom != null) 'nom': nom,
+      if (actif != null) 'actif': actif,
+      if (syncStatus != null) 'sync_status': syncStatus,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReferentielsCompanion copyWith(
+      {Value<String>? id,
+      Value<String>? entrepriseId,
+      Value<String>? type,
+      Value<String>? nom,
+      Value<bool>? actif,
+      Value<String>? syncStatus,
+      Value<DateTime>? createdAt,
+      Value<DateTime>? updatedAt,
+      Value<int>? rowid}) {
+    return ReferentielsCompanion(
+      id: id ?? this.id,
+      entrepriseId: entrepriseId ?? this.entrepriseId,
+      type: type ?? this.type,
+      nom: nom ?? this.nom,
+      actif: actif ?? this.actif,
+      syncStatus: syncStatus ?? this.syncStatus,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (entrepriseId.present) {
+      map['entreprise_id'] = Variable<String>(entrepriseId.value);
+    }
+    if (type.present) {
+      map['type'] = Variable<String>(type.value);
+    }
+    if (nom.present) {
+      map['nom'] = Variable<String>(nom.value);
+    }
+    if (actif.present) {
+      map['actif'] = Variable<bool>(actif.value);
+    }
+    if (syncStatus.present) {
+      map['sync_status'] = Variable<String>(syncStatus.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReferentielsCompanion(')
+          ..write('id: $id, ')
+          ..write('entrepriseId: $entrepriseId, ')
+          ..write('type: $type, ')
+          ..write('nom: $nom, ')
+          ..write('actif: $actif, ')
+          ..write('syncStatus: $syncStatus, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -13841,6 +14304,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ProduitsTable produits = $ProduitsTable(this);
   late final $StockMouvementsTable stockMouvements =
       $StockMouvementsTable(this);
+  late final $ReferentielsTable referentiels = $ReferentielsTable(this);
   late final ClientsDao clientsDao = ClientsDao(this as AppDatabase);
   late final ClientContactsDao clientContactsDao =
       ClientContactsDao(this as AppDatabase);
@@ -13862,6 +14326,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final ProduitsDao produitsDao = ProduitsDao(this as AppDatabase);
   late final StockMouvementsDao stockMouvementsDao =
       StockMouvementsDao(this as AppDatabase);
+  late final ReferentielsDao referentielsDao =
+      ReferentielsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -13885,7 +14351,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         syncQueue,
         documentsRapport,
         produits,
-        stockMouvements
+        stockMouvements,
+        referentiels
       ];
 }
 
@@ -16534,6 +17001,7 @@ typedef $$ChargesTableCreateCompanionBuilder = ChargesCompanion Function({
   required int annee,
   Value<String?> justificatifUrl,
   Value<String?> notes,
+  Value<String> recurrence,
   Value<String> syncStatus,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -16552,6 +17020,7 @@ typedef $$ChargesTableUpdateCompanionBuilder = ChargesCompanion Function({
   Value<int> annee,
   Value<String?> justificatifUrl,
   Value<String?> notes,
+  Value<String> recurrence,
   Value<String> syncStatus,
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
@@ -16603,6 +17072,9 @@ class $$ChargesTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get recurrence => $composableBuilder(
+      column: $table.recurrence, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get syncStatus => $composableBuilder(
       column: $table.syncStatus, builder: (column) => ColumnFilters(column));
@@ -16661,6 +17133,9 @@ class $$ChargesTableOrderingComposer
   ColumnOrderings<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get recurrence => $composableBuilder(
+      column: $table.recurrence, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get syncStatus => $composableBuilder(
       column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
 
@@ -16716,6 +17191,9 @@ class $$ChargesTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
+  GeneratedColumn<String> get recurrence => $composableBuilder(
+      column: $table.recurrence, builder: (column) => column);
+
   GeneratedColumn<String> get syncStatus => $composableBuilder(
       column: $table.syncStatus, builder: (column) => column);
 
@@ -16761,6 +17239,7 @@ class $$ChargesTableTableManager extends RootTableManager<
             Value<int> annee = const Value.absent(),
             Value<String?> justificatifUrl = const Value.absent(),
             Value<String?> notes = const Value.absent(),
+            Value<String> recurrence = const Value.absent(),
             Value<String> syncStatus = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -16779,6 +17258,7 @@ class $$ChargesTableTableManager extends RootTableManager<
             annee: annee,
             justificatifUrl: justificatifUrl,
             notes: notes,
+            recurrence: recurrence,
             syncStatus: syncStatus,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -16797,6 +17277,7 @@ class $$ChargesTableTableManager extends RootTableManager<
             required int annee,
             Value<String?> justificatifUrl = const Value.absent(),
             Value<String?> notes = const Value.absent(),
+            Value<String> recurrence = const Value.absent(),
             Value<String> syncStatus = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime> updatedAt = const Value.absent(),
@@ -16815,6 +17296,7 @@ class $$ChargesTableTableManager extends RootTableManager<
             annee: annee,
             justificatifUrl: justificatifUrl,
             notes: notes,
+            recurrence: recurrence,
             syncStatus: syncStatus,
             createdAt: createdAt,
             updatedAt: updatedAt,
@@ -20053,6 +20535,225 @@ typedef $$StockMouvementsTableProcessedTableManager = ProcessedTableManager<
     ),
     StockMouvement,
     PrefetchHooks Function()>;
+typedef $$ReferentielsTableCreateCompanionBuilder = ReferentielsCompanion
+    Function({
+  required String id,
+  Value<String> entrepriseId,
+  required String type,
+  required String nom,
+  Value<bool> actif,
+  Value<String> syncStatus,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+typedef $$ReferentielsTableUpdateCompanionBuilder = ReferentielsCompanion
+    Function({
+  Value<String> id,
+  Value<String> entrepriseId,
+  Value<String> type,
+  Value<String> nom,
+  Value<bool> actif,
+  Value<String> syncStatus,
+  Value<DateTime> createdAt,
+  Value<DateTime> updatedAt,
+  Value<int> rowid,
+});
+
+class $$ReferentielsTableFilterComposer
+    extends Composer<_$AppDatabase, $ReferentielsTable> {
+  $$ReferentielsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get entrepriseId => $composableBuilder(
+      column: $table.entrepriseId, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nom => $composableBuilder(
+      column: $table.nom, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get actif => $composableBuilder(
+      column: $table.actif, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$ReferentielsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ReferentielsTable> {
+  $$ReferentielsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get entrepriseId => $composableBuilder(
+      column: $table.entrepriseId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get type => $composableBuilder(
+      column: $table.type, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nom => $composableBuilder(
+      column: $table.nom, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get actif => $composableBuilder(
+      column: $table.actif, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$ReferentielsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ReferentielsTable> {
+  $$ReferentielsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get entrepriseId => $composableBuilder(
+      column: $table.entrepriseId, builder: (column) => column);
+
+  GeneratedColumn<String> get type =>
+      $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get nom =>
+      $composableBuilder(column: $table.nom, builder: (column) => column);
+
+  GeneratedColumn<bool> get actif =>
+      $composableBuilder(column: $table.actif, builder: (column) => column);
+
+  GeneratedColumn<String> get syncStatus => $composableBuilder(
+      column: $table.syncStatus, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ReferentielsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ReferentielsTable,
+    Referentiel,
+    $$ReferentielsTableFilterComposer,
+    $$ReferentielsTableOrderingComposer,
+    $$ReferentielsTableAnnotationComposer,
+    $$ReferentielsTableCreateCompanionBuilder,
+    $$ReferentielsTableUpdateCompanionBuilder,
+    (
+      Referentiel,
+      BaseReferences<_$AppDatabase, $ReferentielsTable, Referentiel>
+    ),
+    Referentiel,
+    PrefetchHooks Function()> {
+  $$ReferentielsTableTableManager(_$AppDatabase db, $ReferentielsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReferentielsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReferentielsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReferentielsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> id = const Value.absent(),
+            Value<String> entrepriseId = const Value.absent(),
+            Value<String> type = const Value.absent(),
+            Value<String> nom = const Value.absent(),
+            Value<bool> actif = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ReferentielsCompanion(
+            id: id,
+            entrepriseId: entrepriseId,
+            type: type,
+            nom: nom,
+            actif: actif,
+            syncStatus: syncStatus,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String id,
+            Value<String> entrepriseId = const Value.absent(),
+            required String type,
+            required String nom,
+            Value<bool> actif = const Value.absent(),
+            Value<String> syncStatus = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime> updatedAt = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              ReferentielsCompanion.insert(
+            id: id,
+            entrepriseId: entrepriseId,
+            type: type,
+            nom: nom,
+            actif: actif,
+            syncStatus: syncStatus,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$ReferentielsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $ReferentielsTable,
+    Referentiel,
+    $$ReferentielsTableFilterComposer,
+    $$ReferentielsTableOrderingComposer,
+    $$ReferentielsTableAnnotationComposer,
+    $$ReferentielsTableCreateCompanionBuilder,
+    $$ReferentielsTableUpdateCompanionBuilder,
+    (
+      Referentiel,
+      BaseReferences<_$AppDatabase, $ReferentielsTable, Referentiel>
+    ),
+    Referentiel,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -20095,4 +20796,6 @@ class $AppDatabaseManager {
       $$ProduitsTableTableManager(_db, _db.produits);
   $$StockMouvementsTableTableManager get stockMouvements =>
       $$StockMouvementsTableTableManager(_db, _db.stockMouvements);
+  $$ReferentielsTableTableManager get referentiels =>
+      $$ReferentielsTableTableManager(_db, _db.referentiels);
 }

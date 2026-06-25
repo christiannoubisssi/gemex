@@ -4,22 +4,14 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/save_overlay.dart';
-import '../../../../database/app_database.dart';
 import '../../../produits/presentation/providers/produit_provider.dart';
+import '../../../parametres/data/parametres_service.dart';
 import '../providers/charge_provider.dart';
 
-const _categories = [
-  'Loyer',
-  'Salaires',
-  'Fournitures',
-  'Transport',
-  'Téléphone',
-  'Internet',
-  'Sous-traitance',
-  'Assurance',
-  'Impôts et taxes',
-  'Autre',
-];
+/// Provider pour les catégories de charges (configurable via ParametresService)
+final chargeCategoriesProvider = FutureProvider<List<String>>((ref) async {
+  return ParametresService.getChargeCategories();
+});
 
 class ChargeFormScreen extends ConsumerStatefulWidget {
   final String? chargeId;
@@ -34,8 +26,9 @@ class _ChargeFormScreenState extends ConsumerState<ChargeFormScreen> {
   final _libelleCtrl = TextEditingController();
   final _montantCtrl = TextEditingController();
   final _notesCtrl = TextEditingController();
-  String _categorie = _categories.first;
+  String _categorie = 'Loyer';
   DateTime _dateCharge = DateTime.now();
+  String _recurrence = 'unique';
   bool _saving = false;
 
   @override
@@ -69,6 +62,7 @@ class _ChargeFormScreenState extends ConsumerState<ChargeFormScreen> {
           dateCharge: _dateCharge,
           notes:
               _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+          recurrence: _recurrence,
         );
 
     if (mounted) {
@@ -145,16 +139,28 @@ class _ChargeFormScreenState extends ConsumerState<ChargeFormScreen> {
                     );
                   },
                 ),
-                DropdownButtonFormField<String>(
-                  initialValue: _categorie,
-                  decoration: const InputDecoration(
-                    labelText: 'Catégorie',
-                    prefixIcon: Icon(Icons.category_outlined),
-                  ),
-                  items: _categories
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _categorie = v ?? _categorie),
+                Consumer(
+                  builder: (ctx, cRef, _) {
+                    final catAsync = cRef.watch(chargeCategoriesProvider);
+                    final categories = catAsync.valueOrNull ??
+                        ParametresService.defaultChargeCategories;
+                    // Si la catégorie actuelle n'est pas dans la liste, l'ajouter
+                    final effectiveList = categories.contains(_categorie)
+                        ? categories
+                        : [_categorie, ...categories];
+                    return DropdownButtonFormField<String>(
+                      value: _categorie,
+                      decoration: const InputDecoration(
+                        labelText: 'Catégorie',
+                        prefixIcon: Icon(Icons.category_outlined),
+                      ),
+                      items: effectiveList
+                          .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _categorie = v ?? _categorie),
+                    );
+                  },
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -193,6 +199,23 @@ class _ChargeFormScreenState extends ConsumerState<ChargeFormScreen> {
                     ),
                     child: Text(DateFormat('dd/MM/yyyy').format(_dateCharge)),
                   ),
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _recurrence,
+                  decoration: const InputDecoration(
+                    labelText: 'Récurrence',
+                    prefixIcon: Icon(Icons.repeat_outlined),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'unique', child: Text('Unique')),
+                    DropdownMenuItem(value: 'mensuel', child: Text('Mensuel')),
+                    DropdownMenuItem(
+                        value: 'trimestriel', child: Text('Trimestriel')),
+                    DropdownMenuItem(value: 'annuel', child: Text('Annuel')),
+                  ],
+                  onChanged: (v) =>
+                      setState(() => _recurrence = v ?? _recurrence),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(

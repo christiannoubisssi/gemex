@@ -58,4 +58,14 @@ class ChargesDao extends DatabaseAccessor<AppDatabase> with _$ChargesDaoMixin {
   Future<void> deleteById(String id) {
     return (delete(charges)..where((c) => c.id.equals(id))).go();
   }
+
+  /// Retourne les charges récurrentes d'un mois/année donné
+  Future<List<Charge>> getRecurrentes(int mois, int annee) {
+    return (select(charges)
+          ..where((c) =>
+              c.mois.equals(mois) &
+              c.annee.equals(annee) &
+              c.recurrence.isNotIn(['unique'])))
+        .get();
+  }
 }

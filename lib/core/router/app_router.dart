@@ -44,6 +44,8 @@ import '../../features/parametres/presentation/screens/profil_screen.dart';
 import '../../features/parametres/presentation/screens/securite_screen.dart';
 import '../../features/pieces_jointes/presentation/screens/pieces_jointes_screen.dart';
 import '../../features/securite/presentation/screens/scanner_screen.dart';
+import '../../features/referentiels/presentation/screens/referentiels_screen.dart';
+import '../../features/comptabilite/presentation/screens/journal_comptable_screen.dart';
 import '../../features/produits/presentation/screens/produits_list_screen.dart';
 import '../../features/produits/presentation/screens/produit_form_screen.dart';
 import '../../features/stock/presentation/screens/stock_screen.dart';
@@ -193,6 +195,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(path: 'charges/new', builder: (_, __) => const ChargeFormScreen()),
               GoRoute(path: 'taxes', builder: (_, __) => const TaxesScreen()),
+              GoRoute(path: 'journal', builder: (_, __) => const JournalComptableScreen()),
               GoRoute(
                 path: 'charges-modeles',
                 builder: (_, __) => const ChargesModelesListScreen(),
@@ -246,6 +249,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(path: 'numerotation', builder: (_, __) => const NumerotationScreen()),
               GoRoute(path: 'utilisateurs', builder: (_, __) => const UtilisateursScreen()),
               GoRoute(path: 'securite', builder: (_, __) => const SecuriteScreen()),
+              GoRoute(path: 'referentiels', builder: (_, __) => const ReferentielsScreen()),
             ],
           ),
           GoRoute(path: '/securite/scanner', builder: (_, __) => const ScannerScreen()),

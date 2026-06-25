@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../produits/presentation/providers/produit_provider.dart';
 import '../providers/charges_modeles_provider.dart';
 
 const _priorites = ['basse', 'normale', 'haute', 'urgente'];
@@ -244,7 +245,7 @@ class _State extends ConsumerState<ChargesModelesFormScreen> {
   }
 }
 
-class _LigneCard extends StatelessWidget {
+class _LigneCard extends ConsumerWidget {
   final int index;
   final _LigneDraft ligne;
   final VoidCallback? onRemove;
@@ -262,7 +263,9 @@ class _LigneCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final produitsAsync = ref.watch(produitsAchatProvider);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
@@ -310,6 +313,51 @@ class _LigneCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
+            // Sélection produit achat (optionnel)
+            produitsAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => const SizedBox.shrink(),
+              data: (produits) => produits.isEmpty
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: DropdownButtonFormField<String>(
+                              decoration: const InputDecoration(
+                                labelText: 'Produit achat (optionnel)',
+                                isDense: true,
+                                prefixIcon: Icon(Icons.inventory_2_outlined, size: 18),
+                              ),
+                              hint: const Text('Sélectionner...'),
+                              items: produits
+                                  .map((p) => DropdownMenuItem(
+                                        value: p.id,
+                                        child: Text('${p.code} — ${p.nom}',
+                                            overflow: TextOverflow.ellipsis),
+                                      ))
+                                  .toList(),
+                              onChanged: (id) {
+                                if (id == null) return;
+                                final p = produits.firstWhere((pr) => pr.id == id);
+                                ligne.designation.text = p.nom;
+                                if (p.prixAchat > 0) {
+                                  ligne.montant.text = p.prixAchat.toStringAsFixed(0);
+                                }
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          IconButton(
+                            icon: const Icon(Icons.add_circle_outline, size: 20, color: AppColors.teal),
+                            tooltip: 'Créer un produit achat',
+                            onPressed: () => _showQuickProduitDialog(context, ref),
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
             TextFormField(
               controller: ligne.designation,
               decoration: const InputDecoration(
@@ -372,5 +420,67 @@ class _LigneCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Dialogue rapide pour créer un produit achat
+  Future<void> _showQuickProduitDialog(BuildContext context, WidgetRef ref) async {
+    final nomCtrl = TextEditingController();
+    final prixCtrl = TextEditingController();
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Nouveau produit achat'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nomCtrl,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Nom *'),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: prixCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Prix d\'achat',
+                suffixText: 'FCFA',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () {
+              if (nomCtrl.text.trim().isEmpty) return;
+              Navigator.pop(context, true);
+            },
+            child: const Text('Créer'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true && nomCtrl.text.trim().isNotEmpty) {
+      final prix = double.tryParse(
+              prixCtrl.text.trim().replaceAll(' ', '').replaceAll(',', '.')) ??
+          0;
+      await ref.read(produitNotifierProvider.notifier).create({
+        'nom': nomCtrl.text.trim(),
+        'prix_achat': prix,
+        'est_achat': true,
+        'est_vente': false,
+      });
+      // Pré-remplit la ligne avec le nouveau produit
+      ligne.designation.text = nomCtrl.text.trim();
+      if (prix > 0) ligne.montant.text = prix.toStringAsFixed(0);
+    }
+    nomCtrl.dispose();
+    prixCtrl.dispose();
   }
 }
