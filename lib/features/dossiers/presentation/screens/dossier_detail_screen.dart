@@ -550,7 +550,7 @@ class _DevisFactureTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final devisAsync =
-        ref.watch(devisListProvider({'dossierId': dossier.id}));
+        ref.watch(devisByDossierProvider(dossier.id));
     final facturesAsync =
         ref.watch(facturesByDossierProvider(dossier.id));
 

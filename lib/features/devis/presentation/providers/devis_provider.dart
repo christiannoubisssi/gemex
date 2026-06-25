@@ -16,6 +16,10 @@ final devisListProvider = FutureProvider.autoDispose.family<List<Devi>, Map<Stri
   ),
 );
 
+final devisByDossierProvider = FutureProvider.autoDispose.family<List<Devi>, String>(
+  (ref, dossierId) async => ref.read(devisRepositoryProvider).getAll(dossierId: dossierId),
+);
+
 final devisDetailProvider = FutureProvider.autoDispose.family<Devi?, String>(
   (ref, id) async => ref.read(devisRepositoryProvider).getById(id),
 );
