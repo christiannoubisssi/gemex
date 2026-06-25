@@ -41,6 +41,13 @@ class FormatUtils {
     return '${value.toStringAsFixed(1)} %';
   }
 
+  /// Formatage des quantités (entier si pas de décimales, sinon 2 décimales)
+  static String formatQuantite(double? value) {
+    if (value == null) return '0';
+    if (value == value.truncateToDouble()) return value.toInt().toString();
+    return value.toStringAsFixed(2);
+  }
+
   /// Numéro temporaire pour les documents créés offline
   static String generateLocalNumero(String prefix) {
     final now = DateTime.now();

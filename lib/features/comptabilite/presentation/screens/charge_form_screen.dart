@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/save_overlay.dart';
+import '../../../../database/app_database.dart';
+import '../../../produits/presentation/providers/produit_provider.dart';
 import '../providers/charge_provider.dart';
 
 const _categories = [
@@ -105,6 +107,44 @@ class _ChargeFormScreenState extends ConsumerState<ChargeFormScreen> {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
+                // Sélection rapide depuis le catalogue achat
+                Consumer(
+                  builder: (ctx, cRef, _) {
+                    final produitsAsync = cRef.watch(produitsAchatProvider);
+                    return produitsAsync.when(
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
+                      data: (produits) => produits.isEmpty
+                          ? const SizedBox.shrink()
+                          : Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  labelText: 'Produit du catalogue (optionnel)',
+                                  isDense: true,
+                                  prefixIcon: Icon(Icons.inventory_2_outlined),
+                                ),
+                                hint: const Text('Saisie libre ou sélectionner…'),
+                                items: produits.map((p) => DropdownMenuItem(
+                                  value: p.id,
+                                  child: Text('${p.code} — ${p.nom}'),
+                                )).toList(),
+                                onChanged: (id) {
+                                  if (id == null) return;
+                                  final p = produits.firstWhere((pr) => pr.id == id);
+                                  setState(() {
+                                    _libelleCtrl.text = p.nom;
+                                    if (p.prixAchat > 0) {
+                                      _montantCtrl.text = p.prixAchat.toString();
+                                    }
+                                    _categorie = p.categorie ?? _categorie;
+                                  });
+                                },
+                              ),
+                            ),
+                    );
+                  },
+                ),
                 DropdownButtonFormField<String>(
                   initialValue: _categorie,
                   decoration: const InputDecoration(

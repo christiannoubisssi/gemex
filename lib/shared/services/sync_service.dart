@@ -15,6 +15,7 @@ import '../../features/devis/presentation/providers/devis_provider.dart';
 import '../../features/dossiers/presentation/providers/dossier_provider.dart';
 import '../../features/factures/presentation/providers/facture_provider.dart';
 import '../../features/paie/presentation/providers/salaire_provider.dart';
+import '../../features/stock/presentation/providers/stock_provider.dart';
 
 enum SyncStatus { idle, syncing, error, offline }
 
@@ -81,6 +82,8 @@ class SyncService {
       await _pullFacturesLignes();
       await _pullCharges();
       await _pullPersonnel();
+      await _pullProduits();
+      await _pullStockMouvements();
 
       // ── Push Drift pending → Supabase ─────────────────────────────────
       final pending = await _db.syncQueueDao
@@ -404,6 +407,66 @@ class SyncService {
     }
   }
 
+  Future<void> _pullProduits() async {
+    try {
+      final rows = await _supabase.from('produits').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        await _db.produitsDao.upsert(ProduitsCompanion.insert(
+          id:           _s(m, 'id')!,
+          entrepriseId: _s(m, 'entreprise_id') ?? 'default',
+          code:         _s(m, 'code') ?? '',
+          nom:          _s(m, 'nom') ?? '',
+          description:  drift.Value(_s(m, 'description')),
+          unite:        drift.Value(_s(m, 'unite') ?? 'unité'),
+          prixVente:    drift.Value(_f(m, 'prix_vente') ?? 0),
+          prixAchat:    drift.Value(_f(m, 'prix_achat') ?? 0),
+          estVente:     drift.Value(m['est_vente'] as bool? ?? true),
+          estAchat:     drift.Value(m['est_achat'] as bool? ?? false),
+          categorie:    drift.Value(_s(m, 'categorie')),
+          stockMin:     drift.Value(_f(m, 'stock_min') ?? 0),
+          actif:        drift.Value(m['actif'] as bool? ?? true),
+          syncStatus:   const drift.Value('synced'),
+          createdAt:    drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
+          updatedAt:    drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
+        ));
+      }
+      // produitsProvider est StreamProvider → auto-update
+      AppLogger.d('SyncService', 'Pull produits : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull produits échoué', error: e);
+    }
+  }
+
+  Future<void> _pullStockMouvements() async {
+    try {
+      final rows = await _supabase.from('stock_mouvements').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        await _db.stockMouvementsDao.upsert(StockMouvementsCompanion.insert(
+          id:             _s(m, 'id')!,
+          entrepriseId:   _s(m, 'entreprise_id') ?? 'default',
+          produitId:      _s(m, 'produit_id') ?? '',
+          type:           _s(m, 'type') ?? 'entree',
+          quantite:       _f(m, 'quantite') ?? 0,
+          dateMouvement:  _dt(m, 'date_mouvement') ?? DateTime.now(),
+          prixUnitaire:   drift.Value(_f(m, 'prix_unitaire') ?? 0),
+          reference:      drift.Value(_s(m, 'reference')),
+          dossierId:      drift.Value(_s(m, 'dossier_id')),
+          effectuePar:    drift.Value(_s(m, 'effectue_par')),
+          notes:          drift.Value(_s(m, 'notes')),
+          syncStatus:     const drift.Value('synced'),
+          createdAt:      drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
+          updatedAt:      drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
+        ));
+      }
+      _ref.invalidate(stockQuantitesProvider);
+      AppLogger.d('SyncService', 'Pull stock_mouvements : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull stock_mouvements échoué', error: e);
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   // PUSH : Drift local → Supabase (SyncQueue)
   // ═══════════════════════════════════════════════════════════════════════
@@ -412,6 +475,8 @@ class SyncService {
     'piece_jointe': 'pieces_jointes',
     'charge_modele': 'charges_modeles',
     'personnel': 'personnel',
+    'produit': 'produits',
+    'stock_mouvement': 'stock_mouvements',
   };
 
   static const Set<String> _lignesTypes = {
@@ -516,6 +581,10 @@ class SyncService {
         await _db.piecesJointesDao.markSynced(entityId);
       case 'client_contact':
         await _db.clientContactsDao.markSynced(entityId);
+      case 'produit':
+        await _db.produitsDao.markSynced(entityId);
+      case 'stock_mouvement':
+        await _db.stockMouvementsDao.markSynced(entityId);
     }
   }
 

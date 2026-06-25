@@ -9,6 +9,7 @@ import '../../../../core/widgets/save_overlay.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../database/app_database.dart';
 import '../../../taxes/presentation/providers/taxe_provider.dart';
+import '../../../produits/presentation/providers/produit_provider.dart';
 import '../../../clients/presentation/providers/client_provider.dart';
 import '../../../dossiers/presentation/providers/dossier_provider.dart';
 import '../providers/facture_provider.dart';
@@ -631,12 +632,43 @@ class _LigneWidgetState extends ConsumerState<_LigneWidget> {
   Widget build(BuildContext context) {
     final appliedIds = widget.ctrl.taxes.map((t) => t.id).toSet();
     final isWide = MediaQuery.of(context).size.width >= 600;
+    final produitsAsync = ref.watch(produitsVenteProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Sélection rapide depuis le catalogue
+          produitsAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (produits) => produits.isEmpty
+                ? const SizedBox.shrink()
+                : Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: 'Produit du catalogue (optionnel)',
+                        isDense: true,
+                        prefixIcon: Icon(Icons.inventory_2_outlined, size: 18),
+                      ),
+                      hint: const Text('Saisie libre ou sélectionner…'),
+                      items: produits.map((p) => DropdownMenuItem(
+                        value: p.id,
+                        child: Text('${p.code} — ${p.nom}'),
+                      )).toList(),
+                      onChanged: (id) {
+                        if (id == null) return;
+                        final p = produits.firstWhere((pr) => pr.id == id);
+                        widget.ctrl.desCtrl.text = p.nom;
+                        widget.ctrl.puCtrl.text = p.prixVente > 0 ? p.prixVente.toString() : '';
+                        widget.onChanged();
+                        setState(() {});
+                      },
+                    ),
+                  ),
+          ),
           if (isWide)
             Row(
               children: [

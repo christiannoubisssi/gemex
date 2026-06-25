@@ -839,3 +839,60 @@ create policy "Authentifié - accès complet" on public.documents_rapport
 drop trigger if exists trg_documents_rapport_updated_at on public.documents_rapport;
 create trigger trg_documents_rapport_updated_at before update on public.documents_rapport
   for each row execute procedure public.set_updated_at();
+
+-- ============================================================
+-- Migration Lot Produits & Stock
+-- ============================================================
+
+create table if not exists public.produits (
+  id            text primary key,
+  entreprise_id text not null default 'default',
+  code          text not null,
+  nom           text not null,
+  description   text,
+  unite         text not null default 'unité',
+  prix_vente    double precision not null default 0,
+  prix_achat    double precision not null default 0,
+  est_vente     boolean not null default true,
+  est_achat     boolean not null default false,
+  categorie     text,
+  stock_min     double precision not null default 0,
+  actif         boolean not null default true,
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  unique (entreprise_id, code)
+);
+
+alter table public.produits enable row level security;
+drop policy if exists "Authentifié - accès complet" on public.produits;
+create policy "Authentifié - accès complet" on public.produits
+  for all using (auth.uid() is not null) with check (auth.uid() is not null);
+
+drop trigger if exists trg_produits_updated_at on public.produits;
+create trigger trg_produits_updated_at before update on public.produits
+  for each row execute procedure public.set_updated_at();
+
+create table if not exists public.stock_mouvements (
+  id              text primary key,
+  entreprise_id   text not null default 'default',
+  produit_id      text not null,
+  type            text not null check (type in ('entree','sortie')),
+  quantite        double precision not null,
+  prix_unitaire   double precision not null default 0,
+  date_mouvement  timestamptz not null default now(),
+  reference       text,
+  dossier_id      text,
+  effectue_par    text,
+  notes           text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+alter table public.stock_mouvements enable row level security;
+drop policy if exists "Authentifié - accès complet" on public.stock_mouvements;
+create policy "Authentifié - accès complet" on public.stock_mouvements
+  for all using (auth.uid() is not null) with check (auth.uid() is not null);
+
+drop trigger if exists trg_stock_mouvements_updated_at on public.stock_mouvements;
+create trigger trg_stock_mouvements_updated_at before update on public.stock_mouvements
+  for each row execute procedure public.set_updated_at();

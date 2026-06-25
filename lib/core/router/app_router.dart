@@ -44,6 +44,9 @@ import '../../features/parametres/presentation/screens/profil_screen.dart';
 import '../../features/parametres/presentation/screens/securite_screen.dart';
 import '../../features/pieces_jointes/presentation/screens/pieces_jointes_screen.dart';
 import '../../features/securite/presentation/screens/scanner_screen.dart';
+import '../../features/produits/presentation/screens/produits_list_screen.dart';
+import '../../features/produits/presentation/screens/produit_form_screen.dart';
+import '../../features/stock/presentation/screens/stock_screen.dart';
 import '../shell/main_shell.dart';
 import '../widgets/log_console_screen.dart';
 
@@ -166,6 +169,24 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
+          GoRoute(
+            path: '/produits',
+            builder: (_, __) => const ProduitsListScreen(),
+            routes: [
+              GoRoute(path: 'new', builder: (_, __) => const ProduitFormScreen()),
+              GoRoute(
+                path: ':id',
+                builder: (_, state) => const SizedBox(), // détail futur
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    builder: (_, state) => ProduitFormScreen(id: state.pathParameters['id']),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          GoRoute(path: '/stock', builder: (_, __) => const StockScreen()),
           GoRoute(
             path: '/comptabilite',
             builder: (_, __) => const ComptabiliteScreen(),

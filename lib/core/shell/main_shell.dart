@@ -54,6 +54,12 @@ const _allNavDefs = [
     roles: {'admin', 'expert', 'comptable'},
   ),
   _NavItemDef(
+    icon: Icons.inventory_2_outlined,
+    label: 'Produits',
+    route: '/produits',
+    roles: {'admin', 'comptable', 'expert'},
+  ),
+  _NavItemDef(
     icon: Icons.account_balance_outlined,
     label: 'Comptabilité',
     route: '/comptabilite',
