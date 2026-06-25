@@ -85,6 +85,12 @@ class SyncService {
       await _pullProduits();
       await _pullStockMouvements();
       await _pullReferentiels();
+      await _pullTaxes();
+      await _pullSalaires();
+      await _pullConges();
+      await _pullChargesModeles();
+      await _pullChargesModeleLines();
+      await _pullDocumentsRapport();
 
       // ── Push Drift pending → Supabase ─────────────────────────────────
       final pending = await _db.syncQueueDao
@@ -501,6 +507,167 @@ class SyncService {
     }
   }
 
+  Future<void> _pullTaxes() async {
+    try {
+      final rows = await _supabase.from('taxes').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        await _db.taxesDao.upsert(TaxesCompanion(
+          id:           drift.Value(_s(m, 'id')!),
+          entrepriseId: drift.Value(_s(m, 'entreprise_id') ?? 'default'),
+          nom:          drift.Value(_s(m, 'nom') ?? ''),
+          taux:         drift.Value(_f(m, 'taux') ?? 0),
+          description:  drift.Value(_s(m, 'description')),
+          actif:        drift.Value(m['actif'] as bool? ?? true),
+          syncStatus:   const drift.Value('synced'),
+          createdAt:    drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
+          updatedAt:    drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
+        ));
+      }
+      AppLogger.d('SyncService', 'Pull taxes : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull taxes échoué', error: e);
+    }
+  }
+
+  Future<void> _pullSalaires() async {
+    try {
+      final rows = await _supabase.from('salaires').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        await _db.salairesDao.upsert(SalairesCompanion.insert(
+          id:              _s(m, 'id')!,
+          entrepriseId:    _s(m, 'entreprise_id') ?? 'default',
+          personnelId:     _s(m, 'personnel_id') ?? '',
+          mois:            _i(m, 'mois') ?? DateTime.now().month,
+          annee:           _i(m, 'annee') ?? DateTime.now().year,
+          salaireNet:      _f(m, 'salaire_net') ?? 0,
+          salaireBrut:     drift.Value(_f(m, 'salaire_brut') ?? 0),
+          cnps:            drift.Value(_f(m, 'cnps') ?? 0),
+          irpp:            drift.Value(_f(m, 'irpp') ?? 0),
+          autresRetenues:  drift.Value(_f(m, 'autres_retenues') ?? 0),
+          statut:          drift.Value(_s(m, 'statut') ?? 'en_attente'),
+          dateValidation:  drift.Value(_dt(m, 'date_validation')),
+          validePar:       drift.Value(_s(m, 'valide_par')),
+          datePaiement:    drift.Value(_dt(m, 'date_paiement')),
+          modePaiement:    drift.Value(_s(m, 'mode_paiement')),
+          comptabilise:    drift.Value(m['comptabilise'] as bool? ?? false),
+          chargeId:        drift.Value(_s(m, 'charge_id')),
+          notes:           drift.Value(_s(m, 'notes')),
+          syncStatus:      const drift.Value('synced'),
+          createdAt:       drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
+          updatedAt:       drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
+        ));
+      }
+      _ref.invalidate(salairesProvider);
+      AppLogger.d('SyncService', 'Pull salaires : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull salaires échoué', error: e);
+    }
+  }
+
+  Future<void> _pullConges() async {
+    try {
+      final rows = await _supabase.from('conges').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        await _db.congesDao.upsert(CongesCompanion.insert(
+          id:           _s(m, 'id')!,
+          personnelId:  _s(m, 'personnel_id') ?? '',
+          dateDebut:    _dt(m, 'date_debut') ?? DateTime.now(),
+          dateFin:      _dt(m, 'date_fin') ?? DateTime.now(),
+          type:         drift.Value(_s(m, 'type') ?? 'conge_annuel'),
+          motif:        drift.Value(_s(m, 'motif')),
+          statut:       drift.Value(_s(m, 'statut') ?? 'demande'),
+          validePar:    drift.Value(_s(m, 'valide_par')),
+          syncStatus:   const drift.Value('synced'),
+          createdAt:    drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
+          updatedAt:    drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
+        ));
+      }
+      AppLogger.d('SyncService', 'Pull conges : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull conges échoué', error: e);
+    }
+  }
+
+  Future<void> _pullChargesModeles() async {
+    try {
+      final rows = await _supabase.from('charges_modeles').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        await _db.chargesModelesDao.upsert(ChargesModelesCompanion.insert(
+          id:              _s(m, 'id')!,
+          entrepriseId:    _s(m, 'entreprise_id') ?? 'default',
+          mois:            _i(m, 'mois') ?? DateTime.now().month,
+          annee:           _i(m, 'annee') ?? DateTime.now().year,
+          titre:           _s(m, 'titre') ?? '',
+          soumisParId:     drift.Value(_s(m, 'soumis_par_id')),
+          soumisParNom:    drift.Value(_s(m, 'soumis_par_nom')),
+          statut:          drift.Value(_s(m, 'statut') ?? 'brouillon'),
+          motifRefus:      drift.Value(_s(m, 'motif_refus')),
+          dateSubmission:  drift.Value(_dt(m, 'date_submission')),
+          dateValidation:  drift.Value(_dt(m, 'date_validation')),
+          valideParId:     drift.Value(_s(m, 'valide_par_id')),
+          valideParNom:    drift.Value(_s(m, 'valide_par_nom')),
+          syncStatus:      const drift.Value('synced'),
+          createdAt:       drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
+          updatedAt:       drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
+        ));
+      }
+      AppLogger.d('SyncService', 'Pull charges_modeles : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull charges_modeles échoué', error: e);
+    }
+  }
+
+  Future<void> _pullChargesModeleLines() async {
+    try {
+      final rows = await _supabase.from('charges_modele_lines').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        await _db.chargesModelesDao.upsertLigne(ChargesModeleLinesCompanion.insert(
+          id:            _s(m, 'id')!,
+          modeleId:      _s(m, 'modele_id') ?? '',
+          designation:   _s(m, 'designation') ?? '',
+          ordre:         drift.Value(_i(m, 'ordre') ?? 0),
+          montant:       drift.Value(_f(m, 'montant') ?? 0),
+          dateEcheance:  drift.Value(_dt(m, 'date_echeance')),
+          priorite:      drift.Value(_s(m, 'priorite') ?? 'normale'),
+          statut:        drift.Value(_s(m, 'statut') ?? 'pending'),
+          motifRefus:    drift.Value(_s(m, 'motif_refus')),
+          notes:         drift.Value(_s(m, 'notes')),
+        ));
+      }
+      AppLogger.d('SyncService', 'Pull charges_modele_lines : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull charges_modele_lines échoué', error: e);
+    }
+  }
+
+  Future<void> _pullDocumentsRapport() async {
+    try {
+      final rows = await _supabase.from('documents_rapport').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        await _db.documentsRapportDao.upsert(DocumentsRapportCompanion(
+          id:           drift.Value(_s(m, 'id')!),
+          dossierId:    drift.Value(_s(m, 'dossier_id') ?? ''),
+          type:         drift.Value(_s(m, 'type') ?? ''),
+          contenuJson:  drift.Value(_s(m, 'contenu_json') ?? '{}'),
+          statut:       drift.Value(_s(m, 'statut') ?? 'brouillon'),
+          entrepriseId: drift.Value(_s(m, 'entreprise_id') ?? 'default'),
+          syncStatus:   const drift.Value('synced'),
+          createdAt:    drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
+          updatedAt:    drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
+        ));
+      }
+      AppLogger.d('SyncService', 'Pull documents_rapport : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull documents_rapport échoué', error: e);
+    }
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   // PUSH : Drift local → Supabase (SyncQueue)
   // ═══════════════════════════════════════════════════════════════════════
@@ -512,6 +679,8 @@ class SyncService {
     'produit': 'produits',
     'stock_mouvement': 'stock_mouvements',
     'referentiel': 'referentiels',
+    'taxe': 'taxes',
+    'document_rapport': 'documents_rapport',
   };
 
   static const Set<String> _lignesTypes = {
@@ -622,6 +791,13 @@ class SyncService {
         await _db.stockMouvementsDao.markSynced(entityId);
       case 'referentiel':
         await _db.referentielsDao.markSynced(entityId);
+      case 'taxe':
+        await _db.taxesDao.upsert(TaxesCompanion(
+          id: drift.Value(entityId),
+          syncStatus: const drift.Value('synced'),
+        ));
+      case 'document_rapport':
+        await _db.documentsRapportDao.markSynced(entityId);
     }
   }
 
