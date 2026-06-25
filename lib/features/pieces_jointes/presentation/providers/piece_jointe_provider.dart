@@ -51,7 +51,17 @@ class PieceJointeNotifier extends AsyncNotifier<void> {
       () => ref.read(pieceJointeRepositoryProvider).delete(id),
     );
   }
+
+  /// Télécharge le fichier depuis Supabase et le met en cache local
+  Future<String?> download(String pieceJointeId) async {
+    return ref.read(pieceJointeRepositoryProvider).download(pieceJointeId);
+  }
 }
+
+/// Taille du cache PJ en octets
+final pjCacheSizeProvider = FutureProvider.autoDispose<int>(
+  (ref) => ref.read(pieceJointeRepositoryProvider).getCacheSize(),
+);
 
 final pieceJointeNotifierProvider =
     AsyncNotifierProvider<PieceJointeNotifier, void>(PieceJointeNotifier.new);

@@ -91,6 +91,7 @@ class SyncService {
       await _pullChargesModeles();
       await _pullChargesModeleLines();
       await _pullDocumentsRapport();
+      await _pullPiecesJointesMeta();
 
       // ── Push Drift pending → Supabase ─────────────────────────────────
       final pending = await _db.syncQueueDao
@@ -665,6 +666,40 @@ class SyncService {
       AppLogger.d('SyncService', 'Pull documents_rapport : ${rows.length}');
     } catch (e) {
       AppLogger.w('SyncService', 'Pull documents_rapport échoué', error: e);
+    }
+  }
+
+  /// Pull métadonnées des pièces jointes (pas les fichiers binaires).
+  /// Les fichiers sont téléchargés à la demande via PieceJointeRepository.download().
+  Future<void> _pullPiecesJointesMeta() async {
+    try {
+      final rows = await _supabase.from('pieces_jointes').select() as List;
+      for (final raw in rows) {
+        final m = _row(raw);
+        final id = _s(m, 'id')!;
+        // Ne pas écraser chemin_local si le fichier existe déjà en local
+        final local = await _db.piecesJointesDao.getById(id);
+        final cheminLocal = local?.cheminLocal ?? '';
+
+        await _db.piecesJointesDao.upsert(PiecesJointesCompanion(
+          id:          drift.Value(id),
+          dossierId:   drift.Value(_s(m, 'dossier_id') ?? ''),
+          nom:         drift.Value(_s(m, 'nom') ?? ''),
+          typeFichier: drift.Value(_s(m, 'type_fichier') ?? 'document'),
+          cheminLocal: drift.Value(cheminLocal),
+          urlStorage:  drift.Value(_s(m, 'url_storage')),
+          taille:      drift.Value(_i(m, 'taille')),
+          latitude:    drift.Value(_f(m, 'latitude')),
+          longitude:   drift.Value(_f(m, 'longitude')),
+          notes:       drift.Value(_s(m, 'notes')),
+          syncStatus:  const drift.Value('synced'),
+          createdAt:   drift.Value(_dt(m, 'created_at') ?? DateTime.now()),
+          updatedAt:   drift.Value(_dt(m, 'updated_at') ?? DateTime.now()),
+        ));
+      }
+      AppLogger.d('SyncService', 'Pull pieces_jointes (méta) : ${rows.length}');
+    } catch (e) {
+      AppLogger.w('SyncService', 'Pull pieces_jointes échoué', error: e);
     }
   }
 
