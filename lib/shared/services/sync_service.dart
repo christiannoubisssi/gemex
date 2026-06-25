@@ -166,13 +166,17 @@ class SyncService {
       final rows = await _supabase.from('dossiers').select() as List;
       for (final raw in rows) {
         final m = _row(raw);
-        // Champs requis (non-nullable, sans default) : id, entrepriseId, titre, annee
+        final remoteNumero = _s(m, 'numero');
+        // Ne pas écraser un numéro local existant avec null
+        final localDossier = await _db.dossiersDao.getById(_s(m, 'id')!);
+        final numero = remoteNumero ?? localDossier?.numero;
+
         await _db.dossiersDao.upsert(DossiersCompanion.insert(
           id:                 _s(m, 'id')!,
           entrepriseId:       _s(m, 'entreprise_id') ?? 'default',
           titre:              _s(m, 'titre') ?? '',
           annee:              _i(m, 'annee') ?? DateTime.now().year,
-          numero:             drift.Value(_s(m, 'numero')),
+          numero:             drift.Value(numero),
           clientId:           drift.Value(_s(m, 'client_id')),
           expertId:           drift.Value(_s(m, 'expert_id')),
           typeMissionId:      drift.Value(_s(m, 'type_mission_id')),
@@ -211,7 +215,10 @@ class SyncService {
       final rows = await _supabase.from('devis').select() as List;
       for (final raw in rows) {
         final m = _row(raw);
-        // Champs requis : id, entrepriseId, clientId, annee, dateEmission, dateValidite
+        final remoteNumero = _s(m, 'numero');
+        final localDevis = await _db.devisDao.getById(_s(m, 'id')!);
+        final numero = remoteNumero ?? localDevis?.numero;
+
         await _db.devisDao.upsertDevis(DevisCompanion.insert(
           id:           _s(m, 'id')!,
           entrepriseId: _s(m, 'entreprise_id') ?? 'default',
@@ -222,7 +229,7 @@ class SyncService {
               DateTime.now().add(const Duration(days: 30)),
           dossierId:    drift.Value(_s(m, 'dossier_id')),
           creePar:      drift.Value(_s(m, 'cree_par')),
-          numero:       drift.Value(_s(m, 'numero')),
+          numero:       drift.Value(numero),
           statut:       drift.Value(_s(m, 'statut') ?? 'brouillon'),
           montantHt:    drift.Value(_f(m, 'montant_ht') ?? 0),
           tauxTva:      drift.Value(_f(m, 'taux_tva') ?? 18),
@@ -276,7 +283,10 @@ class SyncService {
       final rows = await _supabase.from('factures').select() as List;
       for (final raw in rows) {
         final m = _row(raw);
-        // Champs requis : id, entrepriseId, clientId, annee, dateEmission, dateEcheance
+        final remoteNumero = _s(m, 'numero');
+        final localFacture = await _db.facturesDao.getById(_s(m, 'id')!);
+        final numero = remoteNumero ?? localFacture?.numero;
+
         await _db.facturesDao.upsertFacture(FacturesCompanion.insert(
           id:                _s(m, 'id')!,
           entrepriseId:      _s(m, 'entreprise_id') ?? 'default',
@@ -288,7 +298,7 @@ class SyncService {
           dossierId:         drift.Value(_s(m, 'dossier_id')),
           devisId:           drift.Value(_s(m, 'devis_id')),
           creePar:           drift.Value(_s(m, 'cree_par')),
-          numero:            drift.Value(_s(m, 'numero')),
+          numero:            drift.Value(numero),
           statut:            drift.Value(_s(m, 'statut') ?? 'brouillon'),
           datePaiement:      drift.Value(_dt(m, 'date_paiement')),
           montantHt:         drift.Value(_f(m, 'montant_ht') ?? 0),
