@@ -62,11 +62,9 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
           'Conteneur présentant des traces d\'humidité et déformation structurelle.',
       'lieu_sinistre': 'Port d\'Owendo, Libreville, Gabon',
       'date_sinistre': DateTime(2026, 4, 15),
+      'date_expertise': DateTime(2026, 4, 18),
       'montant_sinistre': '4500000',
       'priorite': 'haute',
-      'compagnie_assurance': 'NSIA Gabon',
-      'numero_police': 'POL-2026-003842',
-      'courtier': 'Cabinet Bongo Assurances',
       'notes_internes': 'Client prioritaire. Prévoir visite site dès que possible.',
     });
   }
@@ -229,7 +227,16 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
                   initialValue: _existing?.dateSinistre,
                   inputType: InputType.date,
                   decoration:
-                      const InputDecoration(labelText: 'Date du sinistre'),
+                      const InputDecoration(labelText: 'Date de la requête'),
+                  format: DateFormat('dd/MM/yyyy'),
+                ),
+                const SizedBox(height: 12),
+                FormBuilderDateTimePicker(
+                  name: 'date_expertise',
+                  initialValue: _existing?.dateExpertise,
+                  inputType: InputType.date,
+                  decoration:
+                      const InputDecoration(labelText: 'Date de l\'expertise'),
                   format: DateFormat('dd/MM/yyyy'),
                 ),
                 const SizedBox(height: 12),
@@ -342,31 +349,6 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
                       },
                     );
                   },
-                ),
-              ]),
-              const SizedBox(height: 12),
-
-              _SectionCard(title: 'Assurance', children: [
-                FormBuilderTextField(
-                  name: 'compagnie_assurance',
-                  initialValue: _existing?.compagnieAssurance,
-                  decoration: const InputDecoration(
-                    labelText: 'Compagnie d\'assurance',
-                    hintText: 'Ex : NSIA Gabon, Ogar…',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FormBuilderTextField(
-                  name: 'numero_police',
-                  initialValue: _existing?.numeroPolice,
-                  decoration:
-                      const InputDecoration(labelText: 'N° de police'),
-                ),
-                const SizedBox(height: 12),
-                FormBuilderTextField(
-                  name: 'courtier',
-                  initialValue: _existing?.courtier,
-                  decoration: const InputDecoration(labelText: 'Courtier'),
                 ),
               ]),
               const SizedBox(height: 12),

@@ -179,7 +179,7 @@ class DossierDocumentsService {
         pw.Expanded(child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
           _kv('Dossier', d.numero ?? 'LOCAL', bold, regular),
           _kv('Nature', d.natureSinistre ?? '—', bold, regular),
-          _kv('Date sinistre', d.dateSinistre != null ? _date.format(d.dateSinistre!) : '—', bold, regular),
+          _kv('Date de la requête', d.dateSinistre != null ? _date.format(d.dateSinistre!) : '—', bold, regular),
         ])),
         pw.SizedBox(width: 16),
         pw.Expanded(child: pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [

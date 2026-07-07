@@ -89,6 +89,7 @@ class DossierRepository {
       lieuSinistre: drift.Value(data['lieu_sinistre'] as String?),
       natureSinistre: drift.Value(nature),
       montantSinistre: drift.Value(_parseDouble(data['montant_sinistre'])),
+      dateExpertise: drift.Value(_parseDateTime(data['date_expertise'])),
       compagnieAssurance: drift.Value(data['compagnie_assurance'] as String?),
       numeroPolice: drift.Value(data['numero_police'] as String?),
       courtier: drift.Value(data['courtier'] as String?),
@@ -162,6 +163,9 @@ class DossierRepository {
           : const drift.Value.absent(),
       courtier: data.containsKey('courtier')
           ? drift.Value(data['courtier'] as String?)
+          : const drift.Value.absent(),
+      dateExpertise: data.containsKey('date_expertise')
+          ? drift.Value(_parseDateTime(data['date_expertise']))
           : const drift.Value.absent(),
       notesInternes: data.containsKey('notes_internes')
           ? drift.Value(data['notes_internes'] as String?)

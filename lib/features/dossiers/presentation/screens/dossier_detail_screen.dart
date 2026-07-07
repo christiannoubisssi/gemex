@@ -219,20 +219,12 @@ class _ResumeTab extends ConsumerWidget {
 
         // Infos sinistre
         _Section(title: 'Informations sinistre', icon: Icons.info_outline, children: [
-          _InfoRow('Date du sinistre', FormatUtils.formatDate(dossier.dateSinistre)),
+          _InfoRow('Date de la requête', FormatUtils.formatDate(dossier.dateSinistre)),
           _InfoRow('Lieu', dossier.lieuSinistre),
           _InfoRow('Nature', dossier.natureSinistre),
           if (dossier.montantSinistre != null)
             _InfoRow('Montant déclaré', FormatUtils.formatFcfa(dossier.montantSinistre)),
         ]),
-
-        // Assurance
-        if (dossier.compagnieAssurance != null || dossier.numeroPolice != null)
-          _Section(title: 'Assurance', icon: Icons.shield_outlined, children: [
-            _InfoRow('Compagnie', dossier.compagnieAssurance),
-            _InfoRow('N° police', dossier.numeroPolice),
-            _InfoRow('Courtier', dossier.courtier),
-          ]),
 
         // Dates clés
         _Section(title: 'Dates clés', icon: Icons.calendar_today_outlined, children: [
