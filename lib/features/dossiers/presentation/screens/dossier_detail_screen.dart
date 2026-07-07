@@ -126,6 +126,9 @@ class _DossierDetailScreenState extends ConsumerState<DossierDetailScreen>
                           icon: const Icon(Icons.attach_file),
                           label: const Text('Gérer les pièces'),
                         ),
+                        const SizedBox(height: 24),
+                        // ── Dernières interventions ──────────────────────
+                        _InterventionsPanel(dossierId: dossier.id),
                       ],
                     ),
                   ),
@@ -972,6 +975,109 @@ class _InfoRow extends StatelessWidget {
         ),
       ]),
     );
+  }
+}
+
+// ── Panneau sidebar : dernières interventions ────────────────────────────────
+
+class _InterventionsPanel extends ConsumerWidget {
+  final String dossierId;
+  const _InterventionsPanel({required this.dossierId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final logsAsync = ref.watch(auditByEntityProvider(dossierId));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(children: [
+          const Icon(Icons.history_outlined, size: 14, color: AppColors.teal),
+          const SizedBox(width: 6),
+          const Text('Interventions récentes',
+              style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: AppColors.teal)),
+        ]),
+        const SizedBox(height: 10),
+        logsAsync.when(
+          loading: () => const SizedBox(
+              height: 60,
+              child: Center(child: CircularProgressIndicator(strokeWidth: 2))),
+          error: (_, __) => const SizedBox.shrink(),
+          data: (logs) {
+            if (logs.isEmpty) {
+              return const Padding(
+                padding: EdgeInsets.only(top: 4),
+                child: Text('Aucune activité enregistrée.',
+                    style: TextStyle(
+                        fontSize: 11, color: AppColors.textMuted)),
+              );
+            }
+            // Afficher les 5 dernières entrées
+            final recent = logs.take(5).toList();
+            return Column(
+              children: recent
+                  .map((log) => _InterventionItem(log: log))
+                  .toList(),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _InterventionItem extends StatelessWidget {
+  final AuditLog log;
+  const _InterventionItem({required this.log});
+
+  @override
+  Widget build(BuildContext context) {
+    final color  = AuditLabels.colorForAction(log.actionType);
+    final icon   = AuditLabels.iconForAction(log.actionType);
+    final label  = AuditLabels.forAction(log.actionType);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(
+          width: 28, height: 28,
+          decoration: BoxDecoration(
+              color: color.withAlpha(20), shape: BoxShape.circle),
+          child: Icon(icon, size: 14, color: color),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: color)),
+              Text(log.userNom,
+                  style: const TextStyle(
+                      fontSize: 11, color: AppColors.textSecondary)),
+              Text(_rel(log.createdAt),
+                  style: const TextStyle(
+                      fontSize: 10, color: AppColors.textMuted)),
+            ],
+          ),
+        ),
+      ]),
+    );
+  }
+
+  String _rel(DateTime d) {
+    final diff = DateTime.now().difference(d);
+    if (diff.inMinutes < 1) return 'À l\'instant';
+    if (diff.inHours < 1) return 'Il y a ${diff.inMinutes} min';
+    if (diff.inDays < 1) return 'Il y a ${diff.inHours}h';
+    if (diff.inDays < 7) return 'Il y a ${diff.inDays}j';
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
 }
 

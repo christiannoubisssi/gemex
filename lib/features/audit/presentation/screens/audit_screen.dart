@@ -6,6 +6,46 @@ import '../../../../core/network/connectivity_service.dart';
 import '../../../../database/app_database.dart';
 import '../../../../shared/services/audit_service.dart';
 
+// ── Enum période ──────────────────────────────────────────────────────────────
+
+enum _Periode {
+  aujourd_hui("Aujourd'hui"),
+  semaine('Cette semaine'),
+  mois('Ce mois'),
+  tout('Tout');
+
+  final String label;
+  const _Periode(this.label);
+
+  DateTime get cutoff {
+    final now = DateTime.now();
+    switch (this) {
+      case _Periode.aujourd_hui:
+        return DateTime(now.year, now.month, now.day);
+      case _Periode.semaine:
+        return now.subtract(const Duration(days: 7));
+      case _Periode.mois:
+        return now.subtract(const Duration(days: 30));
+      case _Periode.tout:
+        return DateTime(2000);
+    }
+  }
+}
+
+// ── Enum tri ──────────────────────────────────────────────────────────────────
+
+enum _TriAudit {
+  dateDesc('Date ↓ (récent)'),
+  dateAsc('Date ↑ (ancien)'),
+  utilisateur('Utilisateur A→Z'),
+  type("Type d'action");
+
+  final String label;
+  const _TriAudit(this.label);
+}
+
+// ── Écran principal ───────────────────────────────────────────────────────────
+
 class AuditScreen extends ConsumerStatefulWidget {
   const AuditScreen({super.key});
 
@@ -14,16 +54,55 @@ class AuditScreen extends ConsumerStatefulWidget {
 }
 
 class _AuditScreenState extends ConsumerState<AuditScreen> {
-  String? _filtreUser;
+  String? _filtreUserId;
   String? _filtreType;
   String _filtreRecherche = '';
   _Periode _periode = _Periode.semaine;
+  _TriAudit _tri = _TriAudit.dateDesc;
   bool _pulling = false;
+
+  List<AuditLog> _appliquerFiltresEtTri(List<AuditLog> logs) {
+    final cutoff = _periode.cutoff;
+    var list = logs.where((l) {
+      if (l.createdAt.isBefore(cutoff)) return false;
+      if (_filtreUserId != null && l.userId != _filtreUserId) return false;
+      if (_filtreType != null && !l.actionType.startsWith(_filtreType!)) {
+        return false;
+      }
+      if (_filtreRecherche.isNotEmpty) {
+        final q = _filtreRecherche.toLowerCase();
+        if (!l.description.toLowerCase().contains(q) &&
+            !(l.entityLabel?.toLowerCase().contains(q) ?? false) &&
+            !l.userNom.toLowerCase().contains(q)) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+
+    switch (_tri) {
+      case _TriAudit.dateAsc:
+        list.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      case _TriAudit.utilisateur:
+        list.sort((a, b) => a.userNom.compareTo(b.userNom));
+      case _TriAudit.type:
+        list.sort((a, b) => a.actionType.compareTo(b.actionType));
+      case _TriAudit.dateDesc:
+        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return list;
+  }
+
+  int get _filtresActifs =>
+      (_filtreUserId != null ? 1 : 0) +
+      (_filtreType != null ? 1 : 0) +
+      (_filtreRecherche.isNotEmpty ? 1 : 0) +
+      (_periode != _Periode.semaine ? 1 : 0);
 
   @override
   Widget build(BuildContext context) {
     final logsAsync = ref.watch(auditLogsStreamProvider);
-    final isOnline  = ref.watch(isOnlineProvider);
+    final isOnline = ref.watch(isOnlineProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -35,8 +114,10 @@ class _AuditScreenState extends ConsumerState<AuditScreen> {
                 ? const Padding(
                     padding: EdgeInsets.all(12),
                     child: SizedBox(
-                        width: 20, height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2)),
+                        width: 20,
+                        height: 20,
+                        child:
+                            CircularProgressIndicator(strokeWidth: 2)),
                   )
                 : IconButton(
                     icon: const Icon(Icons.cloud_download_outlined),
@@ -52,53 +133,112 @@ class _AuditScreenState extends ConsumerState<AuditScreen> {
             ),
             orElse: () => const SizedBox.shrink(),
           ),
+          // Réinitialiser tous les filtres
+          if (_filtresActifs > 0)
+            IconButton(
+              icon: Badge(
+                label: Text('$_filtresActifs'),
+                child: const Icon(Icons.filter_alt_off_outlined),
+              ),
+              tooltip: 'Réinitialiser les filtres',
+              onPressed: _resetFiltres,
+            ),
         ],
       ),
       body: Column(children: [
         // ── Barre de filtres ─────────────────────────────────────────────
-        _FiltresBar(
-          periode: _periode,
-          filtreType: _filtreType,
-          filtreRecherche: _filtreRecherche,
-          onPeriode: (p) => setState(() => _periode = p),
-          onType: (t) => setState(() => _filtreType = t),
-          onRecherche: (s) => setState(() => _filtreRecherche = s),
+        logsAsync.maybeWhen(
+          data: (allLogs) {
+            // Utilisateurs uniques présents dans les logs
+            final utilisateurs = <String, String>{};
+            for (final l in allLogs) {
+              utilisateurs.putIfAbsent(l.userId, () => l.userNom);
+            }
+            return _FiltresBar(
+              periode: _periode,
+              tri: _tri,
+              filtreUserId: _filtreUserId,
+              filtreType: _filtreType,
+              filtreRecherche: _filtreRecherche,
+              utilisateurs: utilisateurs,
+              onPeriode: (p) => setState(() => _periode = p),
+              onTri: (t) => setState(() => _tri = t),
+              onUser: (u) => setState(() => _filtreUserId = u),
+              onType: (t) => setState(() => _filtreType = t),
+              onRecherche: (s) => setState(() => _filtreRecherche = s),
+            );
+          },
+          orElse: () => _FiltresBar(
+            periode: _periode,
+            tri: _tri,
+            filtreUserId: _filtreUserId,
+            filtreType: _filtreType,
+            filtreRecherche: _filtreRecherche,
+            utilisateurs: const {},
+            onPeriode: (p) => setState(() => _periode = p),
+            onTri: (t) => setState(() => _tri = t),
+            onUser: (u) => setState(() => _filtreUserId = u),
+            onType: (t) => setState(() => _filtreType = t),
+            onRecherche: (s) => setState(() => _filtreRecherche = s),
+          ),
         ),
         const Divider(height: 1),
+
+        // ── Résumé des filtres actifs ─────────────────────────────────────
+        if (_filtresActifs > 0) _FiltresActifsBanner(count: _filtresActifs),
 
         // ── Liste ────────────────────────────────────────────────────────
         Expanded(
           child: logsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            loading: () =>
+                const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('Erreur : $e')),
             data: (allLogs) {
-              final filtered = _applyFilters(allLogs);
+              final filtered = _appliquerFiltresEtTri(allLogs);
               if (filtered.isEmpty) {
-                return const Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.search_off_outlined,
-                        size: 52, color: Colors.grey),
-                    SizedBox(height: 12),
-                    Text('Aucune activité pour ce filtre.',
-                        style: TextStyle(color: Colors.grey)),
-                  ]),
+                return Center(
+                  child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.search_off_outlined,
+                            size: 52, color: Colors.grey),
+                        const SizedBox(height: 12),
+                        const Text('Aucune activité pour ce filtre.',
+                            style: TextStyle(color: Colors.grey)),
+                        if (_filtresActifs > 0) ...[
+                          const SizedBox(height: 16),
+                          TextButton.icon(
+                            icon: const Icon(Icons.filter_alt_off),
+                            label: const Text('Réinitialiser'),
+                            onPressed: _resetFiltres,
+                          ),
+                        ],
+                      ]),
                 );
               }
 
-              // Regrouper par utilisateur si on filtre par user
+              // Regroupement : par utilisateur si tri=utilisateur, sinon par date
+              final grouperParUser = _tri == _TriAudit.utilisateur;
+
               return ListView.builder(
                 padding: const EdgeInsets.all(12),
                 itemCount: filtered.length,
                 itemBuilder: (_, i) {
                   final log = filtered[i];
-                  final showSeparator = i == 0 ||
-                      filtered[i - 1].userId != log.userId;
+                  final showSeparator = grouperParUser
+                      ? (i == 0 || filtered[i - 1].userId != log.userId)
+                      : _showDateSeparator(filtered, i);
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (showSeparator) ...[
+                      if (showSeparator && grouperParUser) ...[
                         if (i != 0) const SizedBox(height: 8),
                         _UserChip(nom: log.userNom),
+                        const SizedBox(height: 6),
+                      ],
+                      if (showSeparator && !grouperParUser) ...[
+                        if (i != 0) const SizedBox(height: 8),
+                        _DateChip(date: log.createdAt),
                         const SizedBox(height: 6),
                       ],
                       _AuditTile(log: log),
@@ -113,25 +253,23 @@ class _AuditScreenState extends ConsumerState<AuditScreen> {
     );
   }
 
-  List<AuditLog> _applyFilters(List<AuditLog> logs) {
-    final cutoff = _periode.cutoff;
-    return logs.where((l) {
-      if (l.createdAt.isBefore(cutoff)) return false;
-      if (_filtreUser != null && l.userId != _filtreUser) return false;
-      if (_filtreType != null && !l.actionType.startsWith(_filtreType!)) {
-        return false;
-      }
-      if (_filtreRecherche.isNotEmpty) {
-        final q = _filtreRecherche.toLowerCase();
-        if (!l.description.toLowerCase().contains(q) &&
-            !(l.entityLabel?.toLowerCase().contains(q) ?? false) &&
-            !l.userNom.toLowerCase().contains(q)) {
-          return false;
-        }
-      }
-      return true;
-    }).toList();
+  /// Affiche un séparateur de date quand le jour change dans la liste triée par date.
+  bool _showDateSeparator(List<AuditLog> logs, int i) {
+    if (i == 0) return true;
+    final curr = logs[i].createdAt;
+    final prev = logs[i - 1].createdAt;
+    return curr.year != prev.year ||
+        curr.month != prev.month ||
+        curr.day != prev.day;
   }
+
+  void _resetFiltres() => setState(() {
+        _filtreUserId = null;
+        _filtreType = null;
+        _filtreRecherche = '';
+        _periode = _Periode.semaine;
+        _tri = _TriAudit.dateDesc;
+      });
 
   Future<void> _pullFromServer() async {
     setState(() => _pulling = true);
@@ -160,21 +298,21 @@ class _AuditScreenState extends ConsumerState<AuditScreen> {
   }
 
   Future<void> _exportCsv(List<AuditLog> logs) async {
-    final filtered = _applyFilters(logs);
+    final filtered = _appliquerFiltresEtTri(logs);
     final csv = ref.read(auditServiceProvider).exportToCsv(filtered);
 
-    // Afficher dans un dialog pour copier (export fichier nécessite plugin extra)
     if (!mounted) return;
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Export CSV'),
+        title: Text('Export CSV (${filtered.length} lignes)'),
         content: SizedBox(
           width: 500,
           height: 300,
           child: SingleChildScrollView(
             child: SelectableText(csv,
-                style: const TextStyle(fontSize: 11, fontFamily: 'monospace')),
+                style:
+                    const TextStyle(fontSize: 11, fontFamily: 'monospace')),
           ),
         ),
         actions: [
@@ -188,47 +326,31 @@ class _AuditScreenState extends ConsumerState<AuditScreen> {
   }
 }
 
-// ── Enum période ─────────────────────────────────────────────────────────────
-
-enum _Periode {
-  aujourd_hui('Aujourd\'hui'),
-  semaine('Cette semaine'),
-  mois('Ce mois'),
-  tout('Tout');
-
-  final String label;
-  const _Periode(this.label);
-
-  DateTime get cutoff {
-    final now = DateTime.now();
-    switch (this) {
-      case _Periode.aujourd_hui:
-        return DateTime(now.year, now.month, now.day);
-      case _Periode.semaine:
-        return now.subtract(const Duration(days: 7));
-      case _Periode.mois:
-        return now.subtract(const Duration(days: 30));
-      case _Periode.tout:
-        return DateTime(2000);
-    }
-  }
-}
-
-// ── Barre de filtres ─────────────────────────────────────────────────────────
+// ── Barre de filtres ──────────────────────────────────────────────────────────
 
 class _FiltresBar extends StatelessWidget {
   final _Periode periode;
+  final _TriAudit tri;
+  final String? filtreUserId;
   final String? filtreType;
   final String filtreRecherche;
+  final Map<String, String> utilisateurs; // userId → userNom
   final ValueChanged<_Periode> onPeriode;
+  final ValueChanged<_TriAudit> onTri;
+  final ValueChanged<String?> onUser;
   final ValueChanged<String?> onType;
   final ValueChanged<String> onRecherche;
 
   const _FiltresBar({
     required this.periode,
+    required this.tri,
+    required this.filtreUserId,
     required this.filtreType,
     required this.filtreRecherche,
+    required this.utilisateurs,
     required this.onPeriode,
+    required this.onTri,
+    required this.onUser,
     required this.onType,
     required this.onRecherche,
   });
@@ -239,7 +361,7 @@ class _FiltresBar extends StatelessWidget {
       color: AppColors.pageBg,
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Chips de période
+        // ── Ligne 1 : chips de période ─────────────────────────────────
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(children: _Periode.values.map((p) {
@@ -253,7 +375,8 @@ class _FiltresBar extends StatelessWidget {
                 selectedColor: AppColors.navy.withAlpha(30),
                 labelStyle: TextStyle(
                   color: selected ? AppColors.navy : Colors.grey,
-                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight:
+                      selected ? FontWeight.bold : FontWeight.normal,
                   fontSize: 12,
                 ),
               ),
@@ -261,57 +384,159 @@ class _FiltresBar extends StatelessWidget {
           }).toList()),
         ),
         const SizedBox(height: 8),
-        // Filtre type + recherche
-        Row(children: [
-          // Filtre par type d'entité
-          DropdownButton<String?>(
-            value: filtreType,
-            hint: const Text('Type', style: TextStyle(fontSize: 12)),
-            isDense: true,
-            items: [
-              const DropdownMenuItem<String?>(
-                  value: null, child: Text('Tous', style: TextStyle(fontSize: 12))),
-              ...['dossier', 'client', 'devis', 'facture', 'document']
-                  .map((t) => DropdownMenuItem<String?>(
-                        value: t,
-                        child: Text(
-                          {'dossier': 'Dossiers', 'client': 'Clients',
-                            'devis': 'Devis', 'facture': 'Factures',
-                            'document': 'Documents'}[t] ?? t,
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      )),
+
+        // ── Ligne 2 : tri + filtre utilisateur + filtre type ──────────
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: [
+            // Tri
+            const Icon(Icons.sort, size: 15, color: AppColors.textMuted),
+            const SizedBox(width: 4),
+            DropdownButton<_TriAudit>(
+              value: tri,
+              isDense: true,
+              underline: const SizedBox.shrink(),
+              hint: const Text('Trier', style: TextStyle(fontSize: 12)),
+              style: const TextStyle(
+                  fontSize: 12, color: AppColors.textPrimary),
+              items: _TriAudit.values
+                  .map((t) => DropdownMenuItem(
+                      value: t,
+                      child: Text(t.label,
+                          style: const TextStyle(fontSize: 12))))
+                  .toList(),
+              onChanged: (t) { if (t != null) onTri(t); },
+            ),
+            const SizedBox(width: 16),
+
+            // Filtre utilisateur
+            if (utilisateurs.isNotEmpty) ...[
+              const Icon(Icons.person_outline,
+                  size: 15, color: AppColors.textMuted),
+              const SizedBox(width: 4),
+              DropdownButton<String?>(
+                value: filtreUserId,
+                isDense: true,
+                underline: const SizedBox.shrink(),
+                hint: const Text('Utilisateur',
+                    style: TextStyle(
+                        fontSize: 12, color: AppColors.textMuted)),
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textPrimary),
+                items: [
+                  const DropdownMenuItem<String?>(
+                      value: null,
+                      child: Text('Tous',
+                          style: TextStyle(fontSize: 12))),
+                  ...utilisateurs.entries.map(
+                    (e) => DropdownMenuItem<String?>(
+                      value: e.key,
+                      child: Text(e.value,
+                          style: const TextStyle(fontSize: 12)),
+                    ),
+                  ),
+                ],
+                onChanged: onUser,
+              ),
+              const SizedBox(width: 16),
             ],
-            onChanged: onType,
-          ),
-          const SizedBox(width: 12),
-          // Recherche libre
-          Expanded(
-            child: SizedBox(
-              height: 36,
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Chercher utilisateur, référence…',
-                  hintStyle: const TextStyle(fontSize: 12),
-                  prefixIcon: const Icon(Icons.search, size: 18),
-                  contentPadding: EdgeInsets.zero,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
+
+            // Filtre type d'entité
+            const Icon(Icons.category_outlined,
+                size: 15, color: AppColors.textMuted),
+            const SizedBox(width: 4),
+            DropdownButton<String?>(
+              value: filtreType,
+              isDense: true,
+              underline: const SizedBox.shrink(),
+              hint: const Text('Type',
+                  style: TextStyle(
+                      fontSize: 12, color: AppColors.textMuted)),
+              style: const TextStyle(
+                  fontSize: 12, color: AppColors.textPrimary),
+              items: [
+                const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('Tous types',
+                        style: TextStyle(fontSize: 12))),
+                ...[
+                  'dossier',
+                  'client',
+                  'devis',
+                  'facture',
+                  'document'
+                ].map(
+                  (t) => DropdownMenuItem<String?>(
+                    value: t,
+                    child: Text(
+                      {
+                            'dossier': 'Dossiers',
+                            'client': 'Clients',
+                            'devis': 'Devis',
+                            'facture': 'Factures',
+                            'document': 'Documents',
+                          }[t] ??
+                          t,
+                      style: const TextStyle(fontSize: 12),
+                    ),
                   ),
                 ),
-                style: const TextStyle(fontSize: 12),
-                onChanged: onRecherche,
+              ],
+              onChanged: onType,
+            ),
+          ]),
+        ),
+        const SizedBox(height: 8),
+
+        // ── Ligne 3 : recherche libre ─────────────────────────────────
+        SizedBox(
+          height: 36,
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Chercher un utilisateur, une référence…',
+              hintStyle: const TextStyle(fontSize: 12),
+              prefixIcon: const Icon(Icons.search, size: 18),
+              contentPadding: EdgeInsets.zero,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide:
+                    BorderSide(color: Colors.grey.shade300),
               ),
             ),
+            style: const TextStyle(fontSize: 12),
+            controller: TextEditingController(text: filtreRecherche),
+            onChanged: onRecherche,
           ),
-        ]),
+        ),
       ]),
     );
   }
 }
 
-// ── Widgets ───────────────────────────────────────────────────────────────────
+// ── Bannière filtres actifs ───────────────────────────────────────────────────
+
+class _FiltresActifsBanner extends StatelessWidget {
+  final int count;
+  const _FiltresActifsBanner({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      color: AppColors.teal.withAlpha(15),
+      child: Text(
+        '$count filtre${count > 1 ? 's' : ''} actif${count > 1 ? 's' : ''} — appuyez sur ✕ pour réinitialiser',
+        style: const TextStyle(
+            fontSize: 11,
+            color: AppColors.teal,
+            fontWeight: FontWeight.w500),
+      ),
+    );
+  }
+}
+
+// ── Séparateurs ───────────────────────────────────────────────────────────────
 
 class _UserChip extends StatelessWidget {
   final String nom;
@@ -326,16 +551,61 @@ class _UserChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.person_outline, size: 14, color: AppColors.navy),
+        const Icon(Icons.person_outline,
+            size: 14, color: AppColors.navy),
         const SizedBox(width: 4),
         Text(nom,
             style: const TextStyle(
-                fontSize: 12, fontWeight: FontWeight.bold,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
                 color: AppColors.navy)),
       ]),
     );
   }
 }
+
+class _DateChip extends StatelessWidget {
+  final DateTime date;
+  const _DateChip({required this.date});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday =
+        DateTime(now.year, now.month, now.day - 1);
+    final d = DateTime(date.year, date.month, date.day);
+    String label;
+    if (d == today) {
+      label = "Aujourd'hui";
+    } else if (d == yesterday) {
+      label = 'Hier';
+    } else {
+      label =
+          '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.calendar_today_outlined,
+            size: 13, color: Colors.grey),
+        const SizedBox(width: 5),
+        Text(label,
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey)),
+      ]),
+    );
+  }
+}
+
+// ── Tile d'un événement ───────────────────────────────────────────────────────
 
 class _AuditTile extends StatelessWidget {
   final AuditLog log;
@@ -343,19 +613,22 @@ class _AuditTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color  = AuditLabels.colorForAction(log.actionType);
-    final icon   = AuditLabels.iconForAction(log.actionType);
-    final label  = AuditLabels.forAction(log.actionType);
+    final color = AuditLabels.colorForAction(log.actionType);
+    final icon  = AuditLabels.iconForAction(log.actionType);
+    final label = AuditLabels.forAction(log.actionType);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 6),
       child: Padding(
         padding: const EdgeInsets.all(10),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           Container(
-            width: 32, height: 32,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: color.withAlpha(20), shape: BoxShape.circle),
+                color: color.withAlpha(20), shape: BoxShape.circle),
             child: Icon(icon, size: 16, color: color),
           ),
           const SizedBox(width: 10),
@@ -373,13 +646,15 @@ class _AuditTile extends StatelessWidget {
                         TextSpan(
                             text: label,
                             style: TextStyle(
-                                fontWeight: FontWeight.w600, color: color)),
+                                fontWeight: FontWeight.w600,
+                                color: color)),
                         if (log.entityLabel != null) ...[
                           const TextSpan(text: '  '),
                           TextSpan(
                               text: log.entityLabel,
                               style: const TextStyle(
-                                  fontSize: 12, color: AppColors.teal,
+                                  fontSize: 12,
+                                  color: AppColors.teal,
                                   fontWeight: FontWeight.w500)),
                         ],
                       ],
@@ -390,13 +665,22 @@ class _AuditTile extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 11, color: Colors.grey)),
               ]),
+              // Utilisateur
+              Padding(
+                padding: const EdgeInsets.only(top: 1),
+                child: Text(log.userNom,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.textSecondary)),
+              ),
               if (log.description.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(log.description,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                      style: const TextStyle(
+                          fontSize: 12, color: Colors.grey)),
                 ),
-              if (log.ancienneValeur != null && log.nouvelleValeur != null)
+              if (log.ancienneValeur != null &&
+                  log.nouvelleValeur != null)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Text(

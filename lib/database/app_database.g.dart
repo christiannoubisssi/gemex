@@ -1689,6 +1689,12 @@ class $DossiersTable extends Dossiers with TableInfo<$DossiersTable, Dossier> {
   late final GeneratedColumn<String> courtier = GeneratedColumn<String>(
       'courtier', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdByNomMeta =
+      const VerificationMeta('createdByNom');
+  @override
+  late final GeneratedColumn<String> createdByNom = GeneratedColumn<String>(
+      'created_by_nom', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _notesInternesMeta =
       const VerificationMeta('notesInternes');
   @override
@@ -1756,6 +1762,7 @@ class $DossiersTable extends Dossiers with TableInfo<$DossiersTable, Dossier> {
         compagnieAssurance,
         numeroPolice,
         courtier,
+        createdByNom,
         notesInternes,
         observations,
         motifAnnulation,
@@ -1898,6 +1905,12 @@ class $DossiersTable extends Dossiers with TableInfo<$DossiersTable, Dossier> {
       context.handle(_courtierMeta,
           courtier.isAcceptableOrUnknown(data['courtier']!, _courtierMeta));
     }
+    if (data.containsKey('created_by_nom')) {
+      context.handle(
+          _createdByNomMeta,
+          createdByNom.isAcceptableOrUnknown(
+              data['created_by_nom']!, _createdByNomMeta));
+    }
     if (data.containsKey('notes_internes')) {
       context.handle(
           _notesInternesMeta,
@@ -1985,6 +1998,8 @@ class $DossiersTable extends Dossiers with TableInfo<$DossiersTable, Dossier> {
           .read(DriftSqlType.string, data['${effectivePrefix}numero_police']),
       courtier: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}courtier']),
+      createdByNom: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}created_by_nom']),
       notesInternes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes_internes']),
       observations: attachedDatabase.typeMapping
@@ -2030,6 +2045,9 @@ class Dossier extends DataClass implements Insertable<Dossier> {
   final String? compagnieAssurance;
   final String? numeroPolice;
   final String? courtier;
+
+  /// Nom de l'utilisateur qui a créé le dossier (dénormalisé pour affichage rapide)
+  final String? createdByNom;
   final String? notesInternes;
   final String? observations;
   final String? motifAnnulation;
@@ -2060,6 +2078,7 @@ class Dossier extends DataClass implements Insertable<Dossier> {
       this.compagnieAssurance,
       this.numeroPolice,
       this.courtier,
+      this.createdByNom,
       this.notesInternes,
       this.observations,
       this.motifAnnulation,
@@ -2123,6 +2142,9 @@ class Dossier extends DataClass implements Insertable<Dossier> {
     }
     if (!nullToAbsent || courtier != null) {
       map['courtier'] = Variable<String>(courtier);
+    }
+    if (!nullToAbsent || createdByNom != null) {
+      map['created_by_nom'] = Variable<String>(createdByNom);
     }
     if (!nullToAbsent || notesInternes != null) {
       map['notes_internes'] = Variable<String>(notesInternes);
@@ -2195,6 +2217,9 @@ class Dossier extends DataClass implements Insertable<Dossier> {
       courtier: courtier == null && nullToAbsent
           ? const Value.absent()
           : Value(courtier),
+      createdByNom: createdByNom == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdByNom),
       notesInternes: notesInternes == null && nullToAbsent
           ? const Value.absent()
           : Value(notesInternes),
@@ -2238,6 +2263,7 @@ class Dossier extends DataClass implements Insertable<Dossier> {
           serializer.fromJson<String?>(json['compagnieAssurance']),
       numeroPolice: serializer.fromJson<String?>(json['numeroPolice']),
       courtier: serializer.fromJson<String?>(json['courtier']),
+      createdByNom: serializer.fromJson<String?>(json['createdByNom']),
       notesInternes: serializer.fromJson<String?>(json['notesInternes']),
       observations: serializer.fromJson<String?>(json['observations']),
       motifAnnulation: serializer.fromJson<String?>(json['motifAnnulation']),
@@ -2273,6 +2299,7 @@ class Dossier extends DataClass implements Insertable<Dossier> {
       'compagnieAssurance': serializer.toJson<String?>(compagnieAssurance),
       'numeroPolice': serializer.toJson<String?>(numeroPolice),
       'courtier': serializer.toJson<String?>(courtier),
+      'createdByNom': serializer.toJson<String?>(createdByNom),
       'notesInternes': serializer.toJson<String?>(notesInternes),
       'observations': serializer.toJson<String?>(observations),
       'motifAnnulation': serializer.toJson<String?>(motifAnnulation),
@@ -2306,6 +2333,7 @@ class Dossier extends DataClass implements Insertable<Dossier> {
           Value<String?> compagnieAssurance = const Value.absent(),
           Value<String?> numeroPolice = const Value.absent(),
           Value<String?> courtier = const Value.absent(),
+          Value<String?> createdByNom = const Value.absent(),
           Value<String?> notesInternes = const Value.absent(),
           Value<String?> observations = const Value.absent(),
           Value<String?> motifAnnulation = const Value.absent(),
@@ -2346,6 +2374,8 @@ class Dossier extends DataClass implements Insertable<Dossier> {
         numeroPolice:
             numeroPolice.present ? numeroPolice.value : this.numeroPolice,
         courtier: courtier.present ? courtier.value : this.courtier,
+        createdByNom:
+            createdByNom.present ? createdByNom.value : this.createdByNom,
         notesInternes:
             notesInternes.present ? notesInternes.value : this.notesInternes,
         observations:
@@ -2405,6 +2435,9 @@ class Dossier extends DataClass implements Insertable<Dossier> {
           ? data.numeroPolice.value
           : this.numeroPolice,
       courtier: data.courtier.present ? data.courtier.value : this.courtier,
+      createdByNom: data.createdByNom.present
+          ? data.createdByNom.value
+          : this.createdByNom,
       notesInternes: data.notesInternes.present
           ? data.notesInternes.value
           : this.notesInternes,
@@ -2447,6 +2480,7 @@ class Dossier extends DataClass implements Insertable<Dossier> {
           ..write('compagnieAssurance: $compagnieAssurance, ')
           ..write('numeroPolice: $numeroPolice, ')
           ..write('courtier: $courtier, ')
+          ..write('createdByNom: $createdByNom, ')
           ..write('notesInternes: $notesInternes, ')
           ..write('observations: $observations, ')
           ..write('motifAnnulation: $motifAnnulation, ')
@@ -2482,6 +2516,7 @@ class Dossier extends DataClass implements Insertable<Dossier> {
         compagnieAssurance,
         numeroPolice,
         courtier,
+        createdByNom,
         notesInternes,
         observations,
         motifAnnulation,
@@ -2516,6 +2551,7 @@ class Dossier extends DataClass implements Insertable<Dossier> {
           other.compagnieAssurance == this.compagnieAssurance &&
           other.numeroPolice == this.numeroPolice &&
           other.courtier == this.courtier &&
+          other.createdByNom == this.createdByNom &&
           other.notesInternes == this.notesInternes &&
           other.observations == this.observations &&
           other.motifAnnulation == this.motifAnnulation &&
@@ -2548,6 +2584,7 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
   final Value<String?> compagnieAssurance;
   final Value<String?> numeroPolice;
   final Value<String?> courtier;
+  final Value<String?> createdByNom;
   final Value<String?> notesInternes;
   final Value<String?> observations;
   final Value<String?> motifAnnulation;
@@ -2579,6 +2616,7 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
     this.compagnieAssurance = const Value.absent(),
     this.numeroPolice = const Value.absent(),
     this.courtier = const Value.absent(),
+    this.createdByNom = const Value.absent(),
     this.notesInternes = const Value.absent(),
     this.observations = const Value.absent(),
     this.motifAnnulation = const Value.absent(),
@@ -2611,6 +2649,7 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
     this.compagnieAssurance = const Value.absent(),
     this.numeroPolice = const Value.absent(),
     this.courtier = const Value.absent(),
+    this.createdByNom = const Value.absent(),
     this.notesInternes = const Value.absent(),
     this.observations = const Value.absent(),
     this.motifAnnulation = const Value.absent(),
@@ -2646,6 +2685,7 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
     Expression<String>? compagnieAssurance,
     Expression<String>? numeroPolice,
     Expression<String>? courtier,
+    Expression<String>? createdByNom,
     Expression<String>? notesInternes,
     Expression<String>? observations,
     Expression<String>? motifAnnulation,
@@ -2678,6 +2718,7 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
       if (compagnieAssurance != null) 'compagnie_assurance': compagnieAssurance,
       if (numeroPolice != null) 'numero_police': numeroPolice,
       if (courtier != null) 'courtier': courtier,
+      if (createdByNom != null) 'created_by_nom': createdByNom,
       if (notesInternes != null) 'notes_internes': notesInternes,
       if (observations != null) 'observations': observations,
       if (motifAnnulation != null) 'motif_annulation': motifAnnulation,
@@ -2712,6 +2753,7 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
       Value<String?>? compagnieAssurance,
       Value<String?>? numeroPolice,
       Value<String?>? courtier,
+      Value<String?>? createdByNom,
       Value<String?>? notesInternes,
       Value<String?>? observations,
       Value<String?>? motifAnnulation,
@@ -2743,6 +2785,7 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
       compagnieAssurance: compagnieAssurance ?? this.compagnieAssurance,
       numeroPolice: numeroPolice ?? this.numeroPolice,
       courtier: courtier ?? this.courtier,
+      createdByNom: createdByNom ?? this.createdByNom,
       notesInternes: notesInternes ?? this.notesInternes,
       observations: observations ?? this.observations,
       motifAnnulation: motifAnnulation ?? this.motifAnnulation,
@@ -2825,6 +2868,9 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
     if (courtier.present) {
       map['courtier'] = Variable<String>(courtier.value);
     }
+    if (createdByNom.present) {
+      map['created_by_nom'] = Variable<String>(createdByNom.value);
+    }
     if (notesInternes.present) {
       map['notes_internes'] = Variable<String>(notesInternes.value);
     }
@@ -2875,6 +2921,7 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
           ..write('compagnieAssurance: $compagnieAssurance, ')
           ..write('numeroPolice: $numeroPolice, ')
           ..write('courtier: $courtier, ')
+          ..write('createdByNom: $createdByNom, ')
           ..write('notesInternes: $notesInternes, ')
           ..write('observations: $observations, ')
           ..write('motifAnnulation: $motifAnnulation, ')
@@ -15979,6 +16026,7 @@ typedef $$DossiersTableCreateCompanionBuilder = DossiersCompanion Function({
   Value<String?> compagnieAssurance,
   Value<String?> numeroPolice,
   Value<String?> courtier,
+  Value<String?> createdByNom,
   Value<String?> notesInternes,
   Value<String?> observations,
   Value<String?> motifAnnulation,
@@ -16011,6 +16059,7 @@ typedef $$DossiersTableUpdateCompanionBuilder = DossiersCompanion Function({
   Value<String?> compagnieAssurance,
   Value<String?> numeroPolice,
   Value<String?> courtier,
+  Value<String?> createdByNom,
   Value<String?> notesInternes,
   Value<String?> observations,
   Value<String?> motifAnnulation,
@@ -16100,6 +16149,9 @@ class $$DossiersTableFilterComposer
 
   ColumnFilters<String> get courtier => $composableBuilder(
       column: $table.courtier, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get createdByNom => $composableBuilder(
+      column: $table.createdByNom, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get notesInternes => $composableBuilder(
       column: $table.notesInternes, builder: (column) => ColumnFilters(column));
@@ -16209,6 +16261,10 @@ class $$DossiersTableOrderingComposer
   ColumnOrderings<String> get courtier => $composableBuilder(
       column: $table.courtier, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get createdByNom => $composableBuilder(
+      column: $table.createdByNom,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get notesInternes => $composableBuilder(
       column: $table.notesInternes,
       builder: (column) => ColumnOrderings(column));
@@ -16309,6 +16365,9 @@ class $$DossiersTableAnnotationComposer
   GeneratedColumn<String> get courtier =>
       $composableBuilder(column: $table.courtier, builder: (column) => column);
 
+  GeneratedColumn<String> get createdByNom => $composableBuilder(
+      column: $table.createdByNom, builder: (column) => column);
+
   GeneratedColumn<String> get notesInternes => $composableBuilder(
       column: $table.notesInternes, builder: (column) => column);
 
@@ -16374,6 +16433,7 @@ class $$DossiersTableTableManager extends RootTableManager<
             Value<String?> compagnieAssurance = const Value.absent(),
             Value<String?> numeroPolice = const Value.absent(),
             Value<String?> courtier = const Value.absent(),
+            Value<String?> createdByNom = const Value.absent(),
             Value<String?> notesInternes = const Value.absent(),
             Value<String?> observations = const Value.absent(),
             Value<String?> motifAnnulation = const Value.absent(),
@@ -16406,6 +16466,7 @@ class $$DossiersTableTableManager extends RootTableManager<
             compagnieAssurance: compagnieAssurance,
             numeroPolice: numeroPolice,
             courtier: courtier,
+            createdByNom: createdByNom,
             notesInternes: notesInternes,
             observations: observations,
             motifAnnulation: motifAnnulation,
@@ -16438,6 +16499,7 @@ class $$DossiersTableTableManager extends RootTableManager<
             Value<String?> compagnieAssurance = const Value.absent(),
             Value<String?> numeroPolice = const Value.absent(),
             Value<String?> courtier = const Value.absent(),
+            Value<String?> createdByNom = const Value.absent(),
             Value<String?> notesInternes = const Value.absent(),
             Value<String?> observations = const Value.absent(),
             Value<String?> motifAnnulation = const Value.absent(),
@@ -16470,6 +16532,7 @@ class $$DossiersTableTableManager extends RootTableManager<
             compagnieAssurance: compagnieAssurance,
             numeroPolice: numeroPolice,
             courtier: courtier,
+            createdByNom: createdByNom,
             notesInternes: notesInternes,
             observations: observations,
             motifAnnulation: motifAnnulation,

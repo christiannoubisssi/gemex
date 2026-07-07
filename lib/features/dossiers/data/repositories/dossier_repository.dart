@@ -10,6 +10,7 @@ import '../../../../core/services/app_logger.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
+import '../../../parametres/data/user_management_service.dart';
 
 final dossierRepositoryProvider = Provider<DossierRepository>((ref) {
   return DossierRepository(
@@ -73,6 +74,10 @@ class DossierRepository {
     final nature = data['nature_sinistre'] as String?;
     final titre = (nature != null && nature.isNotEmpty) ? nature : numero;
 
+    // Identité du créateur (dénormalisée pour affichage rapide dans la liste)
+    final profile = _ref.read(currentProfileProvider).valueOrNull;
+    final createdByNom = profile?.nom ?? profile?.email;
+
     final companion = DossiersCompanion.insert(
       id: id,
       entrepriseId: data['entreprise_id'] as String? ?? '',
@@ -94,13 +99,20 @@ class DossierRepository {
       numeroPolice: drift.Value(data['numero_police'] as String?),
       courtier: drift.Value(data['courtier'] as String?),
       notesInternes: drift.Value(data['notes_internes'] as String?),
+      createdByNom: drift.Value(createdByNom),
       syncStatus: const drift.Value(AppConstants.syncPending),
     );
 
     await _db.dossiersDao.upsert(companion);
 
     // Champs calculés localement (absents de `data`) mais requis côté Supabase
-    final syncData = {...data, 'id': id, 'titre': titre, 'annee': now.year};
+    final syncData = {
+      ...data,
+      'id': id,
+      'titre': titre,
+      'annee': now.year,
+      if (createdByNom != null) 'created_by_nom': createdByNom,
+    };
 
     final online = _ref.read(isOnlineProvider);
     AppLogger.d('DossierRepository', 'create $id — isOnline=$online');
