@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../database/app_database.dart';
+import '../../../../shared/services/audit_service.dart';
 import '../../data/repositories/facture_repository.dart';
 
 final facturesProvider = FutureProvider.autoDispose.family<List<Facture>, String?>(
@@ -42,6 +43,13 @@ class FactureNotifier extends AsyncNotifier<void> {
       final id = await ref.read(factureRepositoryProvider).createFromDevis(devisId);
       state = const AsyncData(null);
       ref.invalidate(facturesProvider);
+      ref.read(auditServiceProvider).log(
+        actionType: AuditActions.factureCree,
+        entityType: 'facture',
+        entityId: id,
+        description: 'Facture créée depuis devis',
+        metadata: {'devis_id': devisId},
+      );
       return id;
     } catch (e, s) {
       state = AsyncError(e, s);
@@ -55,6 +63,13 @@ class FactureNotifier extends AsyncNotifier<void> {
       final id = await ref.read(factureRepositoryProvider).create(data, lignes);
       state = const AsyncData(null);
       ref.invalidate(facturesProvider);
+      ref.read(auditServiceProvider).log(
+        actionType: AuditActions.factureCree,
+        entityType: 'facture',
+        entityId: id,
+        description: 'Facture créée',
+        metadata: {'dossier_id': data['dossier_id']},
+      );
       return id;
     } catch (e, s) {
       state = AsyncError(e, s);
@@ -65,28 +80,54 @@ class FactureNotifier extends AsyncNotifier<void> {
   Future<void> validerFacture(String id) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      final facture = await ref.read(factureRepositoryProvider).getById(id);
       await ref.read(factureRepositoryProvider).validerFacture(id);
       ref.invalidate(factureDetailProvider(id));
       ref.invalidate(facturesProvider);
+      ref.read(auditServiceProvider).log(
+        actionType: AuditActions.factureModifie,
+        entityType: 'facture',
+        entityId: id,
+        entityLabel: facture?.numero,
+        description: 'Facture validée (brouillon → émise)',
+      );
     });
   }
 
   Future<void> annulerFacture(String id) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      final facture = await ref.read(factureRepositoryProvider).getById(id);
       await ref.read(factureRepositoryProvider).annulerFacture(id);
       ref.invalidate(factureDetailProvider(id));
       ref.invalidate(facturesProvider);
+      ref.read(auditServiceProvider).log(
+        actionType: AuditActions.factureAnnulee,
+        entityType: 'facture',
+        entityId: id,
+        entityLabel: facture?.numero,
+        description: 'Facture annulée',
+      );
     });
   }
 
   Future<void> enregistrerPaiement(String id, double montant, String? mode, String? reference) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      final facture = await ref.read(factureRepositoryProvider).getById(id);
       await ref.read(factureRepositoryProvider).enregistrerPaiement(id, montant, mode, reference);
       ref.invalidate(factureDetailProvider(id));
       ref.invalidate(facturesProvider);
       ref.invalidate(totalCreancesProvider);
+      ref.read(auditServiceProvider).log(
+        actionType: AuditActions.facturePaye,
+        entityType: 'facture',
+        entityId: id,
+        entityLabel: facture?.numero,
+        description: 'Paiement de $montant FCFA enregistré${mode != null ? ' ($mode)' : ''}',
+        nouvelleValeur: montant.toStringAsFixed(0),
+        metadata: {'mode': mode, 'reference': reference},
+      );
     });
   }
 }

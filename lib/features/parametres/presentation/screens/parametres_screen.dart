@@ -96,17 +96,23 @@ class ParametresScreen extends ConsumerWidget {
               ],
             ),
 
-            // ─── Section Diagnostic (admin) ───────────────────────────────
+            // ─── Journal d'activité (admin) ───────────────────────────────
             if (isAdmin) ...[
               const SizedBox(height: 24),
-              const _SectionHeader('Diagnostic'),
+              const _SectionHeader('Contrôle & Audit'),
               const SizedBox(height: 12),
               _SettingsGrid(
                 children: [
                   _SettingsTile(
+                    icon: Icons.manage_search_outlined,
+                    title: 'Journal d\'activité',
+                    subtitle: 'Historique de toutes les actions de l\'équipe',
+                    onTap: () => context.push('/parametres/audit'),
+                  ),
+                  _SettingsTile(
                     icon: Icons.terminal_outlined,
                     title: 'Console de logs',
-                    subtitle: 'Consulter les événements applicatifs en temps réel',
+                    subtitle: 'Événements applicatifs en temps réel',
                     onTap: () => context.push('/logs'),
                   ),
                 ],

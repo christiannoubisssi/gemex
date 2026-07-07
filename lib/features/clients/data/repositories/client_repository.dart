@@ -9,6 +9,7 @@ import '../../../../core/network/connectivity_service.dart';
 import '../../../../core/services/app_logger.dart';
 import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
+import '../../../../shared/services/audit_service.dart';
 
 final clientRepositoryProvider = Provider<ClientRepository>((ref) {
   return ClientRepository(db: AppDatabase.instance, supabase: Supabase.instance.client, ref: ref);
@@ -60,6 +61,14 @@ class ClientRepository {
     } else {
       await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: 'create', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
+
+    _ref.read(auditServiceProvider).log(
+      actionType: AuditActions.clientCree,
+      entityType: 'client',
+      entityId: id,
+      entityLabel: data['nom'] as String?,
+      description: 'Client créé : ${data['nom'] ?? id}',
+    );
     return id;
   }
 
@@ -73,7 +82,7 @@ class ClientRepository {
       telephone: data.containsKey('telephone') ? drift.Value(data['telephone'] as String?) : const drift.Value.absent(),
       adresse: data.containsKey('adresse') ? drift.Value(data['adresse'] as String?) : const drift.Value.absent(),
       ville: data.containsKey('ville') ? drift.Value(data['ville'] as String?) : const drift.Value.absent(),
-      pays: data.containsKey('pays') ? drift.Value(data['pays'] as String?) : const drift.Value.absent(),
+      pays: data.containsKey('pays') ? drift.Value(data['pays'] as String? ?? 'Gabon') : const drift.Value.absent(),
       numeroTva: data.containsKey('numero_tva') ? drift.Value(data['numero_tva'] as String?) : const drift.Value.absent(),
       rccm: data.containsKey('rccm') ? drift.Value(data['rccm'] as String?) : const drift.Value.absent(),
       nif: data.containsKey('nif') ? drift.Value(data['nif'] as String?) : const drift.Value.absent(),
@@ -91,6 +100,14 @@ class ClientRepository {
     } else {
       await _db.syncQueueDao.enqueue(entityType: 'client', entityId: id, operation: 'update', payload: jsonEncode(toJsonSafe({...data, 'id': id})));
     }
+
+    _ref.read(auditServiceProvider).log(
+      actionType: AuditActions.clientModifie,
+      entityType: 'client',
+      entityId: id,
+      entityLabel: data['nom'] as String?,
+      description: 'Client modifié : ${data['nom'] ?? id}',
+    );
   }
 
   Future<void> _trySync(String id, Map<String, dynamic> data, String op) async {

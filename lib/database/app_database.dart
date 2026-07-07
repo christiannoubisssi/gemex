@@ -18,6 +18,7 @@ import 'tables/documents_rapport_table.dart';
 import 'tables/produits_table.dart';
 import 'tables/stock_mouvements_table.dart';
 import 'tables/referentiels_table.dart';
+import 'tables/audit_logs_table.dart';
 import 'daos/clients_dao.dart';
 import 'daos/client_contacts_dao.dart';
 import 'daos/dossiers_dao.dart';
@@ -35,6 +36,7 @@ import 'daos/documents_rapport_dao.dart';
 import 'daos/produits_dao.dart';
 import 'daos/stock_mouvements_dao.dart';
 import 'daos/referentiels_dao.dart';
+import 'daos/audit_logs_dao.dart';
 
 part 'app_database.g.dart';
 
@@ -60,6 +62,7 @@ part 'app_database.g.dart';
     Produits,
     StockMouvements,
     Referentiels,
+    AuditLogs,
   ],
   daos: [
     ClientsDao,
@@ -79,13 +82,14 @@ part 'app_database.g.dart';
     ProduitsDao,
     StockMouvementsDao,
     ReferentielsDao,
+    AuditLogsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -128,6 +132,10 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(clients, clients.refAgl);
         await m.addColumn(clients, clients.refDs);
         await m.addColumn(clients, clients.cabinetBce);
+      }
+      // v11 : journal d'activité (audit trail)
+      if (from < 11) {
+        await m.createTable(auditLogs);
       }
     },
   );

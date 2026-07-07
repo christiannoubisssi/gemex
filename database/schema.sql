@@ -274,6 +274,45 @@ $$;
 -- RLS : tout utilisateur authentifié a accès complet (mono-cabinet).
 -- ============================================================
 
+-- ─── Journal d'activité (audit trail) ───────────────────────────────────────
+create table if not exists public.audit_logs (
+  id              text primary key,
+  entreprise_id   text not null default 'default',
+  user_id         text not null,
+  user_nom        text not null,
+  action_type     text not null,
+  entity_type     text not null,
+  entity_id       text not null,
+  entity_label    text,
+  description     text not null,
+  ancienne_valeur text,
+  nouvelle_valeur text,
+  metadata_json   jsonb,
+  created_at      timestamptz not null default now()
+);
+
+alter table public.audit_logs enable row level security;
+
+-- Tout utilisateur authentifié peut insérer ses propres logs
+drop policy if exists "Insert own audit logs" on public.audit_logs;
+create policy "Insert own audit logs" on public.audit_logs
+  for insert with check (auth.uid() is not null);
+
+-- Seul l'admin peut lire tous les logs
+drop policy if exists "Admin read audit logs" on public.audit_logs;
+create policy "Admin read audit logs" on public.audit_logs
+  for select using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'admin'
+    )
+  );
+
+-- Index pour les requêtes fréquentes
+create index if not exists idx_audit_logs_entity_id  on public.audit_logs (entity_id);
+create index if not exists idx_audit_logs_user_id    on public.audit_logs (user_id);
+create index if not exists idx_audit_logs_created_at on public.audit_logs (created_at desc);
+
 -- ─── Clients ────────────────────────────────────────────────────────────────
 create table if not exists public.clients (
   id            text primary key,

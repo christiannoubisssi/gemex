@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/services/app_logger.dart';
 import '../../../../core/utils/json_utils.dart';
 import '../../../../database/app_database.dart';
+import '../../../../shared/services/audit_service.dart';
 import '../../data/repositories/dossier_repository.dart';
 
 final dossiersProvider = FutureProvider.autoDispose.family<List<Dossier>, String?>(
@@ -47,7 +48,6 @@ class DossierNotifier extends AsyncNotifier<void> {
   Future<String?> create(Map<String, dynamic> data) async {
     state = const AsyncLoading();
     try {
-      // Sanitiser dès le notifier : convertit DateTime → ISO string
       final safeData = toJsonSafe(data);
       AppLogger.i('DossierNotifier', 'Création dossier…');
       final id = await ref.read(dossierRepositoryProvider).create(safeData);
@@ -55,6 +55,15 @@ class DossierNotifier extends AsyncNotifier<void> {
       ref.invalidate(dossiersProvider);
       ref.invalidate(dossierStatsProvider);
       AppLogger.i('DossierNotifier', 'Dossier créé : $id');
+
+      // Journal d'activité (fire-and-forget)
+      ref.read(auditServiceProvider).log(
+        actionType: AuditActions.dossierCree,
+        entityType: 'dossier',
+        entityId: id,
+        description: 'Création du dossier',
+        metadata: {'nature': data['nature_sinistre']},
+      );
       return id;
     } catch (e, s) {
       AppLogger.e('DossierNotifier', 'Erreur création dossier', error: e, stack: s);
@@ -66,19 +75,47 @@ class DossierNotifier extends AsyncNotifier<void> {
   Future<void> updateDossier(String id, Map<String, dynamic> data) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      // Récupérer le label avant mise à jour
+      final dossier = await ref.read(dossierRepositoryProvider).getById(id);
       await ref.read(dossierRepositoryProvider).update(id, toJsonSafe(data));
-      // dossierDetailProvider (StreamProvider) se met à jour automatiquement via Drift
       ref.invalidate(dossiersProvider);
+
+      ref.read(auditServiceProvider).log(
+        actionType: AuditActions.dossierModifie,
+        entityType: 'dossier',
+        entityId: id,
+        entityLabel: dossier?.numero,
+        description: 'Modification du dossier',
+      );
     });
   }
 
   Future<void> changerStatut(String id, String statut, {String? motif}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {
+      final dossier = await ref.read(dossierRepositoryProvider).getById(id);
+      final ancienStatut = dossier?.statut;
       await ref.read(dossierRepositoryProvider).changerStatut(id, statut, motif: motif);
-      // dossierDetailProvider (StreamProvider) se met à jour automatiquement via Drift
       ref.invalidate(dossiersProvider);
       ref.invalidate(dossierStatsProvider);
+
+      final action = statut == 'annule'
+          ? AuditActions.dossierAnnule
+          : statut == 'clos'
+              ? AuditActions.dossierClos
+              : AuditActions.dossierStatutChange;
+
+      ref.read(auditServiceProvider).log(
+        actionType: action,
+        entityType: 'dossier',
+        entityId: id,
+        entityLabel: dossier?.numero,
+        description: motif != null
+            ? 'Statut → $statut. Motif : $motif'
+            : 'Statut → $statut',
+        ancienneValeur: ancienStatut,
+        nouvelleValeur: statut,
+      );
     });
   }
 }

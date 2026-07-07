@@ -16,6 +16,7 @@ import '../../features/dossiers/presentation/providers/dossier_provider.dart';
 import '../../features/factures/presentation/providers/facture_provider.dart';
 import '../../features/paie/presentation/providers/salaire_provider.dart';
 import '../../features/stock/presentation/providers/stock_provider.dart';
+import 'audit_service.dart';
 
 enum SyncStatus { idle, syncing, error, offline }
 
@@ -71,6 +72,9 @@ class SyncService {
 
     try {
       AppLogger.i('SyncService', 'Début de la synchronisation');
+
+      // ── Push logs d'audit en attente ────────────────────────────────────
+      await _ref.read(auditServiceProvider).pushPending();
 
       // ── Pull Supabase → Drift (respecte l'ordre des FK) ─────────────────
       await _pullClients();

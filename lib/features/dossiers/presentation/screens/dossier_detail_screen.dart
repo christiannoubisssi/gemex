@@ -9,6 +9,7 @@ import '../../../../core/constants/permissions.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../../../database/app_database.dart';
+import '../../../../shared/services/audit_service.dart';
 import '../../../../shared/services/dossier_documents_service.dart';
 import '../../../clients/presentation/providers/client_provider.dart';
 import '../../../devis/presentation/providers/devis_provider.dart';
@@ -34,7 +35,7 @@ class _DossierDetailScreenState extends ConsumerState<DossierDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -76,6 +77,7 @@ class _DossierDetailScreenState extends ConsumerState<DossierDetailScreen>
                 Tab(icon: Icon(Icons.info_outline, size: 18), text: 'Résumé'),
                 Tab(icon: Icon(Icons.description_outlined, size: 18), text: 'Documents'),
                 Tab(icon: Icon(Icons.receipt_outlined, size: 18), text: 'Devis & Facture'),
+                Tab(icon: Icon(Icons.history_outlined, size: 18), text: 'Historique'),
               ],
             ),
           ),
@@ -89,6 +91,7 @@ class _DossierDetailScreenState extends ConsumerState<DossierDetailScreen>
                     _ResumeTab(dossier: dossier),
                     _DocumentsTab(dossier: dossier),
                     _DevisFactureTab(dossier: dossier),
+                    _HistoriqueTab(dossierId: dossier.id),
                   ],
                 ),
               ),
@@ -969,5 +972,99 @@ class _InfoRow extends StatelessWidget {
         ),
       ]),
     );
+  }
+}
+
+// ── Onglet Historique ────────────────────────────────────────────────────────
+
+class _HistoriqueTab extends ConsumerWidget {
+  final String dossierId;
+  const _HistoriqueTab({required this.dossierId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final logsAsync = ref.watch(auditByEntityProvider(dossierId));
+
+    return logsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Erreur : $e')),
+      data: (logs) {
+        if (logs.isEmpty) {
+          return const Center(
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.history_outlined, size: 48, color: Colors.grey),
+              SizedBox(height: 12),
+              Text('Aucune activité enregistrée.',
+                  style: TextStyle(color: Colors.grey)),
+            ]),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: logs.length,
+          itemBuilder: (_, i) => _LogTile(log: logs[i]),
+        );
+      },
+    );
+  }
+}
+
+class _LogTile extends StatelessWidget {
+  final AuditLog log;
+  const _LogTile({required this.log});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = AuditLabels.colorForAction(log.actionType);
+    final icon  = AuditLabels.iconForAction(log.actionType);
+    final label = AuditLabels.forAction(log.actionType);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        // Icône couleur
+        Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: color.withAlpha(20),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, size: 18, color: color),
+        ),
+        const SizedBox(width: 12),
+        // Corps
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(
+                child: Text(label,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600, color: color, fontSize: 13)),
+              ),
+              Text(
+                _formatDate(log.createdAt),
+                style: const TextStyle(fontSize: 11, color: Colors.grey),
+              ),
+            ]),
+            Text(log.description,
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            if (log.ancienneValeur != null && log.nouvelleValeur != null)
+              Text('${log.ancienneValeur} → ${log.nouvelleValeur}',
+                  style: const TextStyle(fontSize: 11, color: AppColors.teal)),
+            Text('Par ${log.userNom}',
+                style: const TextStyle(fontSize: 11, color: Colors.grey)),
+          ]),
+        ),
+      ]),
+    );
+  }
+
+  String _formatDate(DateTime d) {
+    final now = DateTime.now();
+    final diff = now.difference(d);
+    if (diff.inMinutes < 1) return 'À l\'instant';
+    if (diff.inHours < 1) return 'Il y a ${diff.inMinutes} min';
+    if (diff.inDays < 1) return 'Il y a ${diff.inHours}h';
+    return '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
   }
 }
