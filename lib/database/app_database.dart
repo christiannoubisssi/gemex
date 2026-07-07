@@ -85,7 +85,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -120,6 +120,14 @@ class AppDatabase extends _$AppDatabase {
       // v9 : récurrence sur les charges
       if (from < 9) {
         await m.addColumn(charges, charges.recurrence);
+      }
+      // v10 : référence + champs OLEA sur les clients
+      if (from < 10) {
+        await m.addColumn(clients, clients.reference);
+        await m.addColumn(clients, clients.refOleaUnique);
+        await m.addColumn(clients, clients.refAgl);
+        await m.addColumn(clients, clients.refDs);
+        await m.addColumn(clients, clients.cabinetBce);
       }
     },
   );

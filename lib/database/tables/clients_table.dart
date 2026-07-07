@@ -15,6 +15,16 @@ class Clients extends Table {
   TextColumn get rccm => text().nullable()();
   TextColumn get nif => text().nullable()();
   TextColumn get notes => text().nullable()();
+
+  // Référence interne (tous clients)
+  TextColumn get reference => text().nullable()();
+
+  // Références spécifiques client OLEA
+  TextColumn get refOleaUnique => text().nullable()();
+  TextColumn get refAgl => text().nullable()();
+  TextColumn get refDs => text().nullable()();
+  TextColumn get cabinetBce => text().nullable()();
+
   RealColumn get totalFacture => real().withDefault(const Constant(0.0))();
   RealColumn get totalPaye => real().withDefault(const Constant(0.0))();
   TextColumn get syncStatus => text().withDefault(const Constant('pending'))();

@@ -86,6 +86,34 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
   late final GeneratedColumn<String> notes = GeneratedColumn<String>(
       'notes', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _referenceMeta =
+      const VerificationMeta('reference');
+  @override
+  late final GeneratedColumn<String> reference = GeneratedColumn<String>(
+      'reference', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _refOleaUniqueMeta =
+      const VerificationMeta('refOleaUnique');
+  @override
+  late final GeneratedColumn<String> refOleaUnique = GeneratedColumn<String>(
+      'ref_olea_unique', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _refAglMeta = const VerificationMeta('refAgl');
+  @override
+  late final GeneratedColumn<String> refAgl = GeneratedColumn<String>(
+      'ref_agl', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _refDsMeta = const VerificationMeta('refDs');
+  @override
+  late final GeneratedColumn<String> refDs = GeneratedColumn<String>(
+      'ref_ds', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _cabinetBceMeta =
+      const VerificationMeta('cabinetBce');
+  @override
+  late final GeneratedColumn<String> cabinetBce = GeneratedColumn<String>(
+      'cabinet_bce', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _totalFactureMeta =
       const VerificationMeta('totalFacture');
   @override
@@ -142,6 +170,11 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
         rccm,
         nif,
         notes,
+        reference,
+        refOleaUnique,
+        refAgl,
+        refDs,
+        cabinetBce,
         totalFacture,
         totalPaye,
         syncStatus,
@@ -227,6 +260,30 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
       context.handle(
           _notesMeta, notes.isAcceptableOrUnknown(data['notes']!, _notesMeta));
     }
+    if (data.containsKey('reference')) {
+      context.handle(_referenceMeta,
+          reference.isAcceptableOrUnknown(data['reference']!, _referenceMeta));
+    }
+    if (data.containsKey('ref_olea_unique')) {
+      context.handle(
+          _refOleaUniqueMeta,
+          refOleaUnique.isAcceptableOrUnknown(
+              data['ref_olea_unique']!, _refOleaUniqueMeta));
+    }
+    if (data.containsKey('ref_agl')) {
+      context.handle(_refAglMeta,
+          refAgl.isAcceptableOrUnknown(data['ref_agl']!, _refAglMeta));
+    }
+    if (data.containsKey('ref_ds')) {
+      context.handle(
+          _refDsMeta, refDs.isAcceptableOrUnknown(data['ref_ds']!, _refDsMeta));
+    }
+    if (data.containsKey('cabinet_bce')) {
+      context.handle(
+          _cabinetBceMeta,
+          cabinetBce.isAcceptableOrUnknown(
+              data['cabinet_bce']!, _cabinetBceMeta));
+    }
     if (data.containsKey('total_facture')) {
       context.handle(
           _totalFactureMeta,
@@ -288,6 +345,16 @@ class $ClientsTable extends Clients with TableInfo<$ClientsTable, Client> {
           .read(DriftSqlType.string, data['${effectivePrefix}nif']),
       notes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes']),
+      reference: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}reference']),
+      refOleaUnique: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ref_olea_unique']),
+      refAgl: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ref_agl']),
+      refDs: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ref_ds']),
+      cabinetBce: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}cabinet_bce']),
       totalFacture: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}total_facture'])!,
       totalPaye: attachedDatabase.typeMapping
@@ -322,6 +389,11 @@ class Client extends DataClass implements Insertable<Client> {
   final String? rccm;
   final String? nif;
   final String? notes;
+  final String? reference;
+  final String? refOleaUnique;
+  final String? refAgl;
+  final String? refDs;
+  final String? cabinetBce;
   final double totalFacture;
   final double totalPaye;
   final String syncStatus;
@@ -342,6 +414,11 @@ class Client extends DataClass implements Insertable<Client> {
       this.rccm,
       this.nif,
       this.notes,
+      this.reference,
+      this.refOleaUnique,
+      this.refAgl,
+      this.refDs,
+      this.cabinetBce,
       required this.totalFacture,
       required this.totalPaye,
       required this.syncStatus,
@@ -382,6 +459,21 @@ class Client extends DataClass implements Insertable<Client> {
     if (!nullToAbsent || notes != null) {
       map['notes'] = Variable<String>(notes);
     }
+    if (!nullToAbsent || reference != null) {
+      map['reference'] = Variable<String>(reference);
+    }
+    if (!nullToAbsent || refOleaUnique != null) {
+      map['ref_olea_unique'] = Variable<String>(refOleaUnique);
+    }
+    if (!nullToAbsent || refAgl != null) {
+      map['ref_agl'] = Variable<String>(refAgl);
+    }
+    if (!nullToAbsent || refDs != null) {
+      map['ref_ds'] = Variable<String>(refDs);
+    }
+    if (!nullToAbsent || cabinetBce != null) {
+      map['cabinet_bce'] = Variable<String>(cabinetBce);
+    }
     map['total_facture'] = Variable<double>(totalFacture);
     map['total_paye'] = Variable<double>(totalPaye);
     map['sync_status'] = Variable<String>(syncStatus);
@@ -417,6 +509,19 @@ class Client extends DataClass implements Insertable<Client> {
       nif: nif == null && nullToAbsent ? const Value.absent() : Value(nif),
       notes:
           notes == null && nullToAbsent ? const Value.absent() : Value(notes),
+      reference: reference == null && nullToAbsent
+          ? const Value.absent()
+          : Value(reference),
+      refOleaUnique: refOleaUnique == null && nullToAbsent
+          ? const Value.absent()
+          : Value(refOleaUnique),
+      refAgl:
+          refAgl == null && nullToAbsent ? const Value.absent() : Value(refAgl),
+      refDs:
+          refDs == null && nullToAbsent ? const Value.absent() : Value(refDs),
+      cabinetBce: cabinetBce == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cabinetBce),
       totalFacture: Value(totalFacture),
       totalPaye: Value(totalPaye),
       syncStatus: Value(syncStatus),
@@ -443,6 +548,11 @@ class Client extends DataClass implements Insertable<Client> {
       rccm: serializer.fromJson<String?>(json['rccm']),
       nif: serializer.fromJson<String?>(json['nif']),
       notes: serializer.fromJson<String?>(json['notes']),
+      reference: serializer.fromJson<String?>(json['reference']),
+      refOleaUnique: serializer.fromJson<String?>(json['refOleaUnique']),
+      refAgl: serializer.fromJson<String?>(json['refAgl']),
+      refDs: serializer.fromJson<String?>(json['refDs']),
+      cabinetBce: serializer.fromJson<String?>(json['cabinetBce']),
       totalFacture: serializer.fromJson<double>(json['totalFacture']),
       totalPaye: serializer.fromJson<double>(json['totalPaye']),
       syncStatus: serializer.fromJson<String>(json['syncStatus']),
@@ -468,6 +578,11 @@ class Client extends DataClass implements Insertable<Client> {
       'rccm': serializer.toJson<String?>(rccm),
       'nif': serializer.toJson<String?>(nif),
       'notes': serializer.toJson<String?>(notes),
+      'reference': serializer.toJson<String?>(reference),
+      'refOleaUnique': serializer.toJson<String?>(refOleaUnique),
+      'refAgl': serializer.toJson<String?>(refAgl),
+      'refDs': serializer.toJson<String?>(refDs),
+      'cabinetBce': serializer.toJson<String?>(cabinetBce),
       'totalFacture': serializer.toJson<double>(totalFacture),
       'totalPaye': serializer.toJson<double>(totalPaye),
       'syncStatus': serializer.toJson<String>(syncStatus),
@@ -491,6 +606,11 @@ class Client extends DataClass implements Insertable<Client> {
           Value<String?> rccm = const Value.absent(),
           Value<String?> nif = const Value.absent(),
           Value<String?> notes = const Value.absent(),
+          Value<String?> reference = const Value.absent(),
+          Value<String?> refOleaUnique = const Value.absent(),
+          Value<String?> refAgl = const Value.absent(),
+          Value<String?> refDs = const Value.absent(),
+          Value<String?> cabinetBce = const Value.absent(),
           double? totalFacture,
           double? totalPaye,
           String? syncStatus,
@@ -511,6 +631,12 @@ class Client extends DataClass implements Insertable<Client> {
         rccm: rccm.present ? rccm.value : this.rccm,
         nif: nif.present ? nif.value : this.nif,
         notes: notes.present ? notes.value : this.notes,
+        reference: reference.present ? reference.value : this.reference,
+        refOleaUnique:
+            refOleaUnique.present ? refOleaUnique.value : this.refOleaUnique,
+        refAgl: refAgl.present ? refAgl.value : this.refAgl,
+        refDs: refDs.present ? refDs.value : this.refDs,
+        cabinetBce: cabinetBce.present ? cabinetBce.value : this.cabinetBce,
         totalFacture: totalFacture ?? this.totalFacture,
         totalPaye: totalPaye ?? this.totalPaye,
         syncStatus: syncStatus ?? this.syncStatus,
@@ -537,6 +663,14 @@ class Client extends DataClass implements Insertable<Client> {
       rccm: data.rccm.present ? data.rccm.value : this.rccm,
       nif: data.nif.present ? data.nif.value : this.nif,
       notes: data.notes.present ? data.notes.value : this.notes,
+      reference: data.reference.present ? data.reference.value : this.reference,
+      refOleaUnique: data.refOleaUnique.present
+          ? data.refOleaUnique.value
+          : this.refOleaUnique,
+      refAgl: data.refAgl.present ? data.refAgl.value : this.refAgl,
+      refDs: data.refDs.present ? data.refDs.value : this.refDs,
+      cabinetBce:
+          data.cabinetBce.present ? data.cabinetBce.value : this.cabinetBce,
       totalFacture: data.totalFacture.present
           ? data.totalFacture.value
           : this.totalFacture,
@@ -565,6 +699,11 @@ class Client extends DataClass implements Insertable<Client> {
           ..write('rccm: $rccm, ')
           ..write('nif: $nif, ')
           ..write('notes: $notes, ')
+          ..write('reference: $reference, ')
+          ..write('refOleaUnique: $refOleaUnique, ')
+          ..write('refAgl: $refAgl, ')
+          ..write('refDs: $refDs, ')
+          ..write('cabinetBce: $cabinetBce, ')
           ..write('totalFacture: $totalFacture, ')
           ..write('totalPaye: $totalPaye, ')
           ..write('syncStatus: $syncStatus, ')
@@ -575,26 +714,32 @@ class Client extends DataClass implements Insertable<Client> {
   }
 
   @override
-  int get hashCode => Object.hash(
-      id,
-      entrepriseId,
-      typeClient,
-      nom,
-      contactNom,
-      email,
-      telephone,
-      adresse,
-      ville,
-      pays,
-      numeroTva,
-      rccm,
-      nif,
-      notes,
-      totalFacture,
-      totalPaye,
-      syncStatus,
-      createdAt,
-      updatedAt);
+  int get hashCode => Object.hashAll([
+        id,
+        entrepriseId,
+        typeClient,
+        nom,
+        contactNom,
+        email,
+        telephone,
+        adresse,
+        ville,
+        pays,
+        numeroTva,
+        rccm,
+        nif,
+        notes,
+        reference,
+        refOleaUnique,
+        refAgl,
+        refDs,
+        cabinetBce,
+        totalFacture,
+        totalPaye,
+        syncStatus,
+        createdAt,
+        updatedAt
+      ]);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -613,6 +758,11 @@ class Client extends DataClass implements Insertable<Client> {
           other.rccm == this.rccm &&
           other.nif == this.nif &&
           other.notes == this.notes &&
+          other.reference == this.reference &&
+          other.refOleaUnique == this.refOleaUnique &&
+          other.refAgl == this.refAgl &&
+          other.refDs == this.refDs &&
+          other.cabinetBce == this.cabinetBce &&
           other.totalFacture == this.totalFacture &&
           other.totalPaye == this.totalPaye &&
           other.syncStatus == this.syncStatus &&
@@ -635,6 +785,11 @@ class ClientsCompanion extends UpdateCompanion<Client> {
   final Value<String?> rccm;
   final Value<String?> nif;
   final Value<String?> notes;
+  final Value<String?> reference;
+  final Value<String?> refOleaUnique;
+  final Value<String?> refAgl;
+  final Value<String?> refDs;
+  final Value<String?> cabinetBce;
   final Value<double> totalFacture;
   final Value<double> totalPaye;
   final Value<String> syncStatus;
@@ -656,6 +811,11 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     this.rccm = const Value.absent(),
     this.nif = const Value.absent(),
     this.notes = const Value.absent(),
+    this.reference = const Value.absent(),
+    this.refOleaUnique = const Value.absent(),
+    this.refAgl = const Value.absent(),
+    this.refDs = const Value.absent(),
+    this.cabinetBce = const Value.absent(),
     this.totalFacture = const Value.absent(),
     this.totalPaye = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -678,6 +838,11 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     this.rccm = const Value.absent(),
     this.nif = const Value.absent(),
     this.notes = const Value.absent(),
+    this.reference = const Value.absent(),
+    this.refOleaUnique = const Value.absent(),
+    this.refAgl = const Value.absent(),
+    this.refDs = const Value.absent(),
+    this.cabinetBce = const Value.absent(),
     this.totalFacture = const Value.absent(),
     this.totalPaye = const Value.absent(),
     this.syncStatus = const Value.absent(),
@@ -703,6 +868,11 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     Expression<String>? rccm,
     Expression<String>? nif,
     Expression<String>? notes,
+    Expression<String>? reference,
+    Expression<String>? refOleaUnique,
+    Expression<String>? refAgl,
+    Expression<String>? refDs,
+    Expression<String>? cabinetBce,
     Expression<double>? totalFacture,
     Expression<double>? totalPaye,
     Expression<String>? syncStatus,
@@ -725,6 +895,11 @@ class ClientsCompanion extends UpdateCompanion<Client> {
       if (rccm != null) 'rccm': rccm,
       if (nif != null) 'nif': nif,
       if (notes != null) 'notes': notes,
+      if (reference != null) 'reference': reference,
+      if (refOleaUnique != null) 'ref_olea_unique': refOleaUnique,
+      if (refAgl != null) 'ref_agl': refAgl,
+      if (refDs != null) 'ref_ds': refDs,
+      if (cabinetBce != null) 'cabinet_bce': cabinetBce,
       if (totalFacture != null) 'total_facture': totalFacture,
       if (totalPaye != null) 'total_paye': totalPaye,
       if (syncStatus != null) 'sync_status': syncStatus,
@@ -749,6 +924,11 @@ class ClientsCompanion extends UpdateCompanion<Client> {
       Value<String?>? rccm,
       Value<String?>? nif,
       Value<String?>? notes,
+      Value<String?>? reference,
+      Value<String?>? refOleaUnique,
+      Value<String?>? refAgl,
+      Value<String?>? refDs,
+      Value<String?>? cabinetBce,
       Value<double>? totalFacture,
       Value<double>? totalPaye,
       Value<String>? syncStatus,
@@ -770,6 +950,11 @@ class ClientsCompanion extends UpdateCompanion<Client> {
       rccm: rccm ?? this.rccm,
       nif: nif ?? this.nif,
       notes: notes ?? this.notes,
+      reference: reference ?? this.reference,
+      refOleaUnique: refOleaUnique ?? this.refOleaUnique,
+      refAgl: refAgl ?? this.refAgl,
+      refDs: refDs ?? this.refDs,
+      cabinetBce: cabinetBce ?? this.cabinetBce,
       totalFacture: totalFacture ?? this.totalFacture,
       totalPaye: totalPaye ?? this.totalPaye,
       syncStatus: syncStatus ?? this.syncStatus,
@@ -824,6 +1009,21 @@ class ClientsCompanion extends UpdateCompanion<Client> {
     if (notes.present) {
       map['notes'] = Variable<String>(notes.value);
     }
+    if (reference.present) {
+      map['reference'] = Variable<String>(reference.value);
+    }
+    if (refOleaUnique.present) {
+      map['ref_olea_unique'] = Variable<String>(refOleaUnique.value);
+    }
+    if (refAgl.present) {
+      map['ref_agl'] = Variable<String>(refAgl.value);
+    }
+    if (refDs.present) {
+      map['ref_ds'] = Variable<String>(refDs.value);
+    }
+    if (cabinetBce.present) {
+      map['cabinet_bce'] = Variable<String>(cabinetBce.value);
+    }
     if (totalFacture.present) {
       map['total_facture'] = Variable<double>(totalFacture.value);
     }
@@ -862,6 +1062,11 @@ class ClientsCompanion extends UpdateCompanion<Client> {
           ..write('rccm: $rccm, ')
           ..write('nif: $nif, ')
           ..write('notes: $notes, ')
+          ..write('reference: $reference, ')
+          ..write('refOleaUnique: $refOleaUnique, ')
+          ..write('refAgl: $refAgl, ')
+          ..write('refDs: $refDs, ')
+          ..write('cabinetBce: $cabinetBce, ')
           ..write('totalFacture: $totalFacture, ')
           ..write('totalPaye: $totalPaye, ')
           ..write('syncStatus: $syncStatus, ')
@@ -14371,6 +14576,11 @@ typedef $$ClientsTableCreateCompanionBuilder = ClientsCompanion Function({
   Value<String?> rccm,
   Value<String?> nif,
   Value<String?> notes,
+  Value<String?> reference,
+  Value<String?> refOleaUnique,
+  Value<String?> refAgl,
+  Value<String?> refDs,
+  Value<String?> cabinetBce,
   Value<double> totalFacture,
   Value<double> totalPaye,
   Value<String> syncStatus,
@@ -14393,6 +14603,11 @@ typedef $$ClientsTableUpdateCompanionBuilder = ClientsCompanion Function({
   Value<String?> rccm,
   Value<String?> nif,
   Value<String?> notes,
+  Value<String?> reference,
+  Value<String?> refOleaUnique,
+  Value<String?> refAgl,
+  Value<String?> refDs,
+  Value<String?> cabinetBce,
   Value<double> totalFacture,
   Value<double> totalPaye,
   Value<String> syncStatus,
@@ -14451,6 +14666,21 @@ class $$ClientsTableFilterComposer
 
   ColumnFilters<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get reference => $composableBuilder(
+      column: $table.reference, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get refOleaUnique => $composableBuilder(
+      column: $table.refOleaUnique, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get refAgl => $composableBuilder(
+      column: $table.refAgl, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get refDs => $composableBuilder(
+      column: $table.refDs, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get cabinetBce => $composableBuilder(
+      column: $table.cabinetBce, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<double> get totalFacture => $composableBuilder(
       column: $table.totalFacture, builder: (column) => ColumnFilters(column));
@@ -14520,6 +14750,22 @@ class $$ClientsTableOrderingComposer
   ColumnOrderings<String> get notes => $composableBuilder(
       column: $table.notes, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get reference => $composableBuilder(
+      column: $table.reference, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get refOleaUnique => $composableBuilder(
+      column: $table.refOleaUnique,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get refAgl => $composableBuilder(
+      column: $table.refAgl, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get refDs => $composableBuilder(
+      column: $table.refDs, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get cabinetBce => $composableBuilder(
+      column: $table.cabinetBce, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<double> get totalFacture => $composableBuilder(
       column: $table.totalFacture,
       builder: (column) => ColumnOrderings(column));
@@ -14588,6 +14834,21 @@ class $$ClientsTableAnnotationComposer
   GeneratedColumn<String> get notes =>
       $composableBuilder(column: $table.notes, builder: (column) => column);
 
+  GeneratedColumn<String> get reference =>
+      $composableBuilder(column: $table.reference, builder: (column) => column);
+
+  GeneratedColumn<String> get refOleaUnique => $composableBuilder(
+      column: $table.refOleaUnique, builder: (column) => column);
+
+  GeneratedColumn<String> get refAgl =>
+      $composableBuilder(column: $table.refAgl, builder: (column) => column);
+
+  GeneratedColumn<String> get refDs =>
+      $composableBuilder(column: $table.refDs, builder: (column) => column);
+
+  GeneratedColumn<String> get cabinetBce => $composableBuilder(
+      column: $table.cabinetBce, builder: (column) => column);
+
   GeneratedColumn<double> get totalFacture => $composableBuilder(
       column: $table.totalFacture, builder: (column) => column);
 
@@ -14641,6 +14902,11 @@ class $$ClientsTableTableManager extends RootTableManager<
             Value<String?> rccm = const Value.absent(),
             Value<String?> nif = const Value.absent(),
             Value<String?> notes = const Value.absent(),
+            Value<String?> reference = const Value.absent(),
+            Value<String?> refOleaUnique = const Value.absent(),
+            Value<String?> refAgl = const Value.absent(),
+            Value<String?> refDs = const Value.absent(),
+            Value<String?> cabinetBce = const Value.absent(),
             Value<double> totalFacture = const Value.absent(),
             Value<double> totalPaye = const Value.absent(),
             Value<String> syncStatus = const Value.absent(),
@@ -14663,6 +14929,11 @@ class $$ClientsTableTableManager extends RootTableManager<
             rccm: rccm,
             nif: nif,
             notes: notes,
+            reference: reference,
+            refOleaUnique: refOleaUnique,
+            refAgl: refAgl,
+            refDs: refDs,
+            cabinetBce: cabinetBce,
             totalFacture: totalFacture,
             totalPaye: totalPaye,
             syncStatus: syncStatus,
@@ -14685,6 +14956,11 @@ class $$ClientsTableTableManager extends RootTableManager<
             Value<String?> rccm = const Value.absent(),
             Value<String?> nif = const Value.absent(),
             Value<String?> notes = const Value.absent(),
+            Value<String?> reference = const Value.absent(),
+            Value<String?> refOleaUnique = const Value.absent(),
+            Value<String?> refAgl = const Value.absent(),
+            Value<String?> refDs = const Value.absent(),
+            Value<String?> cabinetBce = const Value.absent(),
             Value<double> totalFacture = const Value.absent(),
             Value<double> totalPaye = const Value.absent(),
             Value<String> syncStatus = const Value.absent(),
@@ -14707,6 +14983,11 @@ class $$ClientsTableTableManager extends RootTableManager<
             rccm: rccm,
             nif: nif,
             notes: notes,
+            reference: reference,
+            refOleaUnique: refOleaUnique,
+            refAgl: refAgl,
+            refDs: refDs,
+            cabinetBce: cabinetBce,
             totalFacture: totalFacture,
             totalPaye: totalPaye,
             syncStatus: syncStatus,

@@ -133,11 +133,16 @@ class SyncService {
           adresse:      drift.Value(_s(m, 'adresse')),
           ville:        drift.Value(_s(m, 'ville')),
           pays:         drift.Value(_s(m, 'pays') ?? 'Gabon'),
-          numeroTva:    drift.Value(_s(m, 'numero_tva')),
-          rccm:         drift.Value(_s(m, 'rccm')),
-          nif:          drift.Value(_s(m, 'nif')),
-          notes:        drift.Value(_s(m, 'notes')),
-          syncStatus:   const drift.Value('synced'),
+          numeroTva:     drift.Value(_s(m, 'numero_tva')),
+          rccm:          drift.Value(_s(m, 'rccm')),
+          nif:           drift.Value(_s(m, 'nif')),
+          notes:         drift.Value(_s(m, 'notes')),
+          reference:     drift.Value(_s(m, 'reference')),
+          refOleaUnique: drift.Value(_s(m, 'ref_olea_unique')),
+          refAgl:        drift.Value(_s(m, 'ref_agl')),
+          refDs:         drift.Value(_s(m, 'ref_ds')),
+          cabinetBce:    drift.Value(_s(m, 'cabinet_bce')),
+          syncStatus:    const drift.Value('synced'),
         ));
       }
       _ref.invalidate(clientsProvider);

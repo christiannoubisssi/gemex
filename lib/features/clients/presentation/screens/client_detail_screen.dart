@@ -220,6 +220,55 @@ class _ProfilTab extends StatelessWidget {
         if (client.numeroTva != null || client.rccm != null || client.nif != null)
           const SizedBox(height: 12),
 
+        // Référence interne
+        if (client.reference != null) ...[
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Référence',
+                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
+                const Divider(height: 16),
+                _InfoRow(Icons.tag_outlined, client.reference!),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // Références spécifiques OLEA
+        if (client.nom.toUpperCase().contains('OLEA') &&
+            (client.refOleaUnique != null || client.refAgl != null ||
+             client.refDs != null || client.cabinetBce != null)) ...[
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: AppColors.gold, width: 1),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Row(children: [
+                  Icon(Icons.star_outline, size: 16, color: AppColors.gold),
+                  SizedBox(width: 8),
+                  Text('Références OLEA',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.gold)),
+                ]),
+                const Divider(height: 16),
+                if (client.refOleaUnique != null)
+                  _InfoRow(Icons.pin_outlined, 'OLEA unique : ${client.refOleaUnique}'),
+                if (client.refAgl != null)
+                  _InfoRow(Icons.pin_outlined, 'AGL : ${client.refAgl}'),
+                if (client.refDs != null)
+                  _InfoRow(Icons.pin_outlined, 'DS : ${client.refDs}'),
+                if (client.cabinetBce != null)
+                  _InfoRow(Icons.business_outlined, 'Cabinet BCE : ${client.cabinetBce}'),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+
         // Contacts
         _ContactsCard(clientId: client.id),
         const SizedBox(height: 12),

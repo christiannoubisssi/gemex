@@ -296,10 +296,16 @@ create table if not exists public.clients (
   updated_at    timestamptz not null default now()
 );
 
--- Ajout colonnes facturation (si table déjà existante)
-alter table public.clients add column if not exists numero_tva text;
-alter table public.clients add column if not exists rccm text;
-alter table public.clients add column if not exists nif text;
+-- Ajout colonnes (idempotent — si table déjà existante)
+alter table public.clients add column if not exists numero_tva    text;
+alter table public.clients add column if not exists rccm          text;
+alter table public.clients add column if not exists nif           text;
+-- v10 : référence interne + champs OLEA
+alter table public.clients add column if not exists reference       text;
+alter table public.clients add column if not exists ref_olea_unique text;
+alter table public.clients add column if not exists ref_agl         text;
+alter table public.clients add column if not exists ref_ds          text;
+alter table public.clients add column if not exists cabinet_bce     text;
 
 alter table public.clients enable row level security;
 drop policy if exists "Authentifié - accès complet" on public.clients;
