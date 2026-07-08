@@ -89,7 +89,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -140,6 +140,13 @@ class AppDatabase extends _$AppDatabase {
       // v12 : créateur du dossier (dénormalisé pour filtrage rapide)
       if (from < 12) {
         await m.addColumn(dossiers, dossiers.createdByNom);
+      }
+      // v13 : createdById + 3 références client sur les dossiers
+      if (from < 13) {
+        await m.addColumn(dossiers, dossiers.createdById);
+        await m.addColumn(dossiers, dossiers.refClient1);
+        await m.addColumn(dossiers, dossiers.refClient2);
+        await m.addColumn(dossiers, dossiers.refClient3);
       }
     },
   );

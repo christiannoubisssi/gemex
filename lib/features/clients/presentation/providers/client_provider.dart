@@ -49,6 +49,24 @@ final clientsMapProvider = FutureProvider.autoDispose<Map<String, String>>((ref)
   return {for (final c in clients) c.id: c.nom};
 });
 
+/// Liste des clients qui ont une référence définie.
+/// Utilisée dans les dropdowns de référence sur les dossiers.
+/// Format : ({clientId, nom, reference})
+final clientsAvecReferenceProvider = FutureProvider.autoDispose<
+    List<({String clientId, String nom, String reference})>>(
+  (ref) async {
+    final clients = await ref.read(clientRepositoryProvider).getAll();
+    return clients
+        .where((c) => c.reference != null && c.reference!.isNotEmpty)
+        .map((c) => (
+              clientId: c.id,
+              nom: c.nom,
+              reference: c.reference!,
+            ))
+        .toList();
+  },
+);
+
 // ── Contacts client ──────────────────────────────────────────────────────────
 
 final clientContactsProvider = FutureProvider.autoDispose.family<List<ClientContact>, String>(

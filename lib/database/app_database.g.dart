@@ -1695,6 +1695,30 @@ class $DossiersTable extends Dossiers with TableInfo<$DossiersTable, Dossier> {
   late final GeneratedColumn<String> createdByNom = GeneratedColumn<String>(
       'created_by_nom', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _createdByIdMeta =
+      const VerificationMeta('createdById');
+  @override
+  late final GeneratedColumn<String> createdById = GeneratedColumn<String>(
+      'created_by_id', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _refClient1Meta =
+      const VerificationMeta('refClient1');
+  @override
+  late final GeneratedColumn<String> refClient1 = GeneratedColumn<String>(
+      'ref_client1', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _refClient2Meta =
+      const VerificationMeta('refClient2');
+  @override
+  late final GeneratedColumn<String> refClient2 = GeneratedColumn<String>(
+      'ref_client2', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _refClient3Meta =
+      const VerificationMeta('refClient3');
+  @override
+  late final GeneratedColumn<String> refClient3 = GeneratedColumn<String>(
+      'ref_client3', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _notesInternesMeta =
       const VerificationMeta('notesInternes');
   @override
@@ -1763,6 +1787,10 @@ class $DossiersTable extends Dossiers with TableInfo<$DossiersTable, Dossier> {
         numeroPolice,
         courtier,
         createdByNom,
+        createdById,
+        refClient1,
+        refClient2,
+        refClient3,
         notesInternes,
         observations,
         motifAnnulation,
@@ -1911,6 +1939,30 @@ class $DossiersTable extends Dossiers with TableInfo<$DossiersTable, Dossier> {
           createdByNom.isAcceptableOrUnknown(
               data['created_by_nom']!, _createdByNomMeta));
     }
+    if (data.containsKey('created_by_id')) {
+      context.handle(
+          _createdByIdMeta,
+          createdById.isAcceptableOrUnknown(
+              data['created_by_id']!, _createdByIdMeta));
+    }
+    if (data.containsKey('ref_client1')) {
+      context.handle(
+          _refClient1Meta,
+          refClient1.isAcceptableOrUnknown(
+              data['ref_client1']!, _refClient1Meta));
+    }
+    if (data.containsKey('ref_client2')) {
+      context.handle(
+          _refClient2Meta,
+          refClient2.isAcceptableOrUnknown(
+              data['ref_client2']!, _refClient2Meta));
+    }
+    if (data.containsKey('ref_client3')) {
+      context.handle(
+          _refClient3Meta,
+          refClient3.isAcceptableOrUnknown(
+              data['ref_client3']!, _refClient3Meta));
+    }
     if (data.containsKey('notes_internes')) {
       context.handle(
           _notesInternesMeta,
@@ -2000,6 +2052,14 @@ class $DossiersTable extends Dossiers with TableInfo<$DossiersTable, Dossier> {
           .read(DriftSqlType.string, data['${effectivePrefix}courtier']),
       createdByNom: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}created_by_nom']),
+      createdById: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}created_by_id']),
+      refClient1: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ref_client1']),
+      refClient2: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ref_client2']),
+      refClient3: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ref_client3']),
       notesInternes: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}notes_internes']),
       observations: attachedDatabase.typeMapping
@@ -2046,8 +2106,14 @@ class Dossier extends DataClass implements Insertable<Dossier> {
   final String? numeroPolice;
   final String? courtier;
 
-  /// Nom de l'utilisateur qui a créé le dossier (dénormalisé pour affichage rapide)
+  /// Créateur du dossier (dénormalisé pour affichage et stats rapides)
   final String? createdByNom;
+  final String? createdById;
+
+  /// Références client (jusqu'à 3 parties impliquées dans le sinistre)
+  final String? refClient1;
+  final String? refClient2;
+  final String? refClient3;
   final String? notesInternes;
   final String? observations;
   final String? motifAnnulation;
@@ -2079,6 +2145,10 @@ class Dossier extends DataClass implements Insertable<Dossier> {
       this.numeroPolice,
       this.courtier,
       this.createdByNom,
+      this.createdById,
+      this.refClient1,
+      this.refClient2,
+      this.refClient3,
       this.notesInternes,
       this.observations,
       this.motifAnnulation,
@@ -2145,6 +2215,18 @@ class Dossier extends DataClass implements Insertable<Dossier> {
     }
     if (!nullToAbsent || createdByNom != null) {
       map['created_by_nom'] = Variable<String>(createdByNom);
+    }
+    if (!nullToAbsent || createdById != null) {
+      map['created_by_id'] = Variable<String>(createdById);
+    }
+    if (!nullToAbsent || refClient1 != null) {
+      map['ref_client1'] = Variable<String>(refClient1);
+    }
+    if (!nullToAbsent || refClient2 != null) {
+      map['ref_client2'] = Variable<String>(refClient2);
+    }
+    if (!nullToAbsent || refClient3 != null) {
+      map['ref_client3'] = Variable<String>(refClient3);
     }
     if (!nullToAbsent || notesInternes != null) {
       map['notes_internes'] = Variable<String>(notesInternes);
@@ -2220,6 +2302,18 @@ class Dossier extends DataClass implements Insertable<Dossier> {
       createdByNom: createdByNom == null && nullToAbsent
           ? const Value.absent()
           : Value(createdByNom),
+      createdById: createdById == null && nullToAbsent
+          ? const Value.absent()
+          : Value(createdById),
+      refClient1: refClient1 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(refClient1),
+      refClient2: refClient2 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(refClient2),
+      refClient3: refClient3 == null && nullToAbsent
+          ? const Value.absent()
+          : Value(refClient3),
       notesInternes: notesInternes == null && nullToAbsent
           ? const Value.absent()
           : Value(notesInternes),
@@ -2264,6 +2358,10 @@ class Dossier extends DataClass implements Insertable<Dossier> {
       numeroPolice: serializer.fromJson<String?>(json['numeroPolice']),
       courtier: serializer.fromJson<String?>(json['courtier']),
       createdByNom: serializer.fromJson<String?>(json['createdByNom']),
+      createdById: serializer.fromJson<String?>(json['createdById']),
+      refClient1: serializer.fromJson<String?>(json['refClient1']),
+      refClient2: serializer.fromJson<String?>(json['refClient2']),
+      refClient3: serializer.fromJson<String?>(json['refClient3']),
       notesInternes: serializer.fromJson<String?>(json['notesInternes']),
       observations: serializer.fromJson<String?>(json['observations']),
       motifAnnulation: serializer.fromJson<String?>(json['motifAnnulation']),
@@ -2300,6 +2398,10 @@ class Dossier extends DataClass implements Insertable<Dossier> {
       'numeroPolice': serializer.toJson<String?>(numeroPolice),
       'courtier': serializer.toJson<String?>(courtier),
       'createdByNom': serializer.toJson<String?>(createdByNom),
+      'createdById': serializer.toJson<String?>(createdById),
+      'refClient1': serializer.toJson<String?>(refClient1),
+      'refClient2': serializer.toJson<String?>(refClient2),
+      'refClient3': serializer.toJson<String?>(refClient3),
       'notesInternes': serializer.toJson<String?>(notesInternes),
       'observations': serializer.toJson<String?>(observations),
       'motifAnnulation': serializer.toJson<String?>(motifAnnulation),
@@ -2334,6 +2436,10 @@ class Dossier extends DataClass implements Insertable<Dossier> {
           Value<String?> numeroPolice = const Value.absent(),
           Value<String?> courtier = const Value.absent(),
           Value<String?> createdByNom = const Value.absent(),
+          Value<String?> createdById = const Value.absent(),
+          Value<String?> refClient1 = const Value.absent(),
+          Value<String?> refClient2 = const Value.absent(),
+          Value<String?> refClient3 = const Value.absent(),
           Value<String?> notesInternes = const Value.absent(),
           Value<String?> observations = const Value.absent(),
           Value<String?> motifAnnulation = const Value.absent(),
@@ -2376,6 +2482,10 @@ class Dossier extends DataClass implements Insertable<Dossier> {
         courtier: courtier.present ? courtier.value : this.courtier,
         createdByNom:
             createdByNom.present ? createdByNom.value : this.createdByNom,
+        createdById: createdById.present ? createdById.value : this.createdById,
+        refClient1: refClient1.present ? refClient1.value : this.refClient1,
+        refClient2: refClient2.present ? refClient2.value : this.refClient2,
+        refClient3: refClient3.present ? refClient3.value : this.refClient3,
         notesInternes:
             notesInternes.present ? notesInternes.value : this.notesInternes,
         observations:
@@ -2438,6 +2548,14 @@ class Dossier extends DataClass implements Insertable<Dossier> {
       createdByNom: data.createdByNom.present
           ? data.createdByNom.value
           : this.createdByNom,
+      createdById:
+          data.createdById.present ? data.createdById.value : this.createdById,
+      refClient1:
+          data.refClient1.present ? data.refClient1.value : this.refClient1,
+      refClient2:
+          data.refClient2.present ? data.refClient2.value : this.refClient2,
+      refClient3:
+          data.refClient3.present ? data.refClient3.value : this.refClient3,
       notesInternes: data.notesInternes.present
           ? data.notesInternes.value
           : this.notesInternes,
@@ -2481,6 +2599,10 @@ class Dossier extends DataClass implements Insertable<Dossier> {
           ..write('numeroPolice: $numeroPolice, ')
           ..write('courtier: $courtier, ')
           ..write('createdByNom: $createdByNom, ')
+          ..write('createdById: $createdById, ')
+          ..write('refClient1: $refClient1, ')
+          ..write('refClient2: $refClient2, ')
+          ..write('refClient3: $refClient3, ')
           ..write('notesInternes: $notesInternes, ')
           ..write('observations: $observations, ')
           ..write('motifAnnulation: $motifAnnulation, ')
@@ -2517,6 +2639,10 @@ class Dossier extends DataClass implements Insertable<Dossier> {
         numeroPolice,
         courtier,
         createdByNom,
+        createdById,
+        refClient1,
+        refClient2,
+        refClient3,
         notesInternes,
         observations,
         motifAnnulation,
@@ -2552,6 +2678,10 @@ class Dossier extends DataClass implements Insertable<Dossier> {
           other.numeroPolice == this.numeroPolice &&
           other.courtier == this.courtier &&
           other.createdByNom == this.createdByNom &&
+          other.createdById == this.createdById &&
+          other.refClient1 == this.refClient1 &&
+          other.refClient2 == this.refClient2 &&
+          other.refClient3 == this.refClient3 &&
           other.notesInternes == this.notesInternes &&
           other.observations == this.observations &&
           other.motifAnnulation == this.motifAnnulation &&
@@ -2585,6 +2715,10 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
   final Value<String?> numeroPolice;
   final Value<String?> courtier;
   final Value<String?> createdByNom;
+  final Value<String?> createdById;
+  final Value<String?> refClient1;
+  final Value<String?> refClient2;
+  final Value<String?> refClient3;
   final Value<String?> notesInternes;
   final Value<String?> observations;
   final Value<String?> motifAnnulation;
@@ -2617,6 +2751,10 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
     this.numeroPolice = const Value.absent(),
     this.courtier = const Value.absent(),
     this.createdByNom = const Value.absent(),
+    this.createdById = const Value.absent(),
+    this.refClient1 = const Value.absent(),
+    this.refClient2 = const Value.absent(),
+    this.refClient3 = const Value.absent(),
     this.notesInternes = const Value.absent(),
     this.observations = const Value.absent(),
     this.motifAnnulation = const Value.absent(),
@@ -2650,6 +2788,10 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
     this.numeroPolice = const Value.absent(),
     this.courtier = const Value.absent(),
     this.createdByNom = const Value.absent(),
+    this.createdById = const Value.absent(),
+    this.refClient1 = const Value.absent(),
+    this.refClient2 = const Value.absent(),
+    this.refClient3 = const Value.absent(),
     this.notesInternes = const Value.absent(),
     this.observations = const Value.absent(),
     this.motifAnnulation = const Value.absent(),
@@ -2686,6 +2828,10 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
     Expression<String>? numeroPolice,
     Expression<String>? courtier,
     Expression<String>? createdByNom,
+    Expression<String>? createdById,
+    Expression<String>? refClient1,
+    Expression<String>? refClient2,
+    Expression<String>? refClient3,
     Expression<String>? notesInternes,
     Expression<String>? observations,
     Expression<String>? motifAnnulation,
@@ -2719,6 +2865,10 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
       if (numeroPolice != null) 'numero_police': numeroPolice,
       if (courtier != null) 'courtier': courtier,
       if (createdByNom != null) 'created_by_nom': createdByNom,
+      if (createdById != null) 'created_by_id': createdById,
+      if (refClient1 != null) 'ref_client1': refClient1,
+      if (refClient2 != null) 'ref_client2': refClient2,
+      if (refClient3 != null) 'ref_client3': refClient3,
       if (notesInternes != null) 'notes_internes': notesInternes,
       if (observations != null) 'observations': observations,
       if (motifAnnulation != null) 'motif_annulation': motifAnnulation,
@@ -2754,6 +2904,10 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
       Value<String?>? numeroPolice,
       Value<String?>? courtier,
       Value<String?>? createdByNom,
+      Value<String?>? createdById,
+      Value<String?>? refClient1,
+      Value<String?>? refClient2,
+      Value<String?>? refClient3,
       Value<String?>? notesInternes,
       Value<String?>? observations,
       Value<String?>? motifAnnulation,
@@ -2786,6 +2940,10 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
       numeroPolice: numeroPolice ?? this.numeroPolice,
       courtier: courtier ?? this.courtier,
       createdByNom: createdByNom ?? this.createdByNom,
+      createdById: createdById ?? this.createdById,
+      refClient1: refClient1 ?? this.refClient1,
+      refClient2: refClient2 ?? this.refClient2,
+      refClient3: refClient3 ?? this.refClient3,
       notesInternes: notesInternes ?? this.notesInternes,
       observations: observations ?? this.observations,
       motifAnnulation: motifAnnulation ?? this.motifAnnulation,
@@ -2871,6 +3029,18 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
     if (createdByNom.present) {
       map['created_by_nom'] = Variable<String>(createdByNom.value);
     }
+    if (createdById.present) {
+      map['created_by_id'] = Variable<String>(createdById.value);
+    }
+    if (refClient1.present) {
+      map['ref_client1'] = Variable<String>(refClient1.value);
+    }
+    if (refClient2.present) {
+      map['ref_client2'] = Variable<String>(refClient2.value);
+    }
+    if (refClient3.present) {
+      map['ref_client3'] = Variable<String>(refClient3.value);
+    }
     if (notesInternes.present) {
       map['notes_internes'] = Variable<String>(notesInternes.value);
     }
@@ -2922,6 +3092,10 @@ class DossiersCompanion extends UpdateCompanion<Dossier> {
           ..write('numeroPolice: $numeroPolice, ')
           ..write('courtier: $courtier, ')
           ..write('createdByNom: $createdByNom, ')
+          ..write('createdById: $createdById, ')
+          ..write('refClient1: $refClient1, ')
+          ..write('refClient2: $refClient2, ')
+          ..write('refClient3: $refClient3, ')
           ..write('notesInternes: $notesInternes, ')
           ..write('observations: $observations, ')
           ..write('motifAnnulation: $motifAnnulation, ')
@@ -16027,6 +16201,10 @@ typedef $$DossiersTableCreateCompanionBuilder = DossiersCompanion Function({
   Value<String?> numeroPolice,
   Value<String?> courtier,
   Value<String?> createdByNom,
+  Value<String?> createdById,
+  Value<String?> refClient1,
+  Value<String?> refClient2,
+  Value<String?> refClient3,
   Value<String?> notesInternes,
   Value<String?> observations,
   Value<String?> motifAnnulation,
@@ -16060,6 +16238,10 @@ typedef $$DossiersTableUpdateCompanionBuilder = DossiersCompanion Function({
   Value<String?> numeroPolice,
   Value<String?> courtier,
   Value<String?> createdByNom,
+  Value<String?> createdById,
+  Value<String?> refClient1,
+  Value<String?> refClient2,
+  Value<String?> refClient3,
   Value<String?> notesInternes,
   Value<String?> observations,
   Value<String?> motifAnnulation,
@@ -16152,6 +16334,18 @@ class $$DossiersTableFilterComposer
 
   ColumnFilters<String> get createdByNom => $composableBuilder(
       column: $table.createdByNom, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get createdById => $composableBuilder(
+      column: $table.createdById, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get refClient1 => $composableBuilder(
+      column: $table.refClient1, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get refClient2 => $composableBuilder(
+      column: $table.refClient2, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get refClient3 => $composableBuilder(
+      column: $table.refClient3, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get notesInternes => $composableBuilder(
       column: $table.notesInternes, builder: (column) => ColumnFilters(column));
@@ -16265,6 +16459,18 @@ class $$DossiersTableOrderingComposer
       column: $table.createdByNom,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<String> get createdById => $composableBuilder(
+      column: $table.createdById, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get refClient1 => $composableBuilder(
+      column: $table.refClient1, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get refClient2 => $composableBuilder(
+      column: $table.refClient2, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get refClient3 => $composableBuilder(
+      column: $table.refClient3, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get notesInternes => $composableBuilder(
       column: $table.notesInternes,
       builder: (column) => ColumnOrderings(column));
@@ -16368,6 +16574,18 @@ class $$DossiersTableAnnotationComposer
   GeneratedColumn<String> get createdByNom => $composableBuilder(
       column: $table.createdByNom, builder: (column) => column);
 
+  GeneratedColumn<String> get createdById => $composableBuilder(
+      column: $table.createdById, builder: (column) => column);
+
+  GeneratedColumn<String> get refClient1 => $composableBuilder(
+      column: $table.refClient1, builder: (column) => column);
+
+  GeneratedColumn<String> get refClient2 => $composableBuilder(
+      column: $table.refClient2, builder: (column) => column);
+
+  GeneratedColumn<String> get refClient3 => $composableBuilder(
+      column: $table.refClient3, builder: (column) => column);
+
   GeneratedColumn<String> get notesInternes => $composableBuilder(
       column: $table.notesInternes, builder: (column) => column);
 
@@ -16434,6 +16652,10 @@ class $$DossiersTableTableManager extends RootTableManager<
             Value<String?> numeroPolice = const Value.absent(),
             Value<String?> courtier = const Value.absent(),
             Value<String?> createdByNom = const Value.absent(),
+            Value<String?> createdById = const Value.absent(),
+            Value<String?> refClient1 = const Value.absent(),
+            Value<String?> refClient2 = const Value.absent(),
+            Value<String?> refClient3 = const Value.absent(),
             Value<String?> notesInternes = const Value.absent(),
             Value<String?> observations = const Value.absent(),
             Value<String?> motifAnnulation = const Value.absent(),
@@ -16467,6 +16689,10 @@ class $$DossiersTableTableManager extends RootTableManager<
             numeroPolice: numeroPolice,
             courtier: courtier,
             createdByNom: createdByNom,
+            createdById: createdById,
+            refClient1: refClient1,
+            refClient2: refClient2,
+            refClient3: refClient3,
             notesInternes: notesInternes,
             observations: observations,
             motifAnnulation: motifAnnulation,
@@ -16500,6 +16726,10 @@ class $$DossiersTableTableManager extends RootTableManager<
             Value<String?> numeroPolice = const Value.absent(),
             Value<String?> courtier = const Value.absent(),
             Value<String?> createdByNom = const Value.absent(),
+            Value<String?> createdById = const Value.absent(),
+            Value<String?> refClient1 = const Value.absent(),
+            Value<String?> refClient2 = const Value.absent(),
+            Value<String?> refClient3 = const Value.absent(),
             Value<String?> notesInternes = const Value.absent(),
             Value<String?> observations = const Value.absent(),
             Value<String?> motifAnnulation = const Value.absent(),
@@ -16533,6 +16763,10 @@ class $$DossiersTableTableManager extends RootTableManager<
             numeroPolice: numeroPolice,
             courtier: courtier,
             createdByNom: createdByNom,
+            createdById: createdById,
+            refClient1: refClient1,
+            refClient2: refClient2,
+            refClient3: refClient3,
             notesInternes: notesInternes,
             observations: observations,
             motifAnnulation: motifAnnulation,

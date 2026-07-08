@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:printing/printing.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/format_utils.dart';
 import '../../data/dashboard_provider.dart';
@@ -156,6 +157,30 @@ class DashboardScreen extends ConsumerWidget {
                   _QuickAction(icon: Icons.people_outlined, label: 'Clients', onTap: () => context.go('/clients')),
                 ],
               ),
+
+              // ── Suivi des agents (admin only) ──────────────────────────
+              if (ref.read(currentRoleProvider) == AppConstants.roleAdmin) ...[
+                const SizedBox(height: 24),
+                const _SectionTitle('Administration'),
+                const SizedBox(height: 12),
+                ListTile(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: BorderSide(color: AppColors.navy.withAlpha(30)),
+                  ),
+                  leading: const CircleAvatar(
+                    backgroundColor: AppColors.navy,
+                    child: Icon(Icons.group_outlined, color: Colors.white),
+                  ),
+                  title: const Text('Suivi individuel des agents',
+                      style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: const Text(
+                      'Dossiers, durée de traitement, actions par agent'),
+                  trailing: const Icon(Icons.arrow_forward_ios,
+                      size: 14, color: Colors.grey),
+                  onTap: () => context.push('/admin/agents'),
+                ),
+              ],
 
               if (stats.dossiersUrgents.isNotEmpty) ...[
                 const SizedBox(height: 24),

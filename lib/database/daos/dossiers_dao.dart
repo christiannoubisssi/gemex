@@ -94,6 +94,19 @@ class DossiersDao extends DatabaseAccessor<AppDatabase> with _$DossiersDaoMixin 
     return (select(dossiers)..where((d) => d.syncStatus.equals('pending'))).get();
   }
 
+  /// Suppression physique d'un dossier (admin only).
+  Future<void> deleteDossier(String id) {
+    return (delete(dossiers)..where((d) => d.id.equals(id))).go();
+  }
+
+  /// Récupère tous les dossiers créés par un utilisateur donné (pour stats agents).
+  Future<List<Dossier>> getByCreateur(String createdByNom) {
+    return (select(dossiers)
+          ..where((d) => d.createdByNom.equals(createdByNom))
+          ..orderBy([(d) => OrderingTerm.desc(d.createdAt)]))
+        .get();
+  }
+
   Future<Map<String, int>> getStatsCounts() async {
     final all = await select(dossiers).get();
     final counts = <String, int>{};

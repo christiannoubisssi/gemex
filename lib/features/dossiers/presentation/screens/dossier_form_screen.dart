@@ -353,6 +353,59 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
               ]),
               const SizedBox(height: 12),
 
+              // ── Références client ─────────────────────────────────────────
+              Consumer(
+                builder: (context, ref, _) {
+                  final refsAsync = ref.watch(clientsAvecReferenceProvider);
+                  return refsAsync.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                    data: (refs) {
+                      if (refs.isEmpty) return const SizedBox.shrink();
+                      final items = <DropdownMenuItem<String?>>[
+                        const DropdownMenuItem(value: null, child: Text('— Aucune —')),
+                        ...refs.map((r) => DropdownMenuItem(
+                              value: r.reference,
+                              child: Text('${r.reference}  ·  ${r.nom}',
+                                  overflow: TextOverflow.ellipsis),
+                            )),
+                      ];
+                      return _SectionCard(title: 'Références client', children: [
+                        const Text(
+                          'Associez jusqu\'à 3 références issues des fiches clients.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 12),
+                        FormBuilderDropdown<String?>(
+                          name: 'ref_client_1',
+                          initialValue: _existing?.refClient1,
+                          decoration:
+                              const InputDecoration(labelText: 'Référence 1'),
+                          items: items,
+                        ),
+                        const SizedBox(height: 12),
+                        FormBuilderDropdown<String?>(
+                          name: 'ref_client_2',
+                          initialValue: _existing?.refClient2,
+                          decoration:
+                              const InputDecoration(labelText: 'Référence 2'),
+                          items: items,
+                        ),
+                        const SizedBox(height: 12),
+                        FormBuilderDropdown<String?>(
+                          name: 'ref_client_3',
+                          initialValue: _existing?.refClient3,
+                          decoration:
+                              const InputDecoration(labelText: 'Référence 3'),
+                          items: items,
+                        ),
+                      ]);
+                    },
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+
               _SectionCard(title: 'Notes internes', children: [
                 FormBuilderTextField(
                   name: 'notes_internes',

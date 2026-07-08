@@ -9,6 +9,7 @@ import '../../../../database/app_database.dart';
 import '../../../../shared/services/email_service.dart';
 import '../../../../shared/services/pdf_service.dart';
 import '../../../parametres/data/parametres_provider.dart';
+import '../../../parametres/data/user_management_service.dart';
 import '../providers/devis_provider.dart';
 import '../../../factures/presentation/providers/facture_provider.dart';
 
@@ -255,8 +256,79 @@ class DevisDetailScreen extends ConsumerWidget {
             },
           ),
         ],
+        // ── Suppression admin ───────────────────────────────────────────────
+        if (ref.read(currentRoleProvider) == AppConstants.roleAdmin) ...[
+          const SizedBox(height: 16),
+          const Divider(),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.delete_forever, color: AppColors.danger),
+            label: const Text('Supprimer ce devis',
+                style: TextStyle(color: AppColors.danger)),
+            style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.danger)),
+            onPressed: () => _confirmerSuppressionDevis(context, ref, devis),
+          ),
+        ],
       ],
     );
+  }
+
+  Future<void> _confirmerSuppressionDevis(
+      BuildContext context, WidgetRef ref, Devi devis) async {
+    final etape1 = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(children: const [
+          Icon(Icons.warning_amber_rounded, color: AppColors.danger),
+          SizedBox(width: 8),
+          Text('Supprimer le devis'),
+        ]),
+        content: Text(
+          'Supprimer définitivement le devis "${devis.numero ?? 'DEV-LOCAL'}" ?\n\n'
+          'Cette action est IRRÉVERSIBLE.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annuler')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (etape1 != true || !context.mounted) return;
+
+    await ref.read(devisNotifierProvider.notifier).delete(devis.id);
+
+    final notifier = ref.read(devisNotifierProvider);
+    if (notifier.hasError && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur : ${notifier.error}'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+
+    if (context.mounted) {
+      // Retourner à la liste des devis (ou à l'écran précédent)
+      if (context.canPop()) {
+        context.pop();
+      } else {
+        context.go('/devis');
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Devis "${devis.numero ?? 'DEV-LOCAL'}" supprimé.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 
   Future<void> _showEmailDialog(

@@ -26,6 +26,14 @@ class AuditLogsDao extends DatabaseAccessor<AppDatabase>
         .watch();
   }
 
+  /// Version Future (pour les calculs ponctuels, ex : stats agents).
+  Future<List<AuditLog>> getAll({int limit = 2000}) {
+    return (select(auditLogs)
+          ..orderBy([(l) => OrderingTerm.desc(l.createdAt)])
+          ..limit(limit))
+        .get();
+  }
+
   /// Logs pour une entité précise (ex : un dossier).
   Stream<List<AuditLog>> watchByEntityId(String entityId) {
     return (select(auditLogs)

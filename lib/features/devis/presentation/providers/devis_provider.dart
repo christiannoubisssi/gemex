@@ -55,6 +55,29 @@ class DevisNotifier extends AsyncNotifier<void> {
     }
   }
 
+  /// Suppression définitive d'un devis (admin only).
+  /// Vérifie d'abord l'absence de facture liée.
+  Future<void> delete(String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final aFacture = await ref.read(devisRepositoryProvider).aFactureLiee(id);
+      if (aFacture) {
+        throw Exception('Ce devis a une facture liée. Supprimez d\'abord la facture.');
+      }
+      final devis = await ref.read(devisRepositoryProvider).getById(id);
+      await ref.read(devisRepositoryProvider).delete(id);
+      ref.invalidate(devisAllProvider);
+      ref.invalidate(devisListProvider);
+      ref.read(auditServiceProvider).log(
+        actionType: 'devis.supprime',
+        entityType: 'devis',
+        entityId: id,
+        entityLabel: devis?.numero,
+        description: 'Devis supprimé définitivement',
+      );
+    });
+  }
+
   Future<void> updateStatut(String id, String statut) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {

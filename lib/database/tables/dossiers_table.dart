@@ -30,8 +30,14 @@ class Dossiers extends Table {
   TextColumn get numeroPolice => text().nullable()();
   TextColumn get courtier => text().nullable()();
 
-  /// Nom de l'utilisateur qui a créé le dossier (dénormalisé pour affichage rapide)
+  /// Créateur du dossier (dénormalisé pour affichage et stats rapides)
   TextColumn get createdByNom => text().nullable()();
+  TextColumn get createdById  => text().nullable()();
+
+  /// Références client (jusqu'à 3 parties impliquées dans le sinistre)
+  TextColumn get refClient1 => text().nullable()();
+  TextColumn get refClient2 => text().nullable()();
+  TextColumn get refClient3 => text().nullable()();
 
   TextColumn get notesInternes => text().nullable()();
   TextColumn get observations => text().nullable()();

@@ -90,6 +90,23 @@ class DossierNotifier extends AsyncNotifier<void> {
     });
   }
 
+  Future<void> delete(String id) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final dossier = await ref.read(dossierRepositoryProvider).getById(id);
+      await ref.read(dossierRepositoryProvider).delete(id);
+      ref.invalidate(dossiersProvider);
+      ref.invalidate(dossierStatsProvider);
+      ref.read(auditServiceProvider).log(
+        actionType: 'dossier.supprime',
+        entityType: 'dossier',
+        entityId: id,
+        entityLabel: dossier?.numero,
+        description: 'Dossier supprimé définitivement',
+      );
+    });
+  }
+
   Future<void> changerStatut(String id, String statut, {String? motif}) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(() async {

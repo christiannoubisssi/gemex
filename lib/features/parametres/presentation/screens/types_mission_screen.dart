@@ -90,6 +90,29 @@ class _TypesMissionScreenState extends ConsumerState<TypesMissionScreen> {
   }
 
   Future<void> _delete(int index) async {
+    final type = _types[index];
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Supprimer ce type'),
+        content: Text(
+          'Supprimer "${type['nom']}" ?\n\n'
+          'Les dossiers existants ne seront pas affectés.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Annuler'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
     setState(() => _types.removeAt(index));
     await _save();
   }

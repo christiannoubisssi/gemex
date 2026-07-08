@@ -194,6 +194,32 @@ class DevisRepository {
     }
   }
 
+  /// Vérifie si une facture a été générée depuis ce devis.
+  Future<bool> aFactureLiee(String devisId) async {
+    final all = await _db.facturesDao.getAll();
+    return all.any((f) => f.devisId == devisId);
+  }
+
+  /// Suppression définitive d'un devis + lignes (admin only, statut brouillon préféré).
+  Future<void> delete(String id) async {
+    await _db.devisDao.deleteDevis(id);
+    if (_ref.read(isOnlineProvider)) {
+      try {
+        await _supabase.from('devis_lignes').delete().eq('devis_id', id);
+        await _supabase.from('devis').delete().eq('id', id);
+      } catch (e) {
+        AppLogger.w('DevisRepository', 'Suppression Supabase échouée pour $id : $e');
+      }
+    } else {
+      await _db.syncQueueDao.enqueue(
+        entityType: 'devis',
+        entityId: id,
+        operation: 'delete',
+        payload: '{"id":"$id"}',
+      );
+    }
+  }
+
   Future<void> _trySync(String id, Map<String, dynamic> data, String op) async {
     try {
       if (op == 'create') {

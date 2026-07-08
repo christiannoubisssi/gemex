@@ -74,9 +74,10 @@ class DossierRepository {
     final nature = data['nature_sinistre'] as String?;
     final titre = (nature != null && nature.isNotEmpty) ? nature : numero;
 
-    // Identité du créateur (dénormalisée pour affichage rapide dans la liste)
+    // Identité du créateur
     final profile = _ref.read(currentProfileProvider).valueOrNull;
     final createdByNom = profile?.nom ?? profile?.email;
+    final createdById  = profile?.id;
 
     final companion = DossiersCompanion.insert(
       id: id,
@@ -100,6 +101,10 @@ class DossierRepository {
       courtier: drift.Value(data['courtier'] as String?),
       notesInternes: drift.Value(data['notes_internes'] as String?),
       createdByNom: drift.Value(createdByNom),
+      createdById:  drift.Value(createdById),
+      refClient1:   drift.Value(data['ref_client_1'] as String?),
+      refClient2:   drift.Value(data['ref_client_2'] as String?),
+      refClient3:   drift.Value(data['ref_client_3'] as String?),
       syncStatus: const drift.Value(AppConstants.syncPending),
     );
 
@@ -112,6 +117,7 @@ class DossierRepository {
       'titre': titre,
       'annee': now.year,
       if (createdByNom != null) 'created_by_nom': createdByNom,
+      if (createdById  != null) 'created_by_id':  createdById,
     };
 
     final online = _ref.read(isOnlineProvider);
@@ -185,6 +191,15 @@ class DossierRepository {
       deadline: data.containsKey('deadline')
           ? drift.Value(_parseDateTime(data['deadline']))
           : const drift.Value.absent(),
+      refClient1: data.containsKey('ref_client_1')
+          ? drift.Value(data['ref_client_1'] as String?)
+          : const drift.Value.absent(),
+      refClient2: data.containsKey('ref_client_2')
+          ? drift.Value(data['ref_client_2'] as String?)
+          : const drift.Value.absent(),
+      refClient3: data.containsKey('ref_client_3')
+          ? drift.Value(data['ref_client_3'] as String?)
+          : const drift.Value.absent(),
       syncStatus: const drift.Value(AppConstants.syncPending),
       updatedAt: drift.Value(now),
     ));
@@ -257,6 +272,34 @@ class DossierRepository {
 
   Future<Map<String, int>> getStatsCounts() {
     return _db.dossiersDao.getStatsCounts();
+  }
+
+  /// Suppression définitive (admin only) — cascade locale + Supabase.
+  Future<void> delete(String id) async {
+    // Cascade locale : devis liés (+ leurs lignes)
+    await _db.devisDao.deleteByDossierId(id);
+    // Suppression du dossier
+    await _db.dossiersDao.deleteDossier(id);
+
+    if (_ref.read(isOnlineProvider)) {
+      try {
+        await _supabase.from('dossiers').delete().eq('id', id);
+      } catch (e) {
+        AppLogger.w('DossierRepository', 'Suppression Supabase échouée pour $id : $e');
+      }
+    } else {
+      await _db.syncQueueDao.enqueue(
+        entityType: 'dossier',
+        entityId: id,
+        operation: 'delete',
+        payload: '{"id":"$id"}',
+      );
+    }
+  }
+
+  /// Stats par créateur — pour le suivi des agents.
+  Future<List<Dossier>> getByCreateur(String createdByNom) {
+    return _db.dossiersDao.getByCreateur(createdByNom);
   }
 
   Future<void> _syncToSupabase(

@@ -52,6 +52,7 @@ import '../../features/stock/presentation/screens/stock_screen.dart';
 import '../shell/main_shell.dart';
 import '../widgets/log_console_screen.dart';
 import '../../features/audit/presentation/screens/audit_screen.dart';
+import '../../features/admin/presentation/screens/agent_suivi_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final listenable = GoRouterRefreshStream(ref.watch(authStateProvider.stream));
@@ -252,6 +253,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(path: 'securite', builder: (_, __) => const SecuriteScreen()),
               GoRoute(path: 'referentiels', builder: (_, __) => const ReferentielsScreen()),
               GoRoute(path: 'audit', builder: (_, __) => const AuditScreen()),
+              GoRoute(path: 'admin/agents', builder: (_, __) => const AgentSuiviScreen()),
             ],
           ),
           GoRoute(path: '/securite/scanner', builder: (_, __) => const ScannerScreen()),

@@ -127,6 +127,9 @@ class _DossierDetailScreenState extends ConsumerState<DossierDetailScreen>
                           label: const Text('Gérer les pièces'),
                         ),
                         const SizedBox(height: 24),
+                        // ── Suppression admin ───────────────────────────
+                        _SupprimerDossierButton(dossier: dossier),
+                        const SizedBox(height: 24),
                         // ── Dernières interventions ──────────────────────
                         _InterventionsPanel(dossierId: dossier.id),
                       ],
@@ -242,6 +245,19 @@ class _ResumeTab extends ConsumerWidget {
             _InfoRow('Échéance', FormatUtils.formatDate(dossier.deadline),
                 highlight: dossier.deadline!.isBefore(DateTime.now())),
         ]),
+
+        // Références client
+        if (dossier.refClient1 != null ||
+            dossier.refClient2 != null ||
+            dossier.refClient3 != null)
+          _Section(title: 'Références client', icon: Icons.label_outline, children: [
+            if (dossier.refClient1 != null)
+              _InfoRow('Référence 1', dossier.refClient1),
+            if (dossier.refClient2 != null)
+              _InfoRow('Référence 2', dossier.refClient2),
+            if (dossier.refClient3 != null)
+              _InfoRow('Référence 3', dossier.refClient3),
+          ]),
 
         // Notes internes
         if (dossier.notesInternes != null)
@@ -975,6 +991,102 @@ class _InfoRow extends StatelessWidget {
         ),
       ]),
     );
+  }
+}
+
+// ── Bouton suppression admin ─────────────────────────────────────────────────
+
+class _SupprimerDossierButton extends ConsumerWidget {
+  final Dossier dossier;
+  const _SupprimerDossierButton({required this.dossier});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Visible uniquement pour les admins
+    final estAdmin = ref.watch(currentRoleProvider) == AppConstants.roleAdmin;
+    if (!estAdmin) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Divider(),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.delete_forever, color: AppColors.danger),
+          label: const Text('Supprimer le dossier',
+              style: TextStyle(color: AppColors.danger)),
+          style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.danger)),
+          onPressed: () => _confirmerSuppression(context, ref),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _confirmerSuppression(BuildContext context, WidgetRef ref) async {
+    // Première confirmation
+    final etape1 = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(children: const [
+          Icon(Icons.warning_amber_rounded, color: AppColors.danger),
+          SizedBox(width: 8),
+          Text('Supprimer le dossier'),
+        ]),
+        content: Text(
+          'Vous êtes sur le point de supprimer définitivement le dossier '
+          '"${dossier.numero ?? dossier.titre}".\n\n'
+          'Tous les devis associés seront également supprimés.\n\n'
+          'Cette action est IRRÉVERSIBLE.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annuler')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Continuer'),
+          ),
+        ],
+      ),
+    );
+    if (etape1 != true || !context.mounted) return;
+
+    // Double confirmation
+    final etape2 = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Dernière confirmation'),
+        content: const Text(
+          'Êtes-vous absolument certain ?\n\n'
+          'Le dossier et tous ses documents seront supprimés sans possibilité de récupération.',
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Annuler')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Supprimer définitivement'),
+          ),
+        ],
+      ),
+    );
+    if (etape2 != true || !context.mounted) return;
+
+    await ref.read(dossierNotifierProvider.notifier).delete(dossier.id);
+
+    if (context.mounted) {
+      context.go('/dossiers');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Dossier "${dossier.numero ?? dossier.titre}" supprimé.'),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+    }
   }
 }
 

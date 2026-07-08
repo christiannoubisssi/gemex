@@ -68,4 +68,20 @@ class DevisDao extends DatabaseAccessor<AppDatabase> with _$DevisDaoMixin {
   Future<List<Devi>> getPending() {
     return (select(devis)..where((d) => d.syncStatus.equals('pending'))).get();
   }
+
+  /// Suppression physique d'un devis + ses lignes (admin only).
+  Future<void> deleteDevis(String id) async {
+    await (delete(devisLignes)..where((l) => l.devisId.equals(id))).go();
+    await (delete(devis)..where((d) => d.id.equals(id))).go();
+  }
+
+  /// Supprime tous les devis liés à un dossier (cascade lors de suppression dossier).
+  Future<void> deleteByDossierId(String dossierId) async {
+    final liste = await (select(devis)
+          ..where((d) => d.dossierId.equals(dossierId)))
+        .get();
+    for (final d in liste) {
+      await deleteDevis(d.id);
+    }
+  }
 }
