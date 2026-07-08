@@ -63,7 +63,6 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
       'lieu_sinistre': 'Port d\'Owendo, Libreville, Gabon',
       'date_sinistre': DateTime(2026, 4, 15),
       'date_expertise': DateTime(2026, 4, 18),
-      'montant_sinistre': '4500000',
       'priorite': 'haute',
       'notes_internes': 'Client prioritaire. Prévoir visite site dès que possible.',
     });
@@ -238,17 +237,6 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
                   decoration:
                       const InputDecoration(labelText: 'Date de l\'expertise'),
                   format: DateFormat('dd/MM/yyyy'),
-                ),
-                const SizedBox(height: 12),
-                FormBuilderTextField(
-                  name: 'montant_sinistre',
-                  initialValue: _existing?.montantSinistre?.toStringAsFixed(0),
-                  decoration: const InputDecoration(
-                    labelText: 'Montant déclaré',
-                    suffixText: 'FCFA',
-                    hintText: 'Ex : 4500000',
-                  ),
-                  keyboardType: TextInputType.number,
                 ),
               ]),
               const SizedBox(height: 12),
