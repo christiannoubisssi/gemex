@@ -105,10 +105,64 @@ class _EntrepriseScreenState extends ConsumerState<EntrepriseScreen> {
               const SizedBox(height: 24),
               _field(_nomCtrl, 'Nom du cabinet', Icons.business_outlined, required: true),
               _field(_adresseCtrl, 'Adresse', Icons.location_on_outlined, maxLines: 3),
-              _field(_telCtrl, 'Téléphone', Icons.phone_outlined, keyboard: TextInputType.phone),
-              _field(_emailCtrl, 'Email', Icons.email_outlined, keyboard: TextInputType.emailAddress),
-              _field(_rccmCtrl, 'N° RCCM', Icons.numbers_outlined),
-              _field(_nifCtrl, 'N° NIF / Identifiant fiscal', Icons.badge_outlined),
+              // Téléphone et Email côte à côte
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _telCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Téléphone',
+                          prefixIcon: Icon(Icons.phone_outlined),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _emailCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          prefixIcon: Icon(Icons.email_outlined),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // RCCM et NIF côte à côte
+              Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _rccmCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'N° RCCM',
+                          prefixIcon: Icon(Icons.numbers_outlined),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _nifCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'N° NIF / Identifiant fiscal',
+                          prefixIcon: Icon(Icons.badge_outlined),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,

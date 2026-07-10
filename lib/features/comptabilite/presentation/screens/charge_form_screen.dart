@@ -173,32 +173,46 @@ class _ChargeFormScreenState extends ConsumerState<ChargeFormScreen> {
                       (v == null || v.trim().isEmpty) ? 'Champ requis' : null,
                 ),
                 const SizedBox(height: 16),
-                TextFormField(
-                  controller: _montantCtrl,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'Montant *',
-                    suffixText: 'FCFA',
-                    prefixIcon: Icon(Icons.monetization_on_outlined),
-                  ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Champ requis';
-                    final cleaned = v.replaceAll(' ', '').replaceAll(',', '.');
-                    if (double.tryParse(cleaned) == null) return 'Montant invalide';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: _pickDate,
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Date',
-                      prefixIcon: Icon(Icons.calendar_today_outlined),
+                // Montant et Date en 2 colonnes
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _montantCtrl,
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'Montant *',
+                          suffixText: 'FCFA',
+                          prefixIcon: Icon(Icons.monetization_on_outlined),
+                        ),
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty) return 'Champ requis';
+                          final cleaned =
+                              v.replaceAll(' ', '').replaceAll(',', '.');
+                          if (double.tryParse(cleaned) == null) {
+                            return 'Montant invalide';
+                          }
+                          return null;
+                        },
+                      ),
                     ),
-                    child: Text(DateFormat('dd/MM/yyyy').format(_dateCharge)),
-                  ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: _pickDate,
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Date',
+                            prefixIcon: Icon(Icons.calendar_today_outlined),
+                          ),
+                          child: Text(
+                              DateFormat('dd/MM/yyyy').format(_dateCharge)),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(

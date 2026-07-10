@@ -180,65 +180,102 @@ class _PersonnelFormScreenState extends ConsumerState<PersonnelFormScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              _RefDropdownOrText(
-                controller: _posteCtrl,
-                label: 'Poste',
-                icon: Icons.work_outline,
-                provider: postesProvider,
-              ),
-              const SizedBox(height: 16),
-              _RefDropdownOrText(
-                controller: _departementCtrl,
-                label: 'Département',
-                icon: Icons.business_outlined,
-                provider: departementsProvider,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _typeContrat,
-                decoration: const InputDecoration(
-                  labelText: 'Type de contrat',
-                  prefixIcon: Icon(Icons.description_outlined),
-                ),
-                items: _typesContrat
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                    .toList(),
-                onChanged: (v) => setState(() => _typeContrat = v ?? _typeContrat),
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _salaireCtrl,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Salaire de base',
-                  suffixText: 'FCFA',
-                  prefixIcon: Icon(Icons.monetization_on_outlined),
-                ),
-              ),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: () => _pickDate(true),
-                child: InputDecorator(
-                  decoration: const InputDecoration(
-                    labelText: 'Date d\'embauche',
-                    prefixIcon: Icon(Icons.calendar_today_outlined),
-                  ),
-                  child: Text(_dateEmbauche != null ? fmt.format(_dateEmbauche!) : '—'),
-                ),
-              ),
-              if (_typeContrat == 'CDD' || _typeContrat == 'Stage') ...[
-                const SizedBox(height: 16),
-                InkWell(
-                  onTap: () => _pickDate(false),
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Date de fin de contrat',
-                      prefixIcon: Icon(Icons.event_outlined),
+              // Poste et Département côte à côte
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _RefDropdownOrText(
+                      controller: _posteCtrl,
+                      label: 'Poste',
+                      icon: Icons.work_outline,
+                      provider: postesProvider,
                     ),
-                    child: Text(_dateFinContrat != null ? fmt.format(_dateFinContrat!) : '—'),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _RefDropdownOrText(
+                      controller: _departementCtrl,
+                      label: 'Département',
+                      icon: Icons.business_outlined,
+                      provider: departementsProvider,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Type de contrat et Salaire côte à côte
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _typeContrat,
+                      decoration: const InputDecoration(
+                        labelText: 'Type de contrat',
+                        prefixIcon: Icon(Icons.description_outlined),
+                      ),
+                      items: _typesContrat
+                          .map((t) =>
+                              DropdownMenuItem(value: t, child: Text(t)))
+                          .toList(),
+                      onChanged: (v) =>
+                          setState(() => _typeContrat = v ?? _typeContrat),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: TextFormField(
+                      controller: _salaireCtrl,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: 'Salaire de base',
+                        suffixText: 'FCFA',
+                        prefixIcon: Icon(Icons.monetization_on_outlined),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Dates d'embauche et de fin côte à côte
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _pickDate(true),
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Date d\'embauche',
+                          prefixIcon: Icon(Icons.calendar_today_outlined),
+                        ),
+                        child: Text(_dateEmbauche != null
+                            ? fmt.format(_dateEmbauche!)
+                            : '—'),
+                      ),
+                    ),
+                  ),
+                  if (_typeContrat == 'CDD' || _typeContrat == 'Stage') ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _pickDate(false),
+                        child: InputDecorator(
+                          decoration: const InputDecoration(
+                            labelText: 'Date fin de contrat',
+                            prefixIcon: Icon(Icons.event_outlined),
+                          ),
+                          child: Text(_dateFinContrat != null
+                              ? fmt.format(_dateFinContrat!)
+                              : '—'),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
