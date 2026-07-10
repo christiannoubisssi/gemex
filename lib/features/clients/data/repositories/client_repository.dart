@@ -30,6 +30,12 @@ class ClientRepository {
 
   Future<Client?> getById(String id) => _db.clientsDao.getById(id);
 
+  /// Normalise une valeur de formulaire : chaîne vide → null.
+  static String? _str(Map<String, dynamic> data, String key) {
+    final v = data[key] as String?;
+    return (v == null || v.trim().isEmpty) ? null : v.trim();
+  }
+
   Future<String> create(Map<String, dynamic> data) async {
     final id = const Uuid().v4();
     final companion = ClientsCompanion.insert(
@@ -37,21 +43,21 @@ class ClientRepository {
       entrepriseId: data['entreprise_id'] as String? ?? 'default',
       typeClient: data['type_client'] as String? ?? AppConstants.clientEntreprise,
       nom: data['nom'] as String,
-      contactNom: drift.Value(data['contact_nom'] as String?),
-      email: drift.Value(data['email'] as String?),
-      telephone: drift.Value(data['telephone'] as String?),
-      adresse: drift.Value(data['adresse'] as String?),
-      ville: drift.Value(data['ville'] as String?),
-      pays: drift.Value(data['pays'] as String? ?? 'Gabon'),
-      numeroTva: drift.Value(data['numero_tva'] as String?),
-      rccm: drift.Value(data['rccm'] as String?),
-      nif: drift.Value(data['nif'] as String?),
-      notes: drift.Value(data['notes'] as String?),
-      reference: drift.Value(data['reference'] as String?),
-      refOleaUnique: drift.Value(data['ref_olea_unique'] as String?),
-      refAgl: drift.Value(data['ref_agl'] as String?),
-      refDs: drift.Value(data['ref_ds'] as String?),
-      cabinetBce: drift.Value(data['cabinet_bce'] as String?),
+      contactNom: drift.Value(_str(data, 'contact_nom')),
+      email: drift.Value(_str(data, 'email')),
+      telephone: drift.Value(_str(data, 'telephone')),
+      adresse: drift.Value(_str(data, 'adresse')),
+      ville: drift.Value(_str(data, 'ville')),
+      pays: drift.Value(_str(data, 'pays') ?? 'Gabon'),
+      numeroTva: drift.Value(_str(data, 'numero_tva')),
+      rccm: drift.Value(_str(data, 'rccm')),
+      nif: drift.Value(_str(data, 'nif')),
+      notes: drift.Value(_str(data, 'notes')),
+      reference: drift.Value(_str(data, 'reference')),
+      refOleaUnique: drift.Value(_str(data, 'ref_olea_unique')),
+      refAgl: drift.Value(_str(data, 'ref_agl')),
+      refDs: drift.Value(_str(data, 'ref_ds')),
+      cabinetBce: drift.Value(_str(data, 'cabinet_bce')),
       syncStatus: const drift.Value(AppConstants.syncPending),
     );
     await _db.clientsDao.upsert(companion);
@@ -73,25 +79,29 @@ class ClientRepository {
   }
 
   Future<void> update(String id, Map<String, dynamic> data) async {
+    // Helper local : normalise et présente si la clé est présente, absent sinon
+    drift.Value<String?> _v(String key) =>
+        data.containsKey(key) ? drift.Value(_str(data, key)) : const drift.Value.absent();
+
     await _db.clientsDao.upsert(ClientsCompanion(
       id: drift.Value(id),
       typeClient: data.containsKey('type_client') ? drift.Value(data['type_client'] as String) : const drift.Value.absent(),
       nom: data.containsKey('nom') ? drift.Value(data['nom'] as String) : const drift.Value.absent(),
-      contactNom: data.containsKey('contact_nom') ? drift.Value(data['contact_nom'] as String?) : const drift.Value.absent(),
-      email: data.containsKey('email') ? drift.Value(data['email'] as String?) : const drift.Value.absent(),
-      telephone: data.containsKey('telephone') ? drift.Value(data['telephone'] as String?) : const drift.Value.absent(),
-      adresse: data.containsKey('adresse') ? drift.Value(data['adresse'] as String?) : const drift.Value.absent(),
-      ville: data.containsKey('ville') ? drift.Value(data['ville'] as String?) : const drift.Value.absent(),
-      pays: data.containsKey('pays') ? drift.Value(data['pays'] as String? ?? 'Gabon') : const drift.Value.absent(),
-      numeroTva: data.containsKey('numero_tva') ? drift.Value(data['numero_tva'] as String?) : const drift.Value.absent(),
-      rccm: data.containsKey('rccm') ? drift.Value(data['rccm'] as String?) : const drift.Value.absent(),
-      nif: data.containsKey('nif') ? drift.Value(data['nif'] as String?) : const drift.Value.absent(),
-      notes: data.containsKey('notes') ? drift.Value(data['notes'] as String?) : const drift.Value.absent(),
-      reference: data.containsKey('reference') ? drift.Value(data['reference'] as String?) : const drift.Value.absent(),
-      refOleaUnique: data.containsKey('ref_olea_unique') ? drift.Value(data['ref_olea_unique'] as String?) : const drift.Value.absent(),
-      refAgl: data.containsKey('ref_agl') ? drift.Value(data['ref_agl'] as String?) : const drift.Value.absent(),
-      refDs: data.containsKey('ref_ds') ? drift.Value(data['ref_ds'] as String?) : const drift.Value.absent(),
-      cabinetBce: data.containsKey('cabinet_bce') ? drift.Value(data['cabinet_bce'] as String?) : const drift.Value.absent(),
+      contactNom: _v('contact_nom'),
+      email: _v('email'),
+      telephone: _v('telephone'),
+      adresse: _v('adresse'),
+      ville: _v('ville'),
+      pays: data.containsKey('pays') ? drift.Value(_str(data, 'pays') ?? 'Gabon') : const drift.Value.absent(),
+      numeroTva: _v('numero_tva'),
+      rccm: _v('rccm'),
+      nif: _v('nif'),
+      notes: _v('notes'),
+      reference: _v('reference'),
+      refOleaUnique: _v('ref_olea_unique'),
+      refAgl: _v('ref_agl'),
+      refDs: _v('ref_ds'),
+      cabinetBce: _v('cabinet_bce'),
       syncStatus: const drift.Value(AppConstants.syncPending),
       updatedAt: drift.Value(DateTime.now()),
     ));

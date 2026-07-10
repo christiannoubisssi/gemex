@@ -54,6 +54,13 @@ class DossierRepository {
     return _db.dossiersDao.getUrgents();
   }
 
+  /// Normalise une valeur de formulaire : chaîne vide ou whitespace → null.
+  static String? _strOrNull(dynamic v) {
+    if (v == null) return null;
+    final s = v.toString().trim();
+    return s.isEmpty ? null : s;
+  }
+
   static double? _parseDouble(dynamic v) {
     if (v == null) return null;
     if (v is num) return v.toDouble();
@@ -102,9 +109,9 @@ class DossierRepository {
       notesInternes: drift.Value(data['notes_internes'] as String?),
       createdByNom: drift.Value(createdByNom),
       createdById:  drift.Value(createdById),
-      refClient1:   drift.Value(data['ref_client_1'] as String?),
-      refClient2:   drift.Value(data['ref_client_2'] as String?),
-      refClient3:   drift.Value(data['ref_client_3'] as String?),
+      refClient1:   drift.Value(_strOrNull(data['ref_client_1'])),
+      refClient2:   drift.Value(_strOrNull(data['ref_client_2'])),
+      refClient3:   drift.Value(_strOrNull(data['ref_client_3'])),
       syncStatus: const drift.Value(AppConstants.syncPending),
     );
 
@@ -192,13 +199,13 @@ class DossierRepository {
           ? drift.Value(_parseDateTime(data['deadline']))
           : const drift.Value.absent(),
       refClient1: data.containsKey('ref_client_1')
-          ? drift.Value(data['ref_client_1'] as String?)
+          ? drift.Value(_strOrNull(data['ref_client_1']))
           : const drift.Value.absent(),
       refClient2: data.containsKey('ref_client_2')
-          ? drift.Value(data['ref_client_2'] as String?)
+          ? drift.Value(_strOrNull(data['ref_client_2']))
           : const drift.Value.absent(),
       refClient3: data.containsKey('ref_client_3')
-          ? drift.Value(data['ref_client_3'] as String?)
+          ? drift.Value(_strOrNull(data['ref_client_3']))
           : const drift.Value.absent(),
       syncStatus: const drift.Value(AppConstants.syncPending),
       updatedAt: drift.Value(now),

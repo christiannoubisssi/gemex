@@ -220,16 +220,27 @@ class _ProfilTab extends StatelessWidget {
         if (client.numeroTva != null || client.rccm != null || client.nif != null)
           const SizedBox(height: 12),
 
-        // Référence interne
-        if (client.reference != null) ...[
+        // Référence interne (affichée si renseignée)
+        if (client.reference != null && client.reference!.isNotEmpty) ...[
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Référence',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
+                const Row(children: [
+                  Icon(Icons.tag_outlined, size: 16, color: AppColors.teal),
+                  SizedBox(width: 8),
+                  Text('Référence client',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.navy)),
+                ]),
                 const Divider(height: 16),
-                _InfoRow(Icons.tag_outlined, client.reference!),
+                SelectableText(
+                  client.reference!,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
               ]),
             ),
           ),

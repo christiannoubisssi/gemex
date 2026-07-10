@@ -81,6 +81,13 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
         _clientSelectionne = client;
         _clientError = false;
       });
+      // Pré-remplir ref_client_1 depuis la référence du client si le champ est vide
+      final refActuelle = _formKey.currentState?.fields['ref_client_1']?.value as String?;
+      if ((refActuelle == null || refActuelle.isEmpty) &&
+          client.reference != null &&
+          client.reference!.isNotEmpty) {
+        _formKey.currentState?.fields['ref_client_1']?.didChange(client.reference);
+      }
     }
   }
 
@@ -342,56 +349,43 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
               const SizedBox(height: 12),
 
               // ── Références client ─────────────────────────────────────────
-              Consumer(
-                builder: (context, ref, _) {
-                  final refsAsync = ref.watch(clientsAvecReferenceProvider);
-                  return refsAsync.when(
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, __) => const SizedBox.shrink(),
-                    data: (refs) {
-                      if (refs.isEmpty) return const SizedBox.shrink();
-                      final items = <DropdownMenuItem<String?>>[
-                        const DropdownMenuItem(value: null, child: Text('— Aucune —')),
-                        ...refs.map((r) => DropdownMenuItem(
-                              value: r.reference,
-                              child: Text('${r.reference}  ·  ${r.nom}',
-                                  overflow: TextOverflow.ellipsis),
-                            )),
-                      ];
-                      return _SectionCard(title: 'Références client', children: [
-                        const Text(
-                          'Associez jusqu\'à 3 références issues des fiches clients.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 12),
-                        FormBuilderDropdown<String?>(
-                          name: 'ref_client_1',
-                          initialValue: _existing?.refClient1,
-                          decoration:
-                              const InputDecoration(labelText: 'Référence 1'),
-                          items: items,
-                        ),
-                        const SizedBox(height: 12),
-                        FormBuilderDropdown<String?>(
-                          name: 'ref_client_2',
-                          initialValue: _existing?.refClient2,
-                          decoration:
-                              const InputDecoration(labelText: 'Référence 2'),
-                          items: items,
-                        ),
-                        const SizedBox(height: 12),
-                        FormBuilderDropdown<String?>(
-                          name: 'ref_client_3',
-                          initialValue: _existing?.refClient3,
-                          decoration:
-                              const InputDecoration(labelText: 'Référence 3'),
-                          items: items,
-                        ),
-                      ]);
-                    },
-                  );
-                },
-              ),
+              // Champs texte libres — ref_client_1 pré-remplie depuis la fiche client
+              _SectionCard(title: 'Références client', children: [
+                const Text(
+                  'Numéros de référence du client (police, dossier assureur, etc.)',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                const SizedBox(height: 12),
+                FormBuilderTextField(
+                  name: 'ref_client_1',
+                  initialValue: _existing?.refClient1 ?? _clientSelectionne?.reference,
+                  decoration: const InputDecoration(
+                    labelText: 'Référence 1',
+                    hintText: 'Ex : REF-2025-001',
+                    prefixIcon: Icon(Icons.tag_outlined),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FormBuilderTextField(
+                  name: 'ref_client_2',
+                  initialValue: _existing?.refClient2,
+                  decoration: const InputDecoration(
+                    labelText: 'Référence 2',
+                    hintText: 'Ex : N° police assurance',
+                    prefixIcon: Icon(Icons.tag_outlined),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                FormBuilderTextField(
+                  name: 'ref_client_3',
+                  initialValue: _existing?.refClient3,
+                  decoration: const InputDecoration(
+                    labelText: 'Référence 3',
+                    hintText: 'Ex : N° connaissement',
+                    prefixIcon: Icon(Icons.tag_outlined),
+                  ),
+                ),
+              ]),
               const SizedBox(height: 12),
 
               _SectionCard(title: 'Notes internes', children: [
