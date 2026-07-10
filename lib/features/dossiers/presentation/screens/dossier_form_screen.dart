@@ -30,10 +30,14 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
   Dossier? _existing;
   bool _loading = false;
 
-  // Client sélectionné
+  // Client principal du dossier
   String? _clientId;
   Client? _clientSelectionne;
   bool _clientError = false;
+
+  // Clients sélectionnés pour chaque slot de référence (pour affichage)
+  String? _clientIdRef1, _clientIdRef2, _clientIdRef3;
+  String? _nomRef1, _nomRef2, _nomRef3;
 
   bool get isEditing => widget.id != null;
 
@@ -46,11 +50,39 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
   Future<void> _loadExisting() async {
     setState(() => _loading = true);
     _existing = await ref.read(dossierRepositoryProvider).getById(widget.id!);
+
+    // Chargement batch : client principal + lookup des refs
+    final allClients = await ref.read(clientRepositoryProvider).getAll();
+
     if (_existing?.clientId != null) {
       _clientId = _existing!.clientId;
       _clientSelectionne =
-          await ref.read(clientRepositoryProvider).getById(_existing!.clientId!);
+          allClients.where((c) => c.id == _existing!.clientId!).firstOrNull;
     }
+
+    // Tente de retrouver le client correspondant à chaque référence stockée
+    if (_existing?.refClient1 != null) {
+      final match = allClients
+          .where((c) => c.reference == _existing!.refClient1)
+          .firstOrNull;
+      _clientIdRef1 = match?.id;
+      _nomRef1 = match?.nom;
+    }
+    if (_existing?.refClient2 != null) {
+      final match = allClients
+          .where((c) => c.reference == _existing!.refClient2)
+          .firstOrNull;
+      _clientIdRef2 = match?.id;
+      _nomRef2 = match?.nom;
+    }
+    if (_existing?.refClient3 != null) {
+      final match = allClients
+          .where((c) => c.reference == _existing!.refClient3)
+          .firstOrNull;
+      _clientIdRef3 = match?.id;
+      _nomRef3 = match?.nom;
+    }
+
     setState(() => _loading = false);
   }
 
@@ -82,11 +114,18 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
         _clientError = false;
       });
       // Pré-remplir ref_client_1 depuis la référence du client si le champ est vide
-      final refActuelle = _formKey.currentState?.fields['ref_client_1']?.value as String?;
+      final refActuelle =
+          _formKey.currentState?.fields['ref_client_1']?.value as String?;
       if ((refActuelle == null || refActuelle.isEmpty) &&
           client.reference != null &&
           client.reference!.isNotEmpty) {
-        _formKey.currentState?.fields['ref_client_1']?.didChange(client.reference);
+        _formKey.currentState?.fields['ref_client_1']
+            ?.didChange(client.reference);
+        // Synchronise aussi le dropdown de référence 1
+        setState(() {
+          _clientIdRef1 = client.id;
+          _nomRef1 = client.nom;
+        });
       }
     }
   }
@@ -94,7 +133,6 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.saveAndValidate()) return;
 
-    // Validation client obligatoire
     if (_clientId == null) {
       setState(() => _clientError = true);
       return;
@@ -128,291 +166,435 @@ class _DossierFormScreenState extends ConsumerState<DossierFormScreen> {
     }
   }
 
+  // ── Helpers layout ────────────────────────────────────────────────────────
+
+  /// Disposition 2 colonnes égales avec espacement standard (12 px).
+  Widget _twoCol(Widget left, Widget right) => Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: left),
+          const SizedBox(width: 12),
+          Expanded(child: right),
+        ],
+      );
+
+  /// Construit une ligne de sélection de référence client :
+  /// colonne gauche = dropdown sélecteur de client,
+  /// colonne droite = champ texte référence (auto-rempli depuis la fiche client).
+  Widget _buildRefRow({
+    required List<Client> clients,
+    required int slot,
+    required String? clientId,
+    required String? nomClient,
+    required String? initialRef,
+    required void Function(Client?) onClientChanged,
+  }) {
+    return _twoCol(
+      // ── Colonne gauche : sélection du client ──────────────────────────
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Client référence $slot',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 4),
+          DropdownButtonFormField<String?>(
+            value: clientId,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              hintText: '— Aucun —',
+              prefixIcon: Icon(Icons.person_outline, size: 18),
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+            items: [
+              const DropdownMenuItem<String?>(
+                  value: null, child: Text('— Aucun —')),
+              ...clients.map((c) => DropdownMenuItem<String?>(
+                    value: c.id,
+                    child:
+                        Text(c.nom, overflow: TextOverflow.ellipsis),
+                  )),
+            ],
+            onChanged: (id) {
+              final c = id != null
+                  ? clients.where((c) => c.id == id).firstOrNull
+                  : null;
+              onClientChanged(c);
+            },
+          ),
+          // Confirmation du nom du client sélectionné
+          if (nomClient != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(children: [
+                const Icon(Icons.check_circle_outline,
+                    size: 12, color: AppColors.teal),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    nomClient,
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.teal),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ]),
+            ),
+        ],
+      ),
+      // ── Colonne droite : champ référence libre (auto-rempli) ─────────
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Référence $slot',
+            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 4),
+          FormBuilderTextField(
+            name: 'ref_client_$slot',
+            initialValue: initialRef,
+            decoration: const InputDecoration(
+              hintText: 'N° référence',
+              prefixIcon: Icon(Icons.tag_outlined, size: 18),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading && _existing == null && isEditing) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+          body: Center(child: CircularProgressIndicator()));
     }
 
     return SaveOverlay(
       saving: _loading && (_existing != null || !isEditing),
       label: isEditing ? 'Mise à jour du dossier…' : 'Création du dossier…',
       child: Scaffold(
-      appBar: AppBar(
-        title: Text(isEditing ? 'Modifier le dossier' : 'Nouveau dossier'),
-        actions: [
-          if (!isEditing)
-            TextButton.icon(
-              onPressed: _fillExample,
-              icon: const Icon(Icons.auto_fix_high, size: 18),
-              label: const Text('Exemple'),
-              style: TextButton.styleFrom(foregroundColor: AppColors.gold),
-            ),
-        ],
-      ),
-      body: FormBuilder(
-        key: _formKey,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Bandeau numéro automatique
-              if (!isEditing)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.navy.withAlpha(15),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.navy.withAlpha(40)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.info_outline, size: 16, color: AppColors.navy),
+        appBar: AppBar(
+          title: Text(isEditing ? 'Modifier le dossier' : 'Nouveau dossier'),
+          actions: [
+            if (!isEditing)
+              TextButton.icon(
+                onPressed: _fillExample,
+                icon: const Icon(Icons.auto_fix_high, size: 18),
+                label: const Text('Exemple'),
+                style:
+                    TextButton.styleFrom(foregroundColor: AppColors.gold),
+              ),
+          ],
+        ),
+        body: FormBuilder(
+          key: _formKey,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // ── Bandeau numéro automatique ─────────────────────────
+                if (!isEditing)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.navy.withAlpha(15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: AppColors.navy.withAlpha(40)),
+                    ),
+                    child: const Row(children: [
+                      Icon(Icons.info_outline,
+                          size: 16, color: AppColors.navy),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Le numéro du dossier (AV-AAAA-XXXX) sera attribué automatiquement.',
-                          style:
-                              TextStyle(fontSize: 12, color: AppColors.navy),
+                          style: TextStyle(
+                              fontSize: 12, color: AppColors.navy),
                         ),
                       ),
-                    ],
+                    ]),
                   ),
-                ),
 
-              // ── Sélecteur client (obligatoire) ──────────────────────────
-              _SectionCard(title: 'Client *', children: [
-                _ClientSelector(
-                  client: _clientSelectionne,
-                  hasError: _clientError,
-                  onTap: _ouvrirSelecteurClient,
-                  onClear: isEditing
-                      ? null
-                      : () => setState(() {
-                            _clientId = null;
-                            _clientSelectionne = null;
-                          }),
-                ),
-              ]),
-              const SizedBox(height: 12),
-
-              // ── Informations principales ─────────────────────────────────
-              _SectionCard(title: 'Informations principales', children: [
-                FormBuilderTextField(
-                  name: 'nature_sinistre',
-                  initialValue: _existing?.natureSinistre,
-                  decoration: const InputDecoration(
-                    labelText: 'Nature du sinistre *',
-                    hintText: 'Ex : Dommages aux marchandises, Incendie…',
+                // ── Client (obligatoire) ───────────────────────────────
+                _SectionCard(title: 'Client *', children: [
+                  _ClientSelector(
+                    client: _clientSelectionne,
+                    hasError: _clientError,
+                    onTap: _ouvrirSelecteurClient,
+                    onClear: isEditing
+                        ? null
+                        : () => setState(() {
+                              _clientId = null;
+                              _clientSelectionne = null;
+                            }),
                   ),
-                  validator: FormBuilderValidators.required(
-                      errorText: 'Nature du sinistre requise'),
-                ),
+                ]),
                 const SizedBox(height: 12),
-                FormBuilderTextField(
-                  name: 'description',
-                  initialValue: _existing?.description,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                  maxLines: 3,
-                ),
-                const SizedBox(height: 12),
-                FormBuilderTextField(
-                  name: 'lieu_sinistre',
-                  initialValue: _existing?.lieuSinistre,
-                  decoration: const InputDecoration(
-                    labelText: 'Lieu du sinistre',
-                    hintText: 'Ex : Port d\'Owendo, Libreville',
+
+                // ── Informations principales ───────────────────────────
+                _SectionCard(title: 'Informations principales', children: [
+                  FormBuilderTextField(
+                    name: 'nature_sinistre',
+                    initialValue: _existing?.natureSinistre,
+                    decoration: const InputDecoration(
+                      labelText: 'Nature du sinistre *',
+                      hintText:
+                          'Ex : Dommages aux marchandises, Incendie…',
+                    ),
+                    validator: FormBuilderValidators.required(
+                        errorText: 'Nature du sinistre requise'),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  FormBuilderTextField(
+                    name: 'description',
+                    initialValue: _existing?.description,
+                    decoration: const InputDecoration(
+                        labelText: 'Description'),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 12),
+                  // Lieu | Date requête en 2 colonnes
+                  _twoCol(
+                    FormBuilderTextField(
+                      name: 'lieu_sinistre',
+                      initialValue: _existing?.lieuSinistre,
+                      decoration: const InputDecoration(
+                        labelText: 'Lieu du sinistre',
+                        hintText: 'Ex : Port d\'Owendo',
+                      ),
+                    ),
+                    FormBuilderDateTimePicker(
+                      name: 'date_sinistre',
+                      initialValue: _existing?.dateSinistre,
+                      inputType: InputType.date,
+                      decoration: const InputDecoration(
+                          labelText: 'Date de la requête'),
+                      format: DateFormat('dd/MM/yyyy'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FormBuilderDateTimePicker(
+                    name: 'date_expertise',
+                    initialValue: _existing?.dateExpertise,
+                    inputType: InputType.date,
+                    decoration: const InputDecoration(
+                        labelText: 'Date de l\'expertise'),
+                    format: DateFormat('dd/MM/yyyy'),
+                  ),
+                ]),
                 const SizedBox(height: 12),
-                FormBuilderDateTimePicker(
-                  name: 'date_sinistre',
-                  initialValue: _existing?.dateSinistre,
-                  inputType: InputType.date,
-                  decoration:
-                      const InputDecoration(labelText: 'Date de la requête'),
-                  format: DateFormat('dd/MM/yyyy'),
-                ),
+
+                // ── Mission & Priorité ─────────────────────────────────
+                _SectionCard(title: 'Mission & Priorité', children: [
+                  // Type de mission | Agent en charge — 2 colonnes
+                  _twoCol(
+                    Consumer(builder: (context, ref, _) {
+                      final typesAsync = ref.watch(typesMissionProvider);
+                      return typesAsync.when(
+                        loading: () => const LinearProgressIndicator(),
+                        error: (e, _) => Text('Erreur : $e',
+                            style: const TextStyle(
+                                color: AppColors.danger)),
+                        data: (types) {
+                          final current = _existing?.typeMissionId;
+                          final connu =
+                              types.any((t) => t['nom'] == current);
+                          return FormBuilderDropdown<String?>(
+                            name: 'type_mission_id',
+                            initialValue: current,
+                            decoration: const InputDecoration(
+                                labelText: 'Type de mission'),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                  value: null,
+                                  child: Text('Non défini')),
+                              ...types.map((t) =>
+                                  DropdownMenuItem<String?>(
+                                    value: t['nom'],
+                                    child: Text(t['nom'] ?? ''),
+                                  )),
+                              // Conserve l'ancienne valeur si renommée/supprimée
+                              if (current != null && !connu)
+                                DropdownMenuItem<String?>(
+                                  value: current,
+                                  child: Text('$current (ancien)'),
+                                ),
+                            ],
+                          );
+                        },
+                      );
+                    }),
+                    Consumer(builder: (context, ref, _) {
+                      final usersAsync = ref.watch(usersProvider);
+                      return usersAsync.when(
+                        loading: () => const LinearProgressIndicator(),
+                        error: (e, _) => Text('Erreur : $e',
+                            style: const TextStyle(
+                                color: AppColors.danger)),
+                        data: (users) {
+                          final current = _existing?.expertId;
+                          final actifs =
+                              users.where((u) => u.actif).toList();
+                          final connu =
+                              actifs.any((u) => u.id == current);
+                          final inactif = current != null && !connu
+                              ? users
+                                  .where((u) => u.id == current)
+                                  .firstOrNull
+                              : null;
+                          return FormBuilderDropdown<String?>(
+                            name: 'expert_id',
+                            initialValue: current,
+                            decoration: const InputDecoration(
+                                labelText: 'Agent en charge'),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                  value: null,
+                                  child: Text('Non assigné')),
+                              ...actifs.map((u) =>
+                                  DropdownMenuItem<String?>(
+                                    value: u.id,
+                                    child: Text(u.nom ?? u.email),
+                                  )),
+                              // Conserve l'agent s'il est devenu inactif
+                              if (current != null && !connu)
+                                DropdownMenuItem<String?>(
+                                  value: current,
+                                  child: Text(
+                                      '${inactif?.nom ?? inactif?.email ?? current} (inactif)'),
+                                ),
+                            ],
+                          );
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 12),
+                  FormBuilderDropdown<String>(
+                    name: 'priorite',
+                    initialValue:
+                        _existing?.priorite ?? AppConstants.prioriteNormale,
+                    decoration:
+                        const InputDecoration(labelText: 'Priorité'),
+                    items: AppConstants.priorites
+                        .map((p) => DropdownMenuItem(
+                              value: p,
+                              child: Text(
+                                  AppConstants.prioriteLabels[p] ?? p),
+                            ))
+                        .toList(),
+                  ),
+                ]),
                 const SizedBox(height: 12),
-                FormBuilderDateTimePicker(
-                  name: 'date_expertise',
-                  initialValue: _existing?.dateExpertise,
-                  inputType: InputType.date,
-                  decoration:
-                      const InputDecoration(labelText: 'Date de l\'expertise'),
-                  format: DateFormat('dd/MM/yyyy'),
-                ),
-              ]),
-              const SizedBox(height: 12),
 
-              _SectionCard(title: 'Priorité', children: [
-                FormBuilderDropdown<String>(
-                  name: 'priorite',
-                  initialValue:
-                      _existing?.priorite ?? AppConstants.prioriteNormale,
-                  decoration: const InputDecoration(labelText: 'Priorité'),
-                  items: AppConstants.priorites
-                      .map((p) => DropdownMenuItem(
-                            value: p,
-                            child:
-                                Text(AppConstants.prioriteLabels[p] ?? p),
-                          ))
-                      .toList(),
-                ),
-              ]),
-              const SizedBox(height: 12),
-
-              // ── Mission ──────────────────────────────────────────────────
-              _SectionCard(title: 'Mission', children: [
-                Consumer(
-                  builder: (context, ref, _) {
-                    final typesAsync = ref.watch(typesMissionProvider);
-                    return typesAsync.when(
+                // ── Références client ──────────────────────────────────
+                // Chaque slot : dropdown client (gauche) + champ ref (droite)
+                _SectionCard(title: 'Références client', children: [
+                  const Text(
+                    'Sélectionnez un client pour chaque référence. '
+                    'La référence s\'auto-remplit depuis la fiche client.',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 12),
+                  Consumer(builder: (context, ref, _) {
+                    final clientsAsync = ref.watch(clientsProvider(null));
+                    return clientsAsync.when(
                       loading: () => const LinearProgressIndicator(),
-                      error: (e, _) => Text('Erreur : $e',
-                          style: const TextStyle(color: AppColors.danger)),
-                      data: (types) {
-                        final current = _existing?.typeMissionId;
-                        final connu = types.any((t) => t['nom'] == current);
-                        return FormBuilderDropdown<String?>(
-                          name: 'type_mission_id',
-                          initialValue: current,
-                          decoration:
-                              const InputDecoration(labelText: 'Type de mission'),
-                          items: [
-                            const DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text('Non défini'),
-                            ),
-                            ...types.map((t) => DropdownMenuItem<String?>(
-                                  value: t['nom'],
-                                  child: Text(t['nom'] ?? ''),
-                                )),
-                            // Conserve l'ancienne valeur si le type a été renommé/supprimé
-                            if (current != null && !connu)
-                              DropdownMenuItem<String?>(
-                                value: current,
-                                child: Text('$current (ancien)'),
-                              ),
-                          ],
-                        );
-                      },
+                      error: (e, _) => Text('Erreur : $e'),
+                      data: (clients) => Column(
+                        children: [
+                          _buildRefRow(
+                            clients: clients,
+                            slot: 1,
+                            clientId: _clientIdRef1,
+                            nomClient: _nomRef1,
+                            initialRef: _existing?.refClient1,
+                            onClientChanged: (c) {
+                              setState(() {
+                                _clientIdRef1 = c?.id;
+                                _nomRef1 = c?.nom;
+                              });
+                              _formKey.currentState
+                                  ?.fields['ref_client_1']
+                                  ?.didChange(c?.reference ?? '');
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _buildRefRow(
+                            clients: clients,
+                            slot: 2,
+                            clientId: _clientIdRef2,
+                            nomClient: _nomRef2,
+                            initialRef: _existing?.refClient2,
+                            onClientChanged: (c) {
+                              setState(() {
+                                _clientIdRef2 = c?.id;
+                                _nomRef2 = c?.nom;
+                              });
+                              _formKey.currentState
+                                  ?.fields['ref_client_2']
+                                  ?.didChange(c?.reference ?? '');
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          _buildRefRow(
+                            clients: clients,
+                            slot: 3,
+                            clientId: _clientIdRef3,
+                            nomClient: _nomRef3,
+                            initialRef: _existing?.refClient3,
+                            onClientChanged: (c) {
+                              setState(() {
+                                _clientIdRef3 = c?.id;
+                                _nomRef3 = c?.nom;
+                              });
+                              _formKey.currentState
+                                  ?.fields['ref_client_3']
+                                  ?.didChange(c?.reference ?? '');
+                            },
+                          ),
+                        ],
+                      ),
                     );
-                  },
-                ),
+                  }),
+                ]),
                 const SizedBox(height: 12),
-                Consumer(
-                  builder: (context, ref, _) {
-                    final usersAsync = ref.watch(usersProvider);
-                    return usersAsync.when(
-                      loading: () => const LinearProgressIndicator(),
-                      error: (e, _) => Text('Erreur : $e',
-                          style: const TextStyle(color: AppColors.danger)),
-                      data: (users) {
-                        final current = _existing?.expertId;
-                        final actifs = users.where((u) => u.actif).toList();
-                        final connu = actifs.any((u) => u.id == current);
-                        final inactif = current != null && !connu
-                            ? users.where((u) => u.id == current).firstOrNull
-                            : null;
-                        return FormBuilderDropdown<String?>(
-                          name: 'expert_id',
-                          initialValue: current,
-                          decoration:
-                              const InputDecoration(labelText: 'Agent en charge'),
-                          items: [
-                            const DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text('Non assigné'),
-                            ),
-                            ...actifs.map((u) => DropdownMenuItem<String?>(
-                                  value: u.id,
-                                  child: Text(u.nom ?? u.email),
-                                )),
-                            // Conserve l'agent actuel s'il est devenu inactif/introuvable
-                            if (current != null && !connu)
-                              DropdownMenuItem<String?>(
-                                value: current,
-                                child: Text(
-                                    '${inactif?.nom ?? inactif?.email ?? current} (inactif)'),
-                              ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              ]),
-              const SizedBox(height: 12),
 
-              // ── Références client ─────────────────────────────────────────
-              // Champs texte libres — ref_client_1 pré-remplie depuis la fiche client
-              _SectionCard(title: 'Références client', children: [
-                const Text(
-                  'Numéros de référence du client (police, dossier assureur, etc.)',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                const SizedBox(height: 12),
-                FormBuilderTextField(
-                  name: 'ref_client_1',
-                  initialValue: _existing?.refClient1 ?? _clientSelectionne?.reference,
-                  decoration: const InputDecoration(
-                    labelText: 'Référence 1',
-                    hintText: 'Ex : REF-2025-001',
-                    prefixIcon: Icon(Icons.tag_outlined),
+                // ── Notes internes ─────────────────────────────────────
+                _SectionCard(title: 'Notes internes', children: [
+                  FormBuilderTextField(
+                    name: 'notes_internes',
+                    initialValue: _existing?.notesInternes,
+                    decoration: const InputDecoration(
+                        labelText: 'Notes internes'),
+                    maxLines: 4,
                   ),
-                ),
-                const SizedBox(height: 12),
-                FormBuilderTextField(
-                  name: 'ref_client_2',
-                  initialValue: _existing?.refClient2,
-                  decoration: const InputDecoration(
-                    labelText: 'Référence 2',
-                    hintText: 'Ex : N° police assurance',
-                    prefixIcon: Icon(Icons.tag_outlined),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FormBuilderTextField(
-                  name: 'ref_client_3',
-                  initialValue: _existing?.refClient3,
-                  decoration: const InputDecoration(
-                    labelText: 'Référence 3',
-                    hintText: 'Ex : N° connaissement',
-                    prefixIcon: Icon(Icons.tag_outlined),
-                  ),
-                ),
-              ]),
-              const SizedBox(height: 12),
-
-              _SectionCard(title: 'Notes internes', children: [
-                FormBuilderTextField(
-                  name: 'notes_internes',
-                  initialValue: _existing?.notesInternes,
-                  decoration:
-                      const InputDecoration(labelText: 'Notes internes'),
-                  maxLines: 4,
-                ),
-              ]),
-              const SizedBox(height: 80),
-            ],
+                ]),
+                const SizedBox(height: 80),
+              ],
+            ),
+          ),
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: ElevatedButton(
+              onPressed: _loading ? null : _submit,
+              child:
+                  Text(isEditing ? 'Enregistrer' : 'Créer le dossier'),
+            ),
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: ElevatedButton(
-            onPressed: _loading ? null : _submit,
-            child: Text(isEditing ? 'Enregistrer' : 'Créer le dossier'),
-          ),
-        ),
-      ),
-    ), // Scaffold
-    ); // SaveOverlay
+    );
   }
 }
 
@@ -433,12 +615,14 @@ class _ClientSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = hasError ? AppColors.danger : AppColors.navy.withAlpha(60);
+    final borderColor =
+        hasError ? AppColors.danger : AppColors.navy.withAlpha(60);
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
           border: Border.all(color: borderColor),
           borderRadius: BorderRadius.circular(8),
@@ -465,7 +649,8 @@ class _ClientSelector extends StatelessWidget {
                     children: [
                       Text(client!.nom,
                           style: const TextStyle(
-                              fontWeight: FontWeight.w600, fontSize: 14)),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14)),
                       Text(
                         _typeLabel(client!.typeClient) +
                             (client!.ville != null
@@ -480,7 +665,8 @@ class _ClientSelector extends StatelessWidget {
           if (client != null && onClear != null)
             GestureDetector(
               onTap: onClear,
-              child: const Icon(Icons.close, size: 18, color: Colors.grey),
+              child: const Icon(Icons.close,
+                  size: 18, color: Colors.grey),
             )
           else
             const Icon(Icons.arrow_forward_ios,
@@ -517,7 +703,8 @@ class _ClientSelectorSheet extends ConsumerStatefulWidget {
       _ClientSelectorSheetState();
 }
 
-class _ClientSelectorSheetState extends ConsumerState<_ClientSelectorSheet> {
+class _ClientSelectorSheetState
+    extends ConsumerState<_ClientSelectorSheet> {
   final _searchController = TextEditingController();
   String _search = '';
 
@@ -538,7 +725,8 @@ class _ClientSelectorSheetState extends ConsumerState<_ClientSelectorSheet> {
       builder: (context, scrollController) => Container(
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+          borderRadius:
+              BorderRadius.vertical(top: Radius.circular(16)),
         ),
         child: Column(children: [
           // Poignée
@@ -594,9 +782,11 @@ class _ClientSelectorSheetState extends ConsumerState<_ClientSelectorSheet> {
                         },
                       )
                     : null,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 10),
               ),
-              onChanged: (v) => setState(() => _search = v.toLowerCase()),
+              onChanged: (v) =>
+                  setState(() => _search = v.toLowerCase()),
             ),
           ),
           const SizedBox(height: 8),
@@ -604,15 +794,16 @@ class _ClientSelectorSheetState extends ConsumerState<_ClientSelectorSheet> {
             child: clientsAsync.when(
               loading: () =>
                   const Center(child: CircularProgressIndicator()),
-              error: (e, _) =>
-                  Center(child: Text('Erreur : $e')),
+              error: (e, _) => Center(child: Text('Erreur : $e')),
               data: (clients) {
                 final filtered = _search.isEmpty
                     ? clients
                     : clients
                         .where((c) =>
                             c.nom.toLowerCase().contains(_search) ||
-                            (c.email?.toLowerCase().contains(_search) ??
+                            (c.email
+                                    ?.toLowerCase()
+                                    .contains(_search) ??
                                 false) ||
                             (c.telephone?.contains(_search) ?? false))
                         .toList();
@@ -630,7 +821,8 @@ class _ClientSelectorSheetState extends ConsumerState<_ClientSelectorSheet> {
                                 ? 'Aucun client enregistré.\nCreez d\'abord un client.'
                                 : 'Aucun résultat pour "$_search"',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey),
+                            style:
+                                const TextStyle(color: Colors.grey),
                           ),
                         ]),
                   );
@@ -644,9 +836,11 @@ class _ClientSelectorSheetState extends ConsumerState<_ClientSelectorSheet> {
                     final isSelected = c.id == widget.clientActuelId;
                     return ListTile(
                       selected: isSelected,
-                      selectedTileColor: AppColors.navy.withAlpha(15),
+                      selectedTileColor:
+                          AppColors.navy.withAlpha(15),
                       leading: CircleAvatar(
-                        backgroundColor: AppColors.navy.withAlpha(20),
+                        backgroundColor:
+                            AppColors.navy.withAlpha(20),
                         child: Text(
                           c.nom.substring(0, 1).toUpperCase(),
                           style: const TextStyle(
@@ -717,7 +911,8 @@ class _SectionCard extends StatelessWidget {
           children: [
             Text(title,
                 style: const TextStyle(
-                    fontWeight: FontWeight.bold, color: AppColors.navy)),
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.navy)),
             const Divider(height: 16),
             ...children,
           ],
